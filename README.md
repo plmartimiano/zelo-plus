@@ -3,10 +3,15 @@
 Protótipo de hardware/firmware do dispenser automático de medicamentos para idosos (pacientes)
 do projeto acadêmico Zelo+. Projeto PlatformIO (framework Arduino, placa `esp32dev`).
 
+Versão atual: **3 compartimentos** — até 3 medicamentos diferentes para o mesmo
+paciente, cada um fixo no seu compartimento (detalhes em
+[`docs/compartimentos.md`](docs/compartimentos.md)).
+
 ```
 zelo-plus/
-├── platformio.ini   # ambiente esp32dev + dependências
-└── src/main.cpp     # firmware completo (máquina de estados + web + captive portal)
+├── platformio.ini          # ambiente esp32dev + dependências
+├── docs/compartimentos.md  # especificação aprovada dos 3 compartimentos
+└── src/main.cpp            # firmware completo (máquina de estados + web + captive portal)
 ```
 
 ## Como compilar e gravar
@@ -18,19 +23,27 @@ zelo-plus/
 
 ## Fluxo de funcionamento
 
-1. Cuidador acessa a página web servida pelo ESP32 e cadastra paciente, remédio, cuidador,
-   até 5 familiares (opcionais, botão "+"), com celular e ID do Telegram, e um ou mais horários.
-2. No **primeiro cadastro** o compartimento abre para abastecimento.
+1. Cuidador acessa a página web servida pelo ESP32 e cadastra o paciente, até **3
+   medicamentos** (um por compartimento, até 6 horários cada), cuidador, até 5
+   familiares (opcionais) e o bot do Telegram.
+2. A página indica onde colocar cada remédio ("Coloque LOSARTANA no compartimento 1").
+   Cada compartimento que recebe um medicamento **novo** abre para abastecimento, **um
+   de cada vez**; só mudar horários não abre nada.
 3. O compartimento fecha pelo botão físico (trava de 7 s contra toque duplo) ou
    sozinho após 3 minutos.
-4. No horário: buzzer + LED piscando e nome do remédio no LCD.
-5. Paciente aperta o botão → alarme para, compartimento abre suavemente (servo).
+4. No horário: buzzer + LED piscando e, no LCD, nome e compartimento do remédio
+   (alternando se houver mais de um).
+5. Paciente aperta o botão **uma vez** → alarme para e **todos os compartimentos daquela
+   dose abrem**, um servo logo após o outro (nunca dois ao mesmo tempo).
    Se não aparecer, o alarme segue o ciclo de avisos (ver abaixo).
-6. Paciente retira o remédio e fecha pelo botão (mesma trava de 7 s) ou timeout de 3 min.
-7. Repete todo dia nos mesmos horários.
-8. "Abrir compartimento para reposição" na página (dupla confirmação) abre sem refazer o
-   cadastro.
-9. Adicionar horários a um cadastro existente **não** abre o compartimento.
+6. Paciente retira os remédios e fecha pelo botão (um toque fecha todos, após a trava
+   de 7 s) ou timeout de 3 min.
+7. Repete todo dia nos mesmos horários. Um horário que chega com algum compartimento
+   aberto espera ele fechar e toca em seguida.
+8. **Reposição:** a página pergunta qual medicamento será reposto, confirma e abre
+   **só o compartimento dele**.
+9. **Esvaziar compartimento:** apaga o cadastro daquele medicamento e, se o cuidador
+   quiser, abre o compartimento para retirar as sobras.
 
 ## Hardware e pinagem
 
@@ -39,12 +52,17 @@ zelo-plus/
 | Buzzer (ativo) | 15 |
 | LED (+ resistor 220–330 Ω) | 4 |
 | Botão (INPUT_PULLUP, outra perna no GND) | 5 |
-| Servo (sinal) | 13 |
+| Servo compartimento 1 (sinal) | 13 |
+| Servo compartimento 2 (sinal) | 14 |
+| Servo compartimento 3 (sinal) | 27 |
 | LCD I2C 16x2 (PCF8574, `0x27`) — SDA | 21 |
 | LCD I2C — SCL | 22 |
 
-- Servo: 0° = fechado, 90° = aberto. **Alimentação externa de 5 V**, com GND
-  compartilhado com o ESP32 (o 3V3 da placa causa reinícios por queda de tensão).
+- Servos: 0° = fechado, 90° = aberto (ajustáveis por compartimento em
+  `ANGULO_FECHADO` / `ANGULO_ABERTO`). **Alimentação externa de 5 V (≥ 2 A)**, com GND
+  compartilhado com o ESP32; o firmware nunca move dois servos ao mesmo tempo.
+- O GPIO 12 foi evitado: ele interfere na inicialização do ESP32.
+- Etiquetas **1, 2 e 3** na caixa, na mesma ordem da página.
 - LCD: GND→GND, VCC→3V3, SDA→21, SCL→22.
 
 ## Wi-Fi (captive portal)
@@ -57,12 +75,15 @@ modo de configuração.
 
 ## Persistência do cadastro
 
-Paciente, remédio, contatos e horários ficam salvos em `Preferences` (namespace
-`cadastro`, chaves `nome` (paciente), `remedio`, `total`, `horas`, `minutos` e
-`cuid_*` / `fam0_*` … `fam4_*` para os contatos e `tg_token` para o bot) a cada
-"Salvar alarme" e são recarregados no `setup()`. Após um reinício ou queda de energia
-o dispenser volta a tocar nos horários cadastrados sem precisar recadastrar, e o
-próximo salvamento não reabre o compartimento (já conta como cadastro existente).
+Tudo fica em `Preferences` (namespace `cadastro`) e é recarregado no `setup()`:
+
+- `nome` — paciente;
+- `m0_*`, `m1_*`, `m2_*` — medicamento de cada compartimento (`_nome`, `_tot`,
+  `_hr`, `_mn`), ou seja, a ligação medicamento ↔ compartimento;
+- `cuid_*` / `fam0_*` … `fam4_*` — contatos; `tg_token` — bot do Telegram.
+
+O cadastro da versão de um compartimento (`remedio`, `total`, `horas`, `minutos`)
+migra sozinho para o compartimento 1 na primeira vez que esta versão liga.
 
 ## Ciclo do alarme e avisos pelo Telegram
 
@@ -70,9 +91,9 @@ próximo salvamento não reabre o compartimento (já conta como cadastro existen
 |---|---|
 | 0–1 min, 2–3, 4–5, 6–7, 8–9, 10–11 | Buzzer + LED tocando |
 | 1–2 min, 3–4, 5–6, 7–8, 9–10, 11–12 | Silêncio (o botão continua funcionando) |
-| 6 min sem acesso | Telegram para o **cuidador**: Zelo+: Paciente “Nome” não acessou o medicamento das “HH:MM” horas. |
-| 12 min sem acesso | Alarme para; Telegram para **cuidador e familiares**: Zelo+: Paciente “Nome” não foi até o dispenser no horário das “HH:MM”. |
-| Depois dos 12 min | LCD mostra "Dose pendente!"; o botão ainda abre o compartimento |
+| 6 min sem acesso | Telegram para o **cuidador**: Zelo+: Paciente “Nome” não acessou o medicamento das “HH:MM” horas (Losartana). |
+| 12 min sem acesso | Alarme para; Telegram para **cuidador e familiares**: Zelo+: Paciente “Nome” não foi até o dispenser no horário das “HH:MM” (Losartana e Metformina). |
+| Depois dos 12 min | LCD mostra "Dose pendente!"; o botão ainda abre os compartimentos da dose |
 | Paciente acessa após um aviso | Quem foi avisado recebe "paciente acessou o dispenser às HH:MM" |
 
 ### Por que Telegram
@@ -110,8 +131,9 @@ deve ser revisto num produto.
 
 ## Histórico de doses
 
-Cada vez que um alarme dispara, o Zelo+ cria um registro com data, horário e
-situação, guardado na placa (`Preferences`, namespace `historico`, últimas 60 doses):
+Cada vez que um alarme dispara, o Zelo+ cria **um registro por medicamento** com data,
+horário, medicamento, compartimento e situação, guardado na placa (`Preferences`,
+namespace `historico`, últimas 60 doses):
 
 | Situação | Quando |
 |---|---|
@@ -120,26 +142,32 @@ situação, guardado na placa (`Preferences`, namespace `historico`, últimas 60
 | Sem acesso | Alerta final enviado e ninguém apertou o botão |
 | Tocando agora | Alarme em andamento |
 
-Na página aparecem o **resumo dos últimos 7 dias** (percentual de adesão e contagem
-por situação), as **20 doses mais recentes** e o link **Baixar histórico completo
-(planilha CSV)**, que abre no Excel/Google Planilhas (separador `;`). O botão
+Na página aparecem o **resumo dos últimos 7 dias** (percentual de adesão geral e por
+medicamento, e contagem por situação), as **20 doses mais recentes** e o link **Baixar histórico completo
+(planilha CSV)**, que abre no Excel/Google Planilhas (separador `;`, colunas
+data, horário, medicamento, compartimento, situação e atraso). O botão
 "Apagar histórico" limpa todos os registros.
 
 Adesão = (doses tomadas no horário + com atraso) ÷ doses concluídas no período.
 
 ## Máquina de estados (`loop()`)
 
-- `AGUARDANDO` — relógio no LCD, checa horários a cada minuto.
+Os horários são conferidos a cada segundo em qualquer estado; se o dispenser estiver
+ocupado, ficam em espera (`mascaraEmEspera`) e tocam quando ele voltar a `AGUARDANDO`.
+
+- `AGUARDANDO` — relógio no LCD; inicia alarmes em espera e, depois, o abastecimento
+  de compartimentos novos (`filaAbastecimento`, um de cada vez).
 - `TOCANDO` — ciclo 1 min tocando / 1 min silêncio por até 12 min, com avisos aos 6 e 12 min.
-- `PORTA_ABERTA_ESTADO` — aberto após o alarme; botão (após 7 s) ou timeout de 3 min.
-- `ABASTECENDO` — aberto para o cuidador (primeiro cadastro ou reposição manual).
+- `PORTA_ABERTA_ESTADO` — compartimentos da dose abertos; botão (após 7 s) ou timeout
+  de 3 min fecha todos.
+- `ABASTECENDO` — um compartimento aberto para o cuidador (abastecer, repor ou esvaziar).
 
 `modoConfig` separa o modo de configuração de Wi-Fi do modo normal.
 
 ## Limitações conhecidas
 
-1. Um paciente/remédio por vez (exigiria refatorar para array de estruturas).
-2. Máximo de 6 horários por dia (`MAX_ALARMES`).
+1. Um paciente e até 3 medicamentos (`NUM_COMPARTIMENTOS`).
+2. Máximo de 6 horários por medicamento (`MAX_HORARIOS`).
 3. O captive portal pode não abrir sozinho em alguns celulares (abrir o navegador
    manualmente funciona).
 4. Sem HTTPS/autenticação: qualquer pessoa na mesma rede pode alterar o cadastro.
@@ -152,13 +180,14 @@ Adesão = (doses tomadas no horário + com atraso) ÷ doses concluídas no perí
 
 - Página web no próprio ESP32, para o cuidador não mexer no firmware.
 - Trava de 7 s no botão contra fechamento acidental por toque duplo.
-- Abertura automática só no primeiro cadastro.
-- Dupla confirmação no botão de reposição.
+- Abertura automática só quando um compartimento recebe medicamento novo.
+- Cada medicamento fica fixo no seu compartimento; reposição escolhe o medicamento
+  e abre só o compartimento dele, com confirmação.
+- Dose com mais de um remédio: um único toque abre todos, servos em sequência.
 - Wi-Fi configurável por portal, para replicar o dispositivo em outros locais.
 
 ## Próximos passos sugeridos
 
-- Suporte a múltiplos pacientes/compartimentos, se o escopo exigir.
 - Autenticação simples na página web.
 - Integração com backend/app do cuidador para monitoramento remoto.
 - Testar o captive portal em mais modelos de celular.
