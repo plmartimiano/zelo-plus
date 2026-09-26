@@ -7,10 +7,16 @@ Versão atual: **3 compartimentos** — até 3 medicamentos diferentes para o me
 paciente, cada um fixo no seu compartimento (detalhes em
 [`docs/compartimentos.md`](docs/compartimentos.md)).
 
+> 📘 **Material pedagógico:** [`README-DIDATICO.md`](README-DIDATICO.md) explica o
+> funcionamento passo a passo, com o trecho de código de cada etapa.
+> 🔌 **Ligações:** [`docs/ligacoes.png`](docs/ligacoes.png) ([SVG](docs/ligacoes.svg)).
+
 ```
 zelo-plus/
 ├── platformio.ini          # ambiente esp32dev + dependências
+├── README-DIDATICO.md      # guia didático passo a passo
 ├── docs/compartimentos.md  # especificação aprovada dos 3 compartimentos
+├── docs/ligacoes.png/.svg  # diagrama de todas as ligações
 └── src/main.cpp            # firmware completo (máquina de estados + web + captive portal)
 ```
 
