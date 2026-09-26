@@ -60,9 +60,20 @@ const unsigned long TRAVA_BOTAO = 7UL * 1000UL; // 7 segundos de trava apos abri
 // Ciclo do alarme: 1 min tocando, 1 min em silencio, repetindo.
 // Aos 6 min sem acesso avisa o cuidador; aos 12 min para de tocar e alerta
 // cuidador + familiares.
+// MODO_TESTE encurta os tempos para testar em bancada: aviso aos 30 s, alerta
+// final aos 60 s e ciclo de 5 s tocando / 5 s em silencio (mesma proporcao do
+// modo real). Mude para 0 antes de usar de verdade.
+#define MODO_TESTE 1
+
+#if MODO_TESTE
+const unsigned long CICLO_ALARME = 5UL * 1000UL;
+const unsigned long TEMPO_PRIMEIRO_AVISO = 30UL * 1000UL;
+const unsigned long TEMPO_ALERTA_FINAL = 60UL * 1000UL;
+#else
 const unsigned long CICLO_ALARME = 60UL * 1000UL;
 const unsigned long TEMPO_PRIMEIRO_AVISO = 6UL * 60UL * 1000UL;
 const unsigned long TEMPO_ALERTA_FINAL = 12UL * 60UL * 1000UL;
+#endif
 
 enum Estado { AGUARDANDO, TOCANDO, PORTA_ABERTA_ESTADO, ABASTECENDO };
 Estado estadoAtual = AGUARDANDO;
@@ -210,7 +221,8 @@ void avisarPrimeiroAtraso() {
 }
 
 void alertarSemAcesso() {
-  enviarParaTodos("Zelo+ ALERTA: " + nomePaciente + " não acessou a caixa de remédios após 12 minutos do horário das " +
+  enviarParaTodos("Zelo+ ALERTA: " + nomePaciente + " não acessou a caixa de remédios após " +
+                  String((int)(TEMPO_ALERTA_FINAL / 60000UL)) + " minuto(s) do horário das " +
                   horarioAlarmeAtual() + " (" + nomeRemedio +
                   "). Algum problema pode ter ocorrido. Por favor, verifique o paciente.");
 }
@@ -749,6 +761,9 @@ void iniciarModoNormal() {
 
 void setup() {
   Serial.begin(115200);
+#if MODO_TESTE
+  Serial.println("ATENCAO: MODO_TESTE ativo (avisos aos 30 s e 60 s)");
+#endif
 
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
