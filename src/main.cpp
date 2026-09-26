@@ -215,12 +215,12 @@ String horarioAgora() {
 }
 
 void avisarPrimeiroAtraso() {
-  enviarParaCuidador("Paciente “" + nomePaciente + "” não acessou o medicamento das “" +
+  enviarParaCuidador("Zelo+: Paciente “" + nomePaciente + "” não acessou o medicamento das “" +
                      horarioAlarmeAtual() + "” horas.");
 }
 
 void alertarSemAcesso() {
-  enviarParaTodos("Paciente “" + nomePaciente + "” não foi até o dispenser no horário das “" +
+  enviarParaTodos("Zelo+: Paciente “" + nomePaciente + "” não foi até o dispenser no horário das “" +
                   horarioAlarmeAtual() + "”.");
 }
 
