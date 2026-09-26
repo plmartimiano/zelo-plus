@@ -70,8 +70,8 @@ próximo salvamento não reabre o compartimento (já conta como cadastro existen
 |---|---|
 | 0–1 min, 2–3, 4–5, 6–7, 8–9, 10–11 | Buzzer + LED tocando |
 | 1–2 min, 3–4, 5–6, 7–8, 9–10, 11–12 | Silêncio (o botão continua funcionando) |
-| 6 min sem acesso | WhatsApp para o **cuidador**: paciente ainda não acessou |
-| 12 min sem acesso | Alarme para; WhatsApp para **cuidador e familiares**: não houve acesso, algum problema pode ter ocorrido |
+| 6 min sem acesso | WhatsApp para o **cuidador**: Paciente “Nome” não acessou o medicamento das “HH:MM” horas. |
+| 12 min sem acesso | Alarme para; WhatsApp para **cuidador e familiares**: Paciente “Nome” não foi até o dispenser no horário das “HH:MM”. |
 | Depois dos 12 min | LCD mostra "Dose pendente!"; o botão ainda abre o compartimento |
 | Paciente acessa após um aviso | Quem foi avisado recebe "paciente acessou o dispenser às HH:MM" |
 

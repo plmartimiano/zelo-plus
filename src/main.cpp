@@ -215,16 +215,13 @@ String horarioAgora() {
 }
 
 void avisarPrimeiroAtraso() {
-  enviarParaCuidador("Zelo+: " + nomePaciente + " ainda não acessou o dispenser para tomar " +
-                     nomeRemedio + " (horário das " + horarioAlarmeAtual() +
-                     "). O alarme continua tocando.");
+  enviarParaCuidador("Paciente “" + nomePaciente + "” não acessou o medicamento das “" +
+                     horarioAlarmeAtual() + "” horas.");
 }
 
 void alertarSemAcesso() {
-  enviarParaTodos("Zelo+ ALERTA: " + nomePaciente + " não acessou a caixa de remédios após " +
-                  String((int)(TEMPO_ALERTA_FINAL / 60000UL)) + " minuto(s) do horário das " +
-                  horarioAlarmeAtual() + " (" + nomeRemedio +
-                  "). Algum problema pode ter ocorrido. Por favor, verifique o paciente.");
+  enviarParaTodos("Paciente “" + nomePaciente + "” não foi até o dispenser no horário das “" +
+                  horarioAlarmeAtual() + "”.");
 }
 
 // Depois de um aviso, confirma para quem foi avisado que o paciente chegou.
