@@ -744,6 +744,8 @@ void handleSalvar() {
 
     nomePaciente = server.arg("paciente");
     nomeRemedio = server.arg("remedio");
+    nomePaciente.trim(); // evita espacos sobrando nas mensagens
+    nomeRemedio.trim();
 
     // Caixas de familiar deixadas em branco sao ignoradas; os preenchidos sao
     // guardados em sequencia e o restante da lista e limpo.
