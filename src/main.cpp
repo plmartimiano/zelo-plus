@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
+#include <ArduinoJson.h>
 #include <WebServer.h>
 #include <DNSServer.h>
 #include <Preferences.h>
@@ -34,18 +35,20 @@ const int daylightOffset_sec = 0;
 bool modoConfig = false;
 String configErro = "";
 
-// Contato que recebe avisos por WhatsApp (via CallMeBot). Cada numero precisa
-// da sua propria apikey, obtida pelo proprio dono do numero.
+// Contato que recebe avisos pelo Telegram. O chatId e o numero que o Telegram
+// usa para identificar a conversa da pessoa com o bot do Zelo+ (a pessoa precisa
+// abrir o bot e tocar em "Iniciar" uma vez).
 struct Contato {
   String nome;
   String telefone;
-  String apikey;
+  String chatId;
 };
 
 String nomePaciente = "";
 String nomeRemedio = "";
 Contato cuidador;
 Contato familiares[MAX_FAMILIARES];
+String tokenTelegram = ""; // token do bot, criado pelo cuidador no @BotFather
 int horaAlarmes[MAX_ALARMES];
 int minutoAlarmes[MAX_ALARMES];
 bool jaDisparadoHoje[MAX_ALARMES];
@@ -127,7 +130,7 @@ String formatarHorario(int hora, int minuto) {
   return String(valor);
 }
 
-// ---------- ENVIO DE MENSAGENS (WhatsApp via CallMeBot) ----------
+// ---------- ENVIO DE MENSAGENS (Telegram) ----------
 
 String codificarURL(const String& texto) {
   const char* hex = "0123456789ABCDEF";
@@ -146,46 +149,41 @@ String codificarURL(const String& texto) {
   return saida;
 }
 
-// Converte o que o cuidador digitou ("(11) 98765-4321", "+55 11 ...") para o
-// formato internacional exigido pela API: +5511987654321.
-String telefoneInternacional(const String& telefone) {
-  String digitos;
-  for (unsigned int i = 0; i < telefone.length(); i++) {
-    if (isdigit((uint8_t)telefone[i])) digitos += telefone[i];
-  }
-  if (digitos.startsWith("00")) digitos = digitos.substring(2);
-  if (digitos.length() == 10 || digitos.length() == 11) digitos = "55" + digitos; // DDD + numero, sem pais
-  return "+" + digitos;
-}
-
 bool contatoPodeReceber(const Contato& contato) {
-  return contato.telefone != "" && contato.apikey != "";
+  return tokenTelegram != "" && contato.chatId != "";
 }
 
-bool enviarWhatsApp(const Contato& contato, const String& texto) {
-  if (!contatoPodeReceber(contato)) return false;
+// Chama um metodo da API de bots do Telegram. Devolve o codigo HTTP (ou <= 0 em
+// falha de conexao) e, se pedido, o corpo da resposta.
+int chamarTelegram(const String& token, const char* metodo, const String& corpo, String* resposta = nullptr) {
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WhatsApp: sem Wi-Fi, mensagem nao enviada");
-    return false;
+    Serial.println("Telegram: sem Wi-Fi");
+    return -1;
   }
-
-  String url = "https://api.callmebot.com/whatsapp.php?phone=";
-  url += codificarURL(telefoneInternacional(contato.telefone));
-  url += "&text=" + codificarURL(texto);
-  url += "&apikey=" + codificarURL(contato.apikey);
 
   WiFiClientSecure cliente;
   cliente.setInsecure(); // prototipo: nao valida o certificado do servidor
   HTTPClient http;
   http.setTimeout(10000);
+  String url = "https://api.telegram.org/bot" + token + "/" + metodo;
   if (!http.begin(cliente, url)) {
-    Serial.println("WhatsApp: falha ao iniciar conexao");
-    return false;
+    Serial.println("Telegram: falha ao iniciar conexao");
+    return -1;
   }
-  int codigo = http.GET();
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  int codigo = http.POST(corpo);
+  if (resposta != nullptr && codigo > 0) *resposta = http.getString();
   http.end();
+  return codigo;
+}
 
-  Serial.print("WhatsApp para ");
+bool enviarTelegram(const Contato& contato, const String& texto) {
+  if (!contatoPodeReceber(contato)) return false;
+
+  String corpo = "chat_id=" + codificarURL(contato.chatId) + "&text=" + codificarURL(texto);
+  int codigo = chamarTelegram(tokenTelegram, "sendMessage", corpo);
+
+  Serial.print("Telegram para ");
   Serial.print(contato.nome);
   Serial.print(": HTTP ");
   Serial.println(codigo);
@@ -193,13 +191,13 @@ bool enviarWhatsApp(const Contato& contato, const String& texto) {
 }
 
 void enviarParaCuidador(const String& texto) {
-  enviarWhatsApp(cuidador, texto);
+  enviarTelegram(cuidador, texto);
 }
 
 void enviarParaTodos(const String& texto) {
-  enviarWhatsApp(cuidador, texto);
+  enviarTelegram(cuidador, texto);
   for (int i = 0; i < MAX_FAMILIARES; i++) {
-    enviarWhatsApp(familiares[i], texto);
+    enviarTelegram(familiares[i], texto);
   }
 }
 
@@ -244,14 +242,14 @@ void salvarContato(const char* prefixo, const Contato& contato) {
   String p = prefixo;
   prefsCadastro.putString((p + "_nome").c_str(), contato.nome);
   prefsCadastro.putString((p + "_tel").c_str(), contato.telefone);
-  prefsCadastro.putString((p + "_key").c_str(), contato.apikey);
+  prefsCadastro.putString((p + "_chat").c_str(), contato.chatId);
 }
 
 void carregarContato(const char* prefixo, Contato& contato) {
   String p = prefixo;
   contato.nome = prefsCadastro.getString((p + "_nome").c_str(), "");
   contato.telefone = prefsCadastro.getString((p + "_tel").c_str(), "");
-  contato.apikey = prefsCadastro.getString((p + "_key").c_str(), "");
+  contato.chatId = prefsCadastro.getString((p + "_chat").c_str(), "");
 }
 
 String prefixoFamiliar(int i) {
@@ -272,6 +270,7 @@ void salvarCadastro() {
   prefsCadastro.putBytes("horas", horas, totalAlarmes);
   prefsCadastro.putBytes("minutos", minutos, totalAlarmes);
 
+  prefsCadastro.putString("tg_token", tokenTelegram);
   salvarContato("cuid", cuidador);
   for (int i = 0; i < MAX_FAMILIARES; i++) {
     salvarContato(prefixoFamiliar(i).c_str(), familiares[i]);
@@ -282,6 +281,7 @@ void carregarCadastro() {
   nomePaciente = prefsCadastro.getString("nome", "");
   nomeRemedio = prefsCadastro.getString("remedio", "");
 
+  tokenTelegram = prefsCadastro.getString("tg_token", "");
   carregarContato("cuid", cuidador);
   for (int i = 0; i < MAX_FAMILIARES; i++) {
     carregarContato(prefixoFamiliar(i).c_str(), familiares[i]);
@@ -444,10 +444,10 @@ String camposContato(const char* titulo, const char* prefixo, const Contato& con
     html += "<button type='button' onclick='removerFamiliar(this)' style='float:right;background:none;border:none;color:#dc2626;font-size:13px;cursor:pointer'>Remover</button>";
   }
   html += campoTexto("Nome:", (p + "_nome").c_str(), contato.nome, "text", "", obrigatorio);
-  html += campoTexto("Celular (WhatsApp):", (p + "_tel").c_str(), contato.telefone, "tel", "(11) 98765-4321", obrigatorio);
-  html += campoTexto("Chave CallMeBot (apikey):", (p + "_key").c_str(), contato.apikey, "text", "ex.: 123456", false);
-  if (contato.telefone != "" && contato.apikey == "") {
-    html += "<p style='color:#b45309;font-size:13px;margin:0 0 6px'>Sem a chave este numero nao recebe avisos.</p>";
+  html += campoTexto("Celular:", (p + "_tel").c_str(), contato.telefone, "tel", "(11) 98765-4321", obrigatorio);
+  html += campoTexto("ID do Telegram:", (p + "_chat").c_str(), contato.chatId, "text", "ex.: 123456789", false);
+  if (contato.nome != "" && contato.chatId == "") {
+    html += "<p style='color:#b45309;font-size:13px;margin:0 0 6px'>Sem o ID do Telegram esta pessoa nao recebe avisos.</p>";
   }
   html += "</fieldset>";
   return html;
@@ -481,11 +481,20 @@ void handleRoot() {
   html += "<template id='modelo-familiar'>" + camposContato("Familiar", "fam0", Contato(), false, true) + "</template>";
   html += "<button type='button' id='btn-familiar' onclick='adicionarFamiliar()' style='width:100%;padding:10px;background:#e5e7eb;border:none;border-radius:6px;font-size:15px;margin-bottom:12px'>+ Adicionar familiar</button>";
 
-  html += "<details style='margin-bottom:12px;font-size:14px'><summary>Como obter a chave do WhatsApp</summary>";
-  html += "<p>Os avisos sao enviados pelo servico gratuito CallMeBot. Cada pessoa que vai receber avisos deve, no proprio celular:</p>";
-  html += "<ol><li>Abrir <a href='https://www.callmebot.com/blog/free-api-whatsapp-messages/' target='_blank'>callmebot.com</a> e salvar nos contatos o numero indicado la.</li>";
-  html += "<li>Enviar pelo WhatsApp para esse contato: <i>I allow callmebot to send me messages</i></li>";
-  html += "<li>Copiar a chave (apikey) que chegar na resposta e colar aqui.</li></ol></details>";
+  html += "<fieldset style='border:1px solid #d1d5db;border-radius:6px;margin:12px 0;padding:8px 12px'>";
+  html += "<legend>Avisos pelo Telegram</legend>";
+  html += "<label>Token do bot:</label><br>";
+  html += "<input type='password' name='tg_token' id='tg_token' autocomplete='off' placeholder='";
+  html += tokenTelegram != "" ? "(salvo - deixe em branco para manter)" : "cole aqui o token do @BotFather";
+  html += "' style='" + String(ESTILO_CAMPO) + "'><br>";
+  html += "<button type='button' onclick='buscarIdsTelegram()' style='width:100%;padding:10px;background:#0ea5e9;color:white;border:none;border-radius:6px;font-size:15px;margin:6px 0'>Buscar IDs do Telegram</button>";
+  html += "<pre id='ids-telegram' style='white-space:pre-wrap;font-size:13px;background:#f3f4f6;padding:8px;border-radius:6px;display:none'></pre>";
+  html += "<details style='font-size:14px'><summary>Como configurar (passo a passo)</summary><ol>";
+  html += "<li><b>Uma vez so:</b> no Telegram, abra o <b>@BotFather</b>, envie <i>/newbot</i>, escolha um nome e um usuario terminado em <i>bot</i> (ex.: <i>zelo_maria_bot</i>). Copie o <b>token</b> que ele mandar e cole acima.</li>";
+  html += "<li><b>Cada pessoa</b> (cuidador e familiares) procura esse bot no Telegram e toca em <b>Iniciar</b>.</li>";
+  html += "<li>Toque em <b>Buscar IDs do Telegram</b>: aparece o nome e o ID de quem iniciou o bot. Copie cada ID para o campo da pessoa e salve.</li>";
+  html += "<li>Use <b>Enviar mensagem de teste</b> para conferir.</li></ol></details>";
+  html += "</fieldset>";
 
   html += "<label>Horarios do remedio:</label><br>";
   html += "<div id='horarios-container'>";
@@ -512,7 +521,7 @@ void handleRoot() {
     }
     html += "</p>";
 
-    html += "<button type='button' onclick='testarMensagens()' style='width:100%;padding:10px;background:#16a34a;color:white;border:none;border-radius:6px;font-size:15px'>Enviar mensagem de teste no WhatsApp</button>";
+    html += "<button type='button' onclick='testarMensagens()' style='width:100%;padding:10px;background:#16a34a;color:white;border:none;border-radius:6px;font-size:15px'>Enviar mensagem de teste no Telegram</button>";
   }
 
   html += "<hr style='margin:24px 0'>";
@@ -571,6 +580,13 @@ void handleRoot() {
   html += "  renumerarFamiliares();";
   html += "}";
   html += "renumerarFamiliares();";
+  html += "function buscarIdsTelegram() {";
+  html += "  var saida = document.getElementById('ids-telegram');";
+  html += "  saida.style.display = 'block'; saida.textContent = 'Buscando...';";
+  html += "  var corpo = new URLSearchParams(); corpo.append('tg_token', document.getElementById('tg_token').value);";
+  html += "  fetch('/telegram-ids', {method:'POST', body: corpo}).then(function(r){ return r.text(); })";
+  html += "    .then(function(t){ saida.textContent = t; });";
+  html += "}";
   html += "function testarMensagens() {";
   html += "  alert('Enviando... isso pode levar alguns segundos.');";
   html += "  fetch('/testar-mensagens', {method:'POST'}).then(function(r){ return r.text(); })";
@@ -615,18 +631,81 @@ void handleTestarMensagens() {
 
   for (int i = 0; i < 1 + MAX_FAMILIARES; i++) {
     const Contato& c = *contatos[i];
-    if (c.telefone == "") continue;
+    if (c.nome == "") continue;
     resultado += rotulos[i] + " (" + c.nome + "): ";
-    if (c.apikey == "") {
-      resultado += "sem chave CallMeBot\n";
-    } else if (enviarWhatsApp(c, texto)) {
+    if (tokenTelegram == "") {
+      resultado += "falta o token do bot\n";
+    } else if (c.chatId == "") {
+      resultado += "sem ID do Telegram\n";
+    } else if (enviarTelegram(c, texto)) {
       resultado += "enviado\n";
     } else {
-      resultado += "falhou (confira numero e chave)\n";
+      resultado += "falhou (confira o ID e se a pessoa tocou em Iniciar no bot)\n";
     }
   }
 
   server.send(200, "text/plain; charset=utf-8", resultado);
+}
+
+// Lista quem mandou mensagem ao bot recentemente (ex.: tocou em "Iniciar"),
+// para o cuidador copiar o ID de cada pessoa. O Telegram guarda essas
+// mensagens por 24 horas.
+void handleTelegramIds() {
+  String token = server.arg("tg_token");
+  token.trim();
+  if (token == "") token = tokenTelegram;
+  if (token == "") {
+    server.send(200, "text/plain; charset=utf-8", "Cole primeiro o token do bot.");
+    return;
+  }
+
+  String resposta;
+  int codigo = chamarTelegram(token, "getUpdates", "limit=50&allowed_updates=%5B%22message%22%5D", &resposta);
+  if (codigo == 401 || codigo == 404) {
+    server.send(200, "text/plain; charset=utf-8", "Token invalido. Confira o token enviado pelo @BotFather.");
+    return;
+  }
+  if (codigo != 200) {
+    server.send(200, "text/plain; charset=utf-8", "Nao foi possivel falar com o Telegram (HTTP " + String(codigo) + "). Tente de novo.");
+    return;
+  }
+
+  JsonDocument filtro;
+  JsonObject chatFiltro = filtro["result"][0]["message"]["chat"].to<JsonObject>();
+  chatFiltro["id"] = true;
+  chatFiltro["first_name"] = true;
+  chatFiltro["last_name"] = true;
+  chatFiltro["username"] = true;
+
+  JsonDocument doc;
+  if (deserializeJson(doc, resposta, DeserializationOption::Filter(filtro))) {
+    server.send(200, "text/plain; charset=utf-8", "Resposta do Telegram nao reconhecida.");
+    return;
+  }
+
+  String lista = "";
+  String idsVistos = ",";
+  for (JsonObject atualizacao : doc["result"].as<JsonArray>()) {
+    JsonObject chat = atualizacao["message"]["chat"];
+    if (chat.isNull()) continue;
+    String id = chat["id"].as<String>();
+    if (idsVistos.indexOf("," + id + ",") >= 0) continue;
+    idsVistos += id + ",";
+
+    String nome = chat["first_name"] | "";
+    String sobrenome = chat["last_name"] | "";
+    String usuario = chat["username"] | "";
+    if (sobrenome != "") nome += " " + sobrenome;
+    if (usuario != "") nome += " (@" + usuario + ")";
+    lista += nome + "\nID: " + id + "\n\n";
+  }
+
+  if (lista == "") {
+    lista = "Ninguem iniciou o bot nas ultimas 24 horas.\nPeca para cada pessoa abrir o bot no Telegram, tocar em Iniciar, e busque de novo.";
+  } else {
+    lista = "Copie o ID de cada pessoa para o campo dela:\n\n" + lista;
+  }
+  server.send(200, "text/plain; charset=utf-8", lista);
 }
 
 void handleTrocarWifi() {
@@ -641,10 +720,10 @@ void lerContatoDoFormulario(const char* prefixo, Contato& contato) {
   String p = prefixo;
   contato.nome = server.arg(p + "_nome");
   contato.telefone = server.arg(p + "_tel");
-  contato.apikey = server.arg(p + "_key");
+  contato.chatId = server.arg(p + "_chat");
   contato.nome.trim();
   contato.telefone.trim();
-  contato.apikey.trim();
+  contato.chatId.trim();
 }
 
 void handleSalvar() {
@@ -658,6 +737,10 @@ void handleSalvar() {
       return;
     }
     cuidador = novoCuidador;
+
+    String novoToken = server.arg("tg_token");
+    novoToken.trim();
+    if (novoToken != "") tokenTelegram = novoToken; // em branco = mantem o token salvo
 
     nomePaciente = server.arg("paciente");
     nomeRemedio = server.arg("remedio");
@@ -809,6 +892,7 @@ void iniciarModoNormal() {
   server.on("/salvar", HTTP_POST, handleSalvar);
   server.on("/abrir-manual", HTTP_POST, handleAbrirManual);
   server.on("/testar-mensagens", HTTP_POST, handleTestarMensagens);
+  server.on("/telegram-ids", HTTP_POST, handleTelegramIds);
   server.on("/trocar-wifi", handleTrocarWifi);
   server.begin();
 }

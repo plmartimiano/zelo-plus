@@ -19,7 +19,7 @@ zelo-plus/
 ## Fluxo de funcionamento
 
 1. Cuidador acessa a página web servida pelo ESP32 e cadastra paciente, remédio, cuidador,
-   até 5 familiares (opcionais, botão "+") (celular com WhatsApp) e um ou mais horários.
+   até 5 familiares (opcionais, botão "+"), com celular e ID do Telegram, e um ou mais horários.
 2. No **primeiro cadastro** o compartimento abre para abastecimento.
 3. O compartimento fecha pelo botão físico (trava de 7 s contra toque duplo) ou
    sozinho após 3 minutos.
@@ -59,51 +59,54 @@ modo de configuração.
 
 Paciente, remédio, contatos e horários ficam salvos em `Preferences` (namespace
 `cadastro`, chaves `nome` (paciente), `remedio`, `total`, `horas`, `minutos` e
-`cuid_*` / `fam0_*` … `fam4_*` para os contatos) a cada
+`cuid_*` / `fam0_*` … `fam4_*` para os contatos e `tg_token` para o bot) a cada
 "Salvar alarme" e são recarregados no `setup()`. Após um reinício ou queda de energia
 o dispenser volta a tocar nos horários cadastrados sem precisar recadastrar, e o
 próximo salvamento não reabre o compartimento (já conta como cadastro existente).
 
-## Ciclo do alarme e avisos por WhatsApp
+## Ciclo do alarme e avisos pelo Telegram
 
 | Tempo desde o horário | O que acontece |
 |---|---|
 | 0–1 min, 2–3, 4–5, 6–7, 8–9, 10–11 | Buzzer + LED tocando |
 | 1–2 min, 3–4, 5–6, 7–8, 9–10, 11–12 | Silêncio (o botão continua funcionando) |
-| 6 min sem acesso | WhatsApp para o **cuidador**: Zelo+: Paciente “Nome” não acessou o medicamento das “HH:MM” horas. |
-| 12 min sem acesso | Alarme para; WhatsApp para **cuidador e familiares**: Zelo+: Paciente “Nome” não foi até o dispenser no horário das “HH:MM”. |
+| 6 min sem acesso | Telegram para o **cuidador**: Zelo+: Paciente “Nome” não acessou o medicamento das “HH:MM” horas. |
+| 12 min sem acesso | Alarme para; Telegram para **cuidador e familiares**: Zelo+: Paciente “Nome” não foi até o dispenser no horário das “HH:MM”. |
 | Depois dos 12 min | LCD mostra "Dose pendente!"; o botão ainda abre o compartimento |
 | Paciente acessa após um aviso | Quem foi avisado recebe "paciente acessou o dispenser às HH:MM" |
 
-### Por que CallMeBot
+### Por que Telegram
 
-Envio de WhatsApp direto do ESP32, comparando as opções:
+Comparação das opções para o ESP32 enviar avisos:
 
-- **CallMeBot (escolhido)** — gratuito, uma requisição HTTPS simples, sem conta
-  empresarial. Cada pessoa autoriza o próprio número uma vez e recebe uma chave
-  (apikey). Limitações: serviço não oficial, sem garantia de entrega, com limite
-  de mensagens; adequado ao protótipo acadêmico.
+- **Bot do Telegram (escolhido)** — gratuito, API oficial, sem limite de vagas,
+  uma requisição HTTPS direto do ESP32. Cada pessoa só precisa abrir o bot e tocar
+  em "Iniciar".
+- **CallMeBot (WhatsApp)** — foi a primeira escolha, mas o serviço ficou lotado
+  (sem vagas para novos números) e o plano gratuito é só para uso pessoal.
 - **Twilio WhatsApp** — oficial e confiável, mas pago, exige número aprovado e
   modelos de mensagem aprovados pela Meta.
 - **WhatsApp Cloud API (Meta)** — oficial, exige conta Business verificada,
   modelos aprovados e token que expira; complexo para rodar só no ESP32.
-- **Bot do Telegram** — gratuito e confiável, mas não é WhatsApp. Boa alternativa
-  se o CallMeBot ficar instável.
 
-Para um produto real, o caminho recomendado é o ESP32 avisar um backend, e o
-backend enviar pela API oficial (Twilio ou Meta).
+Para um produto real com WhatsApp, o caminho recomendado é o ESP32 avisar um
+backend, e o backend enviar pela API oficial (Twilio ou Meta).
 
-### Como cada contato obtém a chave
+### Como configurar
 
-1. Abrir https://www.callmebot.com/blog/free-api-whatsapp-messages/ e salvar nos
-   contatos o número indicado na página.
-2. Enviar pelo WhatsApp para esse contato: `I allow callmebot to send me messages`.
-3. Colar a apikey recebida no campo "Chave CallMeBot" da página de cadastro.
-4. Usar o botão **Enviar mensagem de teste no WhatsApp** para conferir.
+1. **Uma vez só (cuidador):** no Telegram, abrir o **@BotFather**, enviar `/newbot`,
+   escolher um nome e um usuário terminado em `bot` (ex.: `zelo_maria_bot`).
+   Copiar o **token** e colar no campo "Token do bot" da página de cadastro.
+2. **Cada pessoa** (cuidador e familiares) procura o bot no Telegram e toca em
+   **Iniciar**.
+3. Na página, tocar em **Buscar IDs do Telegram**: aparecem o nome e o ID de quem
+   iniciou o bot nas últimas 24 horas. Copiar cada ID para o campo da pessoa e salvar.
+4. Usar **Enviar mensagem de teste no Telegram** para conferir.
 
-O telefone pode ser digitado com ou sem DDI/pontuação; `(11) 98765-4321` vira
-`+5511987654321`. A conexão HTTPS não valida o certificado (`setInsecure`), o que é
-aceitável no protótipo, mas deve ser revisto num produto.
+O token fica salvo na placa (Preferences, chave `tg_token`) e não é mostrado de
+volta na página; deixar o campo em branco ao salvar mantém o token atual. A conexão
+HTTPS não valida o certificado (`setInsecure`), o que é aceitável no protótipo, mas
+deve ser revisto num produto.
 
 ## Máquina de estados (`loop()`)
 
