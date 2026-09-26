@@ -17,6 +17,7 @@
 #define SERVO_PIN 13
 #define MAX_ALARMES 6
 #define MAX_FAMILIARES 5
+#define MAX_HISTORICO 60
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 Servo portaServo;
@@ -24,6 +25,7 @@ WebServer server(80);
 DNSServer dnsServer;
 Preferences preferences;
 Preferences prefsCadastro;
+Preferences prefsHistorico;
 
 const byte DNS_PORT = 53;
 IPAddress apIP(192, 168, 4, 1);
@@ -314,6 +316,161 @@ void carregarCadastro() {
   Serial.println(" horario(s)");
 }
 
+// ---------- HISTORICO DE DOSES ----------
+// Cada disparo de alarme vira um registro, guardado em Preferences (namespace
+// "historico") num buffer circular com as ultimas MAX_HISTORICO doses.
+
+enum StatusDose : uint8_t {
+  DOSE_PENDENTE = 0,    // alarme tocando (ou placa reiniciou antes de concluir)
+  DOSE_NO_HORARIO = 1,  // acesso antes do primeiro aviso ao cuidador
+  DOSE_ATRASADA = 2,    // acesso depois do primeiro aviso (inclusive apos o alerta final)
+  DOSE_SEM_ACESSO = 3   // alerta final enviado e ninguem acessou
+};
+
+struct RegistroDose {
+  uint32_t inicio;     // horario do disparo (segundos desde 1970)
+  uint16_t atrasoSeg;  // tempo ate o acesso
+  uint8_t status;
+  uint8_t reservado;
+};
+
+RegistroDose historico[MAX_HISTORICO];
+int totalHistorico = 0;    // registros validos (ate MAX_HISTORICO)
+int proximoHistorico = 0;  // posicao onde entra o proximo registro
+int registroAtual = -1;    // registro do alarme em andamento
+
+void salvarHistorico() {
+  prefsHistorico.putBytes("regs", historico, sizeof(historico));
+  prefsHistorico.putUChar("total", (uint8_t)totalHistorico);
+  prefsHistorico.putUChar("prox", (uint8_t)proximoHistorico);
+}
+
+void carregarHistorico() {
+  totalHistorico = 0;
+  proximoHistorico = 0;
+  if (prefsHistorico.getBytes("regs", historico, sizeof(historico)) != sizeof(historico)) {
+    memset(historico, 0, sizeof(historico));
+    return;
+  }
+  totalHistorico = prefsHistorico.getUChar("total", 0);
+  proximoHistorico = prefsHistorico.getUChar("prox", 0);
+  if (totalHistorico > MAX_HISTORICO || proximoHistorico >= MAX_HISTORICO) {
+    totalHistorico = 0;
+    proximoHistorico = 0;
+  }
+}
+
+// Indice do k-esimo registro mais recente (k = 0 e o ultimo).
+int indiceHistorico(int k) {
+  return (proximoHistorico - 1 - k + 2 * MAX_HISTORICO) % MAX_HISTORICO;
+}
+
+int registrarInicioDose() {
+  int idx = proximoHistorico;
+  historico[idx].inicio = (uint32_t)time(nullptr);
+  historico[idx].atrasoSeg = 0;
+  historico[idx].status = DOSE_PENDENTE;
+  historico[idx].reservado = 0;
+  proximoHistorico = (proximoHistorico + 1) % MAX_HISTORICO;
+  if (totalHistorico < MAX_HISTORICO) totalHistorico++;
+  salvarHistorico();
+  return idx;
+}
+
+void atualizarDose(StatusDose status, unsigned long decorridoMs) {
+  if (registroAtual < 0) return;
+  unsigned long segundos = decorridoMs / 1000UL;
+  historico[registroAtual].status = status;
+  historico[registroAtual].atrasoSeg = segundos > 65535UL ? 65535 : (uint16_t)segundos;
+  salvarHistorico();
+}
+
+const char* textoStatusDose(uint8_t status, bool emAndamento) {
+  switch (status) {
+    case DOSE_NO_HORARIO: return "Tomada no horario";
+    case DOSE_ATRASADA: return "Tomada com atraso";
+    case DOSE_SEM_ACESSO: return "Sem acesso";
+    default: return emAndamento ? "Tocando agora" : "Sem acesso";
+  }
+}
+
+const char* corStatusDose(uint8_t status, bool emAndamento) {
+  switch (status) {
+    case DOSE_NO_HORARIO: return "#16a34a";
+    case DOSE_ATRASADA: return "#d97706";
+    case DOSE_PENDENTE: return emAndamento ? "#2563eb" : "#dc2626";
+    default: return "#dc2626";
+  }
+}
+
+String formatarDataHora(uint32_t segundos, const char* formato) {
+  time_t t = (time_t)segundos;
+  struct tm info;
+  localtime_r(&t, &info);
+  char buffer[24];
+  strftime(buffer, sizeof(buffer), formato, &info);
+  return String(buffer);
+}
+
+String formatarAtraso(uint16_t segundos) {
+  if (segundos < 60) return String(segundos) + " s";
+  return String(segundos / 60) + " min";
+}
+
+String htmlHistorico() {
+  String html = "<hr style='margin:24px 0'><h3 style='margin-bottom:6px'>Historico de doses</h3>";
+  if (totalHistorico == 0) {
+    html += "<p style='color:#6b7280'>Nenhuma dose registrada ainda.</p>";
+    return html;
+  }
+
+  // Resumo dos ultimos 7 dias (sem contar o alarme que esta tocando agora).
+  uint32_t limite = (uint32_t)time(nullptr) - 7UL * 24UL * 3600UL;
+  int noHorario = 0, atrasadas = 0, semAcesso = 0;
+  for (int k = 0; k < totalHistorico; k++) {
+    int idx = indiceHistorico(k);
+    if (historico[idx].inicio < limite) continue;
+    if (idx == registroAtual && estadoAtual == TOCANDO) continue;
+    switch (historico[idx].status) {
+      case DOSE_NO_HORARIO: noHorario++; break;
+      case DOSE_ATRASADA: atrasadas++; break;
+      default: semAcesso++; break;
+    }
+  }
+  int concluidas = noHorario + atrasadas + semAcesso;
+  html += "<p style='margin:4px 0 10px;font-size:15px'>Ultimos 7 dias: ";
+  if (concluidas == 0) {
+    html += "sem doses concluidas.";
+  } else {
+    int adesao = ((noHorario + atrasadas) * 100 + concluidas / 2) / concluidas;
+    html += "<b>" + String(adesao) + "% de adesao</b><br>";
+    html += "<span style='color:#16a34a'>" + String(noHorario) + " no horario</span> &middot; ";
+    html += "<span style='color:#d97706'>" + String(atrasadas) + " com atraso</span> &middot; ";
+    html += "<span style='color:#dc2626'>" + String(semAcesso) + " sem acesso</span>";
+  }
+  html += "</p>";
+
+  html += "<table style='width:100%;border-collapse:collapse;font-size:14px'>";
+  html += "<tr style='text-align:left;border-bottom:1px solid #d1d5db'><th>Data</th><th>Horario</th><th>Situacao</th></tr>";
+  int mostrar = totalHistorico < 20 ? totalHistorico : 20;
+  for (int k = 0; k < mostrar; k++) {
+    int idx = indiceHistorico(k);
+    const RegistroDose& r = historico[idx];
+    bool emAndamento = (idx == registroAtual && estadoAtual == TOCANDO);
+    html += "<tr style='border-bottom:1px solid #f3f4f6'>";
+    html += "<td style='padding:4px 0'>" + formatarDataHora(r.inicio, "%d/%m") + "</td>";
+    html += "<td>" + formatarDataHora(r.inicio, "%H:%M") + "</td>";
+    html += "<td style='color:" + String(corStatusDose(r.status, emAndamento)) + "'>" + textoStatusDose(r.status, emAndamento);
+    if (r.status == DOSE_ATRASADA) html += " (" + formatarAtraso(r.atrasoSeg) + ")";
+    html += "</td></tr>";
+  }
+  html += "</table>";
+
+  html += "<p style='font-size:14px'><a href='/historico.csv'>Baixar historico completo (planilha CSV)</a></p>";
+  html += "<button type='button' onclick='limparHistorico()' style='background:none;border:none;color:#dc2626;font-size:13px;padding:0;cursor:pointer'>Apagar historico</button>";
+  return html;
+}
+
 // ---------- MODO DE CONFIGURACAO DE WI-FI ----------
 
 void handleConfigRoot() {
@@ -524,6 +681,8 @@ void handleRoot() {
     html += "<button type='button' onclick='testarMensagens()' style='width:100%;padding:10px;background:#16a34a;color:white;border:none;border-radius:6px;font-size:15px'>Enviar mensagem de teste no Telegram</button>";
   }
 
+  html += htmlHistorico();
+
   html += "<hr style='margin:24px 0'>";
   html += "<div id='passo1'>";
   html += "<button type='button' onclick='mostrarConfirmacao()' style='width:100%;padding:12px;background:#f59e0b;color:white;border:none;border-radius:6px;font-size:15px'>Abrir compartimento para reposicao</button>";
@@ -586,6 +745,10 @@ void handleRoot() {
   html += "  var corpo = new URLSearchParams(); corpo.append('tg_token', document.getElementById('tg_token').value);";
   html += "  fetch('/telegram-ids', {method:'POST', body: corpo}).then(function(r){ return r.text(); })";
   html += "    .then(function(t){ saida.textContent = t; });";
+  html += "}";
+  html += "function limparHistorico() {";
+  html += "  if (!confirm('Apagar todo o historico de doses?')) return;";
+  html += "  fetch('/limpar-historico', {method:'POST'}).then(function(){ location.reload(); });";
   html += "}";
   html += "function testarMensagens() {";
   html += "  alert('Enviando... isso pode levar alguns segundos.');";
@@ -708,6 +871,31 @@ void handleTelegramIds() {
   server.send(200, "text/plain; charset=utf-8", lista);
 }
 
+void handleHistoricoCSV() {
+  String csv = "data;horario;situacao;atraso_minutos\r\n";
+  for (int k = totalHistorico - 1; k >= 0; k--) { // do mais antigo para o mais recente
+    int idx = indiceHistorico(k);
+    const RegistroDose& r = historico[idx];
+    bool emAndamento = (idx == registroAtual && estadoAtual == TOCANDO);
+    csv += formatarDataHora(r.inicio, "%d/%m/%Y") + ";" + formatarDataHora(r.inicio, "%H:%M") + ";";
+    csv += textoStatusDose(r.status, emAndamento);
+    csv += ";";
+    if (r.status == DOSE_NO_HORARIO || r.status == DOSE_ATRASADA) csv += String((r.atrasoSeg + 30) / 60);
+    csv += "\r\n";
+  }
+  server.sendHeader("Content-Disposition", "attachment; filename=zelo-historico.csv");
+  server.send(200, "text/csv; charset=utf-8", csv);
+}
+
+void handleLimparHistorico() {
+  totalHistorico = 0;
+  proximoHistorico = 0;
+  registroAtual = -1;
+  memset(historico, 0, sizeof(historico));
+  salvarHistorico();
+  server.send(200, "text/plain", "OK");
+}
+
 void handleTrocarWifi() {
   preferences.remove("ssid");
   preferences.remove("pass");
@@ -801,6 +989,7 @@ void iniciarAlarme(int indice) {
   alarmeIniciadoEm = millis();
   nivelAvisoEnviado = 0;
   dosePendente = false;
+  registroAtual = registrarInicioDose();
 
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -817,6 +1006,10 @@ void desligarLedBuzzer() {
 
 // Chamado quando o paciente aperta o botao (durante o alarme ou com dose pendente).
 void abrirParaPaciente() {
+  unsigned long decorrido = millis() - alarmeIniciadoEm;
+  atualizarDose(decorrido < TEMPO_PRIMEIRO_AVISO ? DOSE_NO_HORARIO : DOSE_ATRASADA, decorrido);
+  registroAtual = -1;
+
   desligarLedBuzzer();
   dosePendente = false;
 
@@ -895,6 +1088,8 @@ void iniciarModoNormal() {
   server.on("/abrir-manual", HTTP_POST, handleAbrirManual);
   server.on("/testar-mensagens", HTTP_POST, handleTestarMensagens);
   server.on("/telegram-ids", HTTP_POST, handleTelegramIds);
+  server.on("/historico.csv", handleHistoricoCSV);
+  server.on("/limpar-historico", HTTP_POST, handleLimparHistorico);
   server.on("/trocar-wifi", handleTrocarWifi);
   server.begin();
 }
@@ -920,6 +1115,8 @@ void setup() {
 
   prefsCadastro.begin("cadastro", false);
   carregarCadastro();
+  prefsHistorico.begin("historico", false);
+  carregarHistorico();
 
   preferences.begin("wifi", false);
   String ssidSalvo = preferences.getString("ssid", "");
@@ -975,6 +1172,7 @@ void loop() {
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print("Avisando familia");
+        atualizarDose(DOSE_SEM_ACESSO, decorrido);
         alertarSemAcesso();
         nivelAvisoEnviado = 2;
 

@@ -108,6 +108,25 @@ volta na página; deixar o campo em branco ao salvar mantém o token atual. A co
 HTTPS não valida o certificado (`setInsecure`), o que é aceitável no protótipo, mas
 deve ser revisto num produto.
 
+## Histórico de doses
+
+Cada vez que um alarme dispara, o Zelo+ cria um registro com data, horário e
+situação, guardado na placa (`Preferences`, namespace `historico`, últimas 60 doses):
+
+| Situação | Quando |
+|---|---|
+| Tomada no horário | Paciente apertou o botão antes do primeiro aviso (6 min; 30 s no modo teste) |
+| Tomada com atraso | Apertou depois do primeiro aviso, inclusive depois do alerta final (o tempo de atraso é registrado) |
+| Sem acesso | Alerta final enviado e ninguém apertou o botão |
+| Tocando agora | Alarme em andamento |
+
+Na página aparecem o **resumo dos últimos 7 dias** (percentual de adesão e contagem
+por situação), as **20 doses mais recentes** e o link **Baixar histórico completo
+(planilha CSV)**, que abre no Excel/Google Planilhas (separador `;`). O botão
+"Apagar histórico" limpa todos os registros.
+
+Adesão = (doses tomadas no horário + com atraso) ÷ doses concluídas no período.
+
 ## Máquina de estados (`loop()`)
 
 - `AGUARDANDO` — relógio no LCD, checa horários a cada minuto.
