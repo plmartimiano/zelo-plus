@@ -66,6 +66,25 @@ void fecharPortaLentamente() {
   }
 }
 
+// Escapa caracteres especiais antes de inserir texto do usuario (ou nomes de
+// redes Wi-Fi) no HTML, para que aspas ou tags nao quebrem a pagina.
+String escaparHTML(const String& texto) {
+  String saida;
+  saida.reserve(texto.length() + 8);
+  for (unsigned int i = 0; i < texto.length(); i++) {
+    char c = texto[i];
+    switch (c) {
+      case '&': saida += "&amp;"; break;
+      case '<': saida += "&lt;"; break;
+      case '>': saida += "&gt;"; break;
+      case '"': saida += "&quot;"; break;
+      case '\'': saida += "&#39;"; break;
+      default: saida += c;
+    }
+  }
+  return saida;
+}
+
 // ---------- PERSISTENCIA DO CADASTRO ----------
 // Namespace "cadastro" em Preferences (separado do namespace "wifi"),
 // para o cadastro sobreviver a reinicios e quedas de energia.
@@ -134,7 +153,8 @@ void handleConfigRoot() {
   html += "<label>Rede Wi-Fi:</label><br>";
   html += "<select name='ssid' style='width:100%;padding:8px;margin:6px 0' required>";
   for (int i = 0; i < redesEncontradas; i++) {
-    html += "<option value='" + WiFi.SSID(i) + "'>" + WiFi.SSID(i) + "</option>";
+    String ssidEscapado = escaparHTML(WiFi.SSID(i));
+    html += "<option value='" + ssidEscapado + "'>" + ssidEscapado + "</option>";
   }
   html += "</select><br>";
   html += "<label>Senha da rede:</label><br>";
@@ -203,9 +223,9 @@ void iniciarModoConfig() {
 
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Configurar Wi-Fi:");
+  lcd.print("Conecte no Wi-Fi");
   lcd.setCursor(0, 1);
-  lcd.print("Rede: ZeloPlus-Config");
+  lcd.print("ZeloPlus-Config");
 
   server.on("/", handleConfigRoot);
   server.on("/conectar", HTTP_POST, handleConectar);
@@ -229,9 +249,9 @@ void handleRoot() {
   html += "<h2>Zelo+ - Cadastro de alarme</h2>";
   html += "<form action='/salvar' method='POST'>";
   html += "<label>Nome do idoso:</label><br>";
-  html += "<input type='text' name='nome' value='" + nomeIdoso + "' style='width:100%;padding:8px;margin:6px 0' required><br>";
+  html += "<input type='text' name='nome' value='" + escaparHTML(nomeIdoso) + "' style='width:100%;padding:8px;margin:6px 0' required><br>";
   html += "<label>Nome do remedio:</label><br>";
-  html += "<input type='text' name='remedio' value='" + nomeRemedio + "' style='width:100%;padding:8px;margin:6px 0' required><br>";
+  html += "<input type='text' name='remedio' value='" + escaparHTML(nomeRemedio) + "' style='width:100%;padding:8px;margin:6px 0' required><br>";
   html += "<label>Horarios do remedio:</label><br>";
   html += "<div id='horarios-container'>";
 
@@ -251,7 +271,7 @@ void handleRoot() {
   html += "</form>";
 
   if (alarmeConfigurado) {
-    html += "<p style='margin-top:20px;color:green'>Remedio: " + nomeRemedio + " - " + nomeIdoso + "</p>";
+    html += "<p style='margin-top:20px;color:green'>Remedio: " + escaparHTML(nomeRemedio) + " - " + escaparHTML(nomeIdoso) + "</p>";
     html += "<p style='color:green'>Horarios cadastrados: ";
     for (int i = 0; i < totalAlarmes; i++) {
       if (horaAlarmes[i] < 10) html += "0";
@@ -526,7 +546,7 @@ void loop() {
       if (travaLiberada && digitalRead(BUTTON_PIN) == LOW) {
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("Fechando porta...");
+        lcd.print("Fechando porta..");
         fecharPortaLentamente();
 
         lcd.clear();
@@ -550,7 +570,7 @@ void loop() {
       if (millis() - portaAbertaEm >= TEMPO_PORTA_ABERTA) {
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("Fechando porta...");
+        lcd.print("Fechando porta..");
         fecharPortaLentamente();
 
         lcd.clear();
