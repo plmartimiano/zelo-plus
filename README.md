@@ -19,7 +19,7 @@ zelo-plus/
 ## Fluxo de funcionamento
 
 1. Cuidador acessa a página web servida pelo ESP32 e cadastra paciente, remédio, cuidador,
-   até 2 familiares (celular com WhatsApp) e um ou mais horários.
+   até 5 familiares (opcionais, botão "+") (celular com WhatsApp) e um ou mais horários.
 2. No **primeiro cadastro** o compartimento abre para abastecimento.
 3. O compartimento fecha pelo botão físico (trava de 7 s contra toque duplo) ou
    sozinho após 3 minutos.
@@ -59,7 +59,7 @@ modo de configuração.
 
 Paciente, remédio, contatos e horários ficam salvos em `Preferences` (namespace
 `cadastro`, chaves `nome` (paciente), `remedio`, `total`, `horas`, `minutos` e
-`cuid_*` / `fam0_*` / `fam1_*` para os contatos) a cada
+`cuid_*` / `fam0_*` … `fam4_*` para os contatos) a cada
 "Salvar alarme" e são recarregados no `setup()`. Após um reinício ou queda de energia
 o dispenser volta a tocar nos horários cadastrados sem precisar recadastrar, e o
 próximo salvamento não reabre o compartimento (já conta como cadastro existente).

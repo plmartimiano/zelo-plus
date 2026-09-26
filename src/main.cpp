@@ -15,7 +15,7 @@
 #define BUTTON_PIN 5
 #define SERVO_PIN 13
 #define MAX_ALARMES 6
-#define MAX_FAMILIARES 2
+#define MAX_FAMILIARES 5
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 Servo portaServo;
@@ -436,10 +436,16 @@ String campoTexto(const char* rotulo, const char* nome, const String& valor, con
   return html;
 }
 
-String camposContato(const char* titulo, const char* prefixo, const Contato& contato, bool obrigatorio) {
+String camposContato(const char* titulo, const char* prefixo, const Contato& contato, bool obrigatorio,
+                     bool familiar = false) {
   String p = prefixo;
-  String html = "<fieldset style='border:1px solid #d1d5db;border-radius:6px;margin:12px 0;padding:8px 12px'>";
+  String html = "<fieldset";
+  if (familiar) html += " class='familiar'";
+  html += " style='border:1px solid #d1d5db;border-radius:6px;margin:12px 0;padding:8px 12px'>";
   html += "<legend>" + String(titulo) + "</legend>";
+  if (familiar) {
+    html += "<button type='button' onclick='removerFamiliar(this)' style='float:right;background:none;border:none;color:#dc2626;font-size:13px;cursor:pointer'>Remover</button>";
+  }
   html += campoTexto("Nome:", (p + "_nome").c_str(), contato.nome, "text", "", obrigatorio);
   html += campoTexto("Celular (WhatsApp):", (p + "_tel").c_str(), contato.telefone, "tel", "(11) 98765-4321", obrigatorio);
   html += campoTexto("Chave CallMeBot (apikey):", (p + "_key").c_str(), contato.apikey, "text", "ex.: 123456", false);
@@ -459,11 +465,24 @@ void handleRoot() {
   html += campoTexto("Nome do paciente:", "paciente", nomePaciente, "text", "", true);
   html += campoTexto("Nome do remedio:", "remedio", nomeRemedio, "text", "", true);
 
-  html += camposContato("Cuidador", "cuid", cuidador, true);
+  html += camposContato("Cuidador (obrigatorio)", "cuid", cuidador, true);
+
+  // Familiares sao opcionais: mostra os ja cadastrados (ou uma caixa vazia) e
+  // o botao "+" cria novas caixas no navegador, ate MAX_FAMILIARES.
+  int familiaresMostrados = 0;
+  html += "<div id='familiares-container'>";
   for (int i = 0; i < MAX_FAMILIARES; i++) {
-    String titulo = "Familiar " + String(i + 1) + " (opcional)";
-    html += camposContato(titulo.c_str(), prefixoFamiliar(i).c_str(), familiares[i], false);
+    if (familiares[i].nome == "" && familiares[i].telefone == "") continue;
+    String titulo = "Familiar " + String(familiaresMostrados + 1) + " (opcional)";
+    html += camposContato(titulo.c_str(), prefixoFamiliar(familiaresMostrados).c_str(), familiares[i], false, true);
+    familiaresMostrados++;
   }
+  if (familiaresMostrados == 0) {
+    html += camposContato("Familiar 1 (opcional)", "fam0", Contato(), false, true);
+  }
+  html += "</div>";
+  html += "<template id='modelo-familiar'>" + camposContato("Familiar", "fam0", Contato(), false, true) + "</template>";
+  html += "<button type='button' id='btn-familiar' onclick='adicionarFamiliar()' style='width:100%;padding:10px;background:#e5e7eb;border:none;border-radius:6px;font-size:15px;margin-bottom:12px'>+ Adicionar familiar</button>";
 
   html += "<details style='margin-bottom:12px;font-size:14px'><summary>Como obter a chave do WhatsApp</summary>";
   html += "<p>Os avisos sao enviados pelo servico gratuito CallMeBot. Cada pessoa que vai receber avisos deve, no proprio celular:</p>";
@@ -534,6 +553,27 @@ void handleRoot() {
   html += "    cancelarAbertura();";
   html += "  });";
   html += "}";
+  html += "var MAX_FAMILIARES = " + String(MAX_FAMILIARES) + ";";
+  html += "function renumerarFamiliares() {";
+  html += "  var caixas = document.querySelectorAll('#familiares-container .familiar');";
+  html += "  for (var i = 0; i < caixas.length; i++) {";
+  html += "    caixas[i].querySelector('legend').textContent = 'Familiar ' + (i + 1) + ' (opcional)';";
+  html += "    var campos = caixas[i].querySelectorAll('input');";
+  html += "    for (var j = 0; j < campos.length; j++) { campos[j].name = campos[j].name.replace(/^fam[0-9]+/, 'fam' + i); }";
+  html += "  }";
+  html += "  document.getElementById('btn-familiar').style.display = caixas.length >= MAX_FAMILIARES ? 'none' : 'block';";
+  html += "}";
+  html += "function adicionarFamiliar() {";
+  html += "  var container = document.getElementById('familiares-container');";
+  html += "  if (container.querySelectorAll('.familiar').length >= MAX_FAMILIARES) return;";
+  html += "  container.appendChild(document.getElementById('modelo-familiar').content.cloneNode(true));";
+  html += "  renumerarFamiliares();";
+  html += "}";
+  html += "function removerFamiliar(botao) {";
+  html += "  botao.closest('.familiar').remove();";
+  html += "  renumerarFamiliares();";
+  html += "}";
+  html += "renumerarFamiliares();";
   html += "function testarMensagens() {";
   html += "  alert('Enviando... isso pode levar alguns segundos.');";
   html += "  fetch('/testar-mensagens', {method:'POST'}).then(function(r){ return r.text(); })";
@@ -614,11 +654,28 @@ void handleSalvar() {
   if (server.hasArg("paciente") && server.hasArg("remedio")) {
     bool jaTinhaCadastro = alarmeConfigurado;
 
+    Contato novoCuidador;
+    lerContatoDoFormulario("cuid", novoCuidador);
+    if (novoCuidador.nome == "" || novoCuidador.telefone == "") {
+      server.send(400, "text/plain; charset=utf-8", "O cuidador é obrigatório: preencha nome e celular.");
+      return;
+    }
+    cuidador = novoCuidador;
+
     nomePaciente = server.arg("paciente");
     nomeRemedio = server.arg("remedio");
-    lerContatoDoFormulario("cuid", cuidador);
+
+    // Caixas de familiar deixadas em branco sao ignoradas; os preenchidos sao
+    // guardados em sequencia e o restante da lista e limpo.
+    int totalFamiliares = 0;
     for (int i = 0; i < MAX_FAMILIARES; i++) {
-      lerContatoDoFormulario(prefixoFamiliar(i).c_str(), familiares[i]);
+      Contato familiar;
+      lerContatoDoFormulario(prefixoFamiliar(i).c_str(), familiar);
+      if (familiar.nome == "" && familiar.telefone == "") continue;
+      familiares[totalFamiliares++] = familiar;
+    }
+    for (int i = totalFamiliares; i < MAX_FAMILIARES; i++) {
+      familiares[i] = Contato();
     }
 
     totalAlarmes = 0;
