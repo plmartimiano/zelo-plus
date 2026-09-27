@@ -3,12 +3,19 @@
 Protótipo de hardware/firmware do dispenser automático de medicamentos para idosos (pacientes)
 do projeto acadêmico Zelo+. Projeto PlatformIO (framework Arduino, placa `esp32dev`).
 
+![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
+
+*Imagem de referência — conceito visual do produto final (ilustrativo); não é o protótipo atual.*
+
 Versão atual: **3 compartimentos** — até 3 medicamentos diferentes para o mesmo
 paciente, cada um fixo no seu compartimento (detalhes em
 [`docs/compartimentos.md`](docs/compartimentos.md)).
 
 > 🛒 **Lista completa de componentes, com ilustrações e preços estimados:** Parte E do
 > guia didático.
+> 🏭 **Custo de produção em série (estimativa de viabilidade, set/2026):** Parte F do
+> guia didático — impressão 3D × plástico injetado, componentes no atacado e custo por
+> unidade em 100, 1.000 e 10.000 unidades.
 > 📘 **Material pedagógico:** [`README-DIDATICO.md`](README-DIDATICO.md) explica o
 > funcionamento passo a passo, com o trecho de código de cada etapa.
 > Versão para impressão: [`docs/Zelo-Guia-Didatico.pdf`](docs/Zelo-Guia-Didatico.pdf).

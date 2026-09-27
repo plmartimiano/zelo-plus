@@ -5,6 +5,12 @@
 > **trecho de código** responsável por ela (o arquivo completo está em
 > [`src/main.cpp`](src/main.cpp)).
 
+<!-- so-github -->
+![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
+
+*Imagem de referência — conceito visual do produto final (ilustrativo); não é o protótipo atual.*
+<!-- /so-github -->
+
 ---
 
 ## Sumário
@@ -57,6 +63,17 @@
   - [E4. Relógio sem internet (opcional)](#e4-relógio-sem-internet-opcional)
   - [E5. Ferramentas necessárias (fora do custo)](#e5-ferramentas-necessárias-fora-do-custo)
   - [E6. Resumo do investimento](#e6-resumo-do-investimento)
+- [Parte F — Custo de produção (estimativa para viabilidade)](#parte-f--custo-de-produção-estimativa-para-viabilidade)
+  - [F1. Premissas e método](#f1-premissas-e-método)
+  - [F2. Dimensões estimadas a partir da referência](#f2-dimensões-estimadas-a-partir-da-referência)
+  - [F3. Gabinete em impressão 3D](#f3-gabinete-em-impressão-3d)
+  - [F4. Gabinete em plástico injetado](#f4-gabinete-em-plástico-injetado)
+  - [F5. Componentes eletrônicos no atacado](#f5-componentes-eletrônicos-no-atacado)
+  - [F6. Custo por unidade em três escalas](#f6-custo-por-unidade-em-três-escalas)
+  - [F7. Investimentos iniciais (uma vez só)](#f7-investimentos-iniciais-uma-vez-só)
+  - [F8. Preço de venda e viabilidade](#f8-preço-de-venda-e-viabilidade)
+  - [F9. Limitações da estimativa](#f9-limitações-da-estimativa)
+  - [F10. Fontes (setembro de 2026)](#f10-fontes-setembro-de-2026)
 
 ---
 
@@ -67,6 +84,11 @@
 O Zelo+ é um **dispenser automático de medicamentos** para pacientes (em especial
 idosos). Ele tem **3 compartimentos**, cada um com um remédio diferente e com uma
 porta movida por um servo motor.
+
+<figure markdown="1">
+![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
+<figcaption><b>Imagem de referência</b> — conceito visual do produto final (ilustrativo), com o botão à esquerda, o LCD no centro e a luz de alerta à direita. Não é o protótipo atual; o relógio do firmware usa 24 horas.</figcaption>
+</figure>
 
 **Rotina do dia a dia:**
 
@@ -1871,7 +1893,8 @@ emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, s�
 
 **Não inclui:** ferramentas (E5), frete e a estrutura física do dispenser (caixa, portas e
 divisórias dos compartimentos), que depende do material escolhido (MDF, acrílico ou
-impressão 3D).
+impressão 3D). O custo da caixa em impressão 3D e em plástico injetado, e o custo por
+unidade em produção, estão na [Parte F](#parte-f--custo-de-produção-estimativa-para-viabilidade).
 
 **Dicas de compra:**
 
@@ -1917,3 +1940,286 @@ Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo
 [Baú da Eletrônica — estanho Cobix 0,5 mm](https://www.baudaeletronica.com.br/produto/rolo-de-solda-estanho-500g-05mm-cobix.html) ·
 [Loja do Mecânico — multímetro Hikari HM-1001](https://www.lojadomecanico.com.br/produto/123563/3/47/multimetro-digital-hm-1001-hikari-21n240) ·
 [LC Ferragens — multímetros (Minipa ET-1002)](https://www.lcferragens.com.br/produto/multimetro-hikari-digital-hm-1000/)
+
+---
+
+# Parte F — Custo de produção (estimativa para viabilidade)
+
+> 📐 **Natureza desta parte:** estimativa acadêmica para avaliar a **viabilidade** de
+> produzir o Zelo+ em série. **Data-base: setembro de 2026.** Não é orçamento: os
+> valores são faixas (mínimo–máximo) calculadas a partir de premissas declaradas, e
+> cada número pode ser refeito trocando a premissa correspondente.
+
+<figure markdown="1">
+![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
+<figcaption><b>Imagem de referência</b> — conceito visual do produto final (ilustrativo). Não é o protótipo atual.</figcaption>
+</figure>
+
+## F1. Premissas e método
+
+**Custo por unidade** = componentes + gabinete + ferragens + montagem + embalagem +
+**investimentos amortizados** (investimento ÷ quantidade produzida).
+
+| Premissa | Valor adotado | Origem |
+|---|---|---|
+| Data-base | setembro de 2026 | — |
+| Câmbio | **US$ 1 = R$ 5,16** | cotação de 24/09/2026 (faixa de 52 semanas: R$ 4,88–5,61) |
+| Fator de nacionalização (componentes importados) | **1,8 ×** o preço de fábrica em dólar | frete e seguro (~8–10 %) + imposto de importação (0–16 %) + IPI + PIS/COFINS + ICMS; simplificação de ordem de grandeza |
+| Custo de US$ 1 de componente posto no Brasil | 5,16 × 1,8 = **R$ 9,29** | cálculo |
+| Energia elétrica | **R$ 0,849/kWh** | tarifa residencial média projetada pela Aneel para 2026 |
+| Mão de obra de montagem | **R$ 20/h** | salário de montador + encargos (~70 %) ÷ 176 h/mês |
+| Volumes analisados | **100**, **1.000** e **10.000** unidades | lote piloto, pequena série, série |
+| Arredondamento | valores finais arredondados ao real | — |
+
+## F2. Dimensões estimadas a partir da referência
+
+A imagem de referência não traz medidas. Elas foram **estimadas por proporção**, usando
+como "régua" uma peça de tamanho conhecido que aparece na foto: o **LCD 16x2**, cuja
+placa mede **80 mm** de largura.
+
+| Medida na foto | Pixels | Conta | Estimativa |
+|---|---|---|---|
+| Largura do LCD (moldura) | ~220 px | escala: 80 mm ÷ 220 px = 0,364 mm/px | — |
+| Largura da caixa | ~740 px | 740 × 0,364 | **≈ 270 mm** |
+| Faixa azul (compartimentos) | ~160 px | 160 × 0,364 | **≈ 60 mm** |
+| Base preta (eletrônica) | ~110 px | 110 × 0,364 | **≈ 40 mm** |
+| Profundidade | não visível de frente | 3 portas de ~84 × 105 mm + faixa traseira de ~55 mm (tampa e servos), conforme o modelo 3D abaixo | **≈ 170 mm** |
+
+<figure markdown="1">
+![Modelo 3D de referência](docs/referencia-cad.jpg)
+<figcaption><b>Modelo 3D de referência</b> (CAD) — usado para estimar as divisórias internas, as portas e os alojamentos dos servos.</figcaption>
+</figure>
+
+**Gabinete de referência:** **270 × 170 × 100 mm**, paredes externas de **2,0 mm**,
+divisórias de **1,6 mm**, 3 portas e 1 tampa traseira. Incerteza das medidas: **±15 %**,
+o que dá cerca de **±25 %** no volume de plástico.
+
+**Volume de plástico** (área × espessura de cada parte):
+
+| Parte | Conta (mm) | Volume |
+|---|---|---|
+| Base — fundo | 270 × 170 × 2,0 | 91,8 cm³ |
+| Base — paredes | perímetro 880 × altura 38 × 2,0 | 66,9 cm³ |
+| Corpo — paredes | 880 × 60 × 2,0 | 105,6 cm³ |
+| Corpo — piso dos compartimentos | 266 × 166 × 2,0 | 88,3 cm³ |
+| Corpo — divisórias e alojamento dos servos | comprimento total 786 × 58 × 1,6 | 72,9 cm³ |
+| 3 portas | 3 × 84 × 105 × 2,0 | 52,9 cm³ |
+| Tampa traseira | 266 × 55 × 2,0 | 29,3 cm³ |
+| Detalhes (dobradiças, fixações, moldura do LCD, logotipo) | + 12 % | 60,9 cm³ |
+| **Total** | | **≈ 569 cm³** |
+
+| Material | Densidade | Massa da peça pronta |
+|---|---|---|
+| PLA (impressão 3D) | 1,24 g/cm³ | 569 × 1,24 = **≈ 705 g** (+ 8 % de perdas = **762 g** de filamento) |
+| ABS (injeção) | 1,05 g/cm³ | 569 × 1,05 = **≈ 597 g** |
+
+## F3. Gabinete em impressão 3D
+
+**Equipamento de referência:** impressora de mesa **300 × 300 mm** (ex.: Creality K1 Max,
+~R$ 6.776). A caixa tem 270 mm de comprimento e **não cabe** nas mesas comuns de
+256 mm sem ser dividida em partes.
+
+| Item | Conta (cenário médio) | Valor |
+|---|---|---|
+| Tempo de impressão | 705 g ÷ 30 g/h | 23,5 h |
+| Filamento PLA | 0,762 kg × R$ 110/kg | R$ 83,76 |
+| Energia | 23,5 h × 0,20 kW × R$ 0,849 | R$ 3,99 |
+| Depreciação da impressora | 23,5 h × (R$ 6.776 ÷ 5.000 h de vida útil) | R$ 31,85 |
+| Manutenção (bicos, mesa, correias) | 23,5 h × R$ 0,30 | R$ 7,05 |
+| Reserva para falhas de impressão | 10 % dos itens acima | R$ 12,67 |
+| Acabamento (retirar suportes, lixar) | 0,5 h × R$ 20 | R$ 10,00 |
+| **Total por gabinete** | | **R$ 149,32** |
+
+**Faixa:** de **R$ 126** (filamento a R$ 90/kg, impressão a 35 g/h, 20 h) até **R$ 198**
+(R$ 140/kg, 20 g/h, 35 h).
+
+- **Conferência:** sem o acabamento, o custo dá **R$ 0,20 por grama**, dentro da faixa de
+  custo real de produção citada pelo mercado para 2026 (R$ 0,18–0,30/g).
+- **Capacidade:** a ~23,5 h por gabinete, uma impressora produz **~300 gabinetes/ano**
+  (80 % do tempo em uso). Para 1.000 unidades/ano são necessárias ~4 impressoras.
+- **Quando usar:** lote piloto e pequena série. Não há investimento em molde, e o
+  desenho pode mudar a qualquer momento.
+
+## F4. Gabinete em plástico injetado
+
+**Moldes necessários** (aço P20, que aguenta a produção em série; valores de mercado
+para o Brasil em 2026):
+
+| Molde | Peça | Investimento estimado |
+|---|---|---|
+| 1 | Corpo (compartimentos, divisórias, alojamento dos servos) | R$ 90–160 mil |
+| 2 | Base (recortes do LCD, botão, LED e USB-C) | R$ 60–110 mil |
+| 3 | Molde "família": 3 portas + tampa traseira | R$ 45–90 mil |
+| — | Projeto do molde (DFM) e ajustes de teste | R$ 15–30 mil |
+| | **Total em aço** | **R$ 210–390 mil** |
+| | Alternativa em **alumínio** (~5–10 mil injeções; ~50 % do custo do aço) | **R$ 115–210 mil** |
+
+*A referência de mercado é de R$ 25–70 mil para o molde de uma peça pequena e simples,
+de uma cavidade. O corpo e a base do Zelo+ são peças médias, com divisórias, recortes e
+nervuras, por isso as faixas acima são maiores.*
+
+**Custo de injetar um gabinete** (sem o molde):
+
+| Item | Conta | Mínimo | Máximo |
+|---|---|---|---|
+| Resina ABS | 0,597 kg × 1,05 (canal de injeção) × R$ 13–18/kg | R$ 8,15 | R$ 11,28 |
+| Pigmento (masterbatch azul e preto, 2 %) | 12,5 g × R$ 35/kg | R$ 0,44 | R$ 0,44 |
+| Hora-máquina (injetora + operador + energia) | ciclos de 60 + 50 + 40 s = 150 s × R$ 150–250/h × 1,05 (refugo) | R$ 6,56 | R$ 10,94 |
+| Logotipo "Zelo+" (tampografia) | por peça | R$ 1,00 | R$ 2,00 |
+| Inspeção | por conjunto | R$ 0,50 | R$ 0,50 |
+| **Total por gabinete** | | **R$ 16,65** | **R$ 25,16** |
+
+**Com o molde amortizado** (investimento ÷ quantidade + custo de injeção):
+
+| Quantidade | Molde de alumínio | Molde de aço |
+|---|---|---|
+| 500 | R$ 247–445 | R$ 437–805 |
+| 1.000 | R$ 132–235 | R$ 227–415 |
+| 2.000 | R$ 74–130 | R$ 122–220 |
+| 5.000 | R$ 40–67 | R$ 59–103 |
+| 10.000 | R$ 28–46 | R$ 38–64 |
+
+**Ponto de equilíbrio (impressão 3D × injeção):**
+
+```text
+ quantidade = investimento no molde ÷ (custo 3D − custo injetado)
+
+ diferença por unidade: de R$ 126 − 25 = R$ 101  até  R$ 198 − 17 = R$ 181
+
+ molde de alumínio: R$ 115–210 mil ÷ R$ 101–181  ≈   630 a 2.100 unidades
+ molde de aço:      R$ 210–390 mil ÷ R$ 101–181  ≈ 1.160 a 3.900 unidades
+```
+
+➡️ **Abaixo de ~1.000 unidades, a impressão 3D é mais barata. Acima de ~4.000, o molde
+de aço compensa com folga.**
+
+## F5. Componentes eletrônicos no atacado
+
+Preços de fábrica em dólar para lotes de ~500–1.000 unidades, multiplicados por
+R$ 9,29 (F1). A fonte é comprada no Brasil, porque precisa da certificação do Inmetro.
+
+**Cenário 1 — os mesmos módulos do protótipo**
+
+| Componente | US$ (fábrica) | R$ posto no Brasil |
+|---|---|---|
+| ESP32 DevKit V1 | 2,50–3,50 | 23,22–32,51 |
+| 3 servos SG90 | 2,10–3,00 | 19,50–27,86 |
+| LCD 16x2 + I2C | 1,50–2,20 | 13,93–20,43 |
+| Buzzer, LED, resistor e botão | 0,20–0,35 | 1,86–3,25 |
+| Módulo IP5306 | 0,60–1,00 | 5,57–9,29 |
+| Bateria 18650 | 1,50–2,50 | 13,93–23,22 |
+| Suporte 18650 | 0,10–0,20 | 0,93–1,86 |
+| Conector USB-C de painel | 0,25–0,50 | 2,32–4,64 |
+| Capacitor 1000 µF | 0,05 | 0,46 |
+| Placa, fios e termo-retrátil | 0,80–1,50 | 7,43–13,93 |
+| Relógio DS3231 + LIR2032 | 0,90–1,50 | 8,36–13,93 |
+| Fonte 5 V/3 A USB-C (Inmetro, compra nacional) | — | 15,00–22,00 |
+| **Total** | | **R$ 112,52–173,39** |
+
+**Cenário 2 — placa de circuito própria** (ESP32, carregador, USB-C, relógio, buzzer,
+botão e LED numa única placa, montada pela fábrica)
+
+| Componente | R$ posto no Brasil |
+|---|---|
+| Módulo ESP32-WROOM-32E | 18,58–24,15 |
+| Placa + montagem automática (IP5306, USB-C, relógio, buzzer, botão, LED) | 27,86–51,08 |
+| LCD 16x2 + I2C | 12,07–17,65 |
+| 3 servos SG90 | 19,50–27,86 |
+| Bateria 18650 + suporte | 14,86–25,08 |
+| Cabos internos | 2,79–5,57 |
+| Fonte 5 V/3 A USB-C (Inmetro) | 15,00–22,00 |
+| **Total** | **R$ 110,67–173,39** |
+
+As peças custam praticamente o mesmo nos dois cenários. O ganho da placa própria está na
+**montagem** (de ~55 para ~20 min por unidade), na **confiabilidade** (sem fios soltos) e
+no **tamanho**.
+
+Protótipo (Parte E, varejo) × produção (atacado): **R$ 278–378 → R$ 111–173**, cerca de
+**55–60 % menos**.
+
+## F6. Custo por unidade em três escalas
+
+| Item | Lote piloto — 100 un. | Pequena série — 1.000 un. | Série — 10.000 un. |
+|---|---|---|---|
+| Arranjo | módulos + impressão 3D | placa própria + impressão 3D | placa própria + injeção (aço) |
+| Componentes | R$ 135–208 ¹ | R$ 111–173 | R$ 111–173 |
+| Gabinete | R$ 126–198 | R$ 126–198 | R$ 17–25 |
+| Ferragens (parafusos, pinos das portas, pés, visor do LCD) | R$ 5–9 | R$ 5–9 | R$ 5–9 |
+| Montagem e teste | 55 min → R$ 18 | 20 min → R$ 7 | 20 min → R$ 7 |
+| Embalagem e manual | R$ 8–14 | R$ 6–12 | R$ 6–12 |
+| Projeto da placa (R$ 5–20 mil) amortizado | — | R$ 5–20 | R$ 0,50–2 |
+| Moldes de aço (R$ 210–390 mil) amortizados | — | — | R$ 21–39 |
+| **Custo de fabricação** | **R$ 292–447** | **R$ 259–419** | **R$ 166–267** |
+| Homologação Anatel (R$ 10–30 mil) amortizada | R$ 100–300 | R$ 10–30 | R$ 1–3 |
+| **Custo total por unidade** | **R$ 392–747** | **R$ 269–449** | **R$ 167–270** |
+
+¹ Componentes do cenário 1 com acréscimo de 20 % por comprar lotes pequenos.
+
+**Leitura dos resultados:**
+
+- Na série, o **gabinete** passa de maior custo (R$ 126–198) para um dos menores
+  (R$ 17–25), e a eletrônica vira o item principal.
+- No lote piloto, a **homologação** pesa mais que qualquer peça. Por isso ela só faz
+  sentido quando já existe plano de produzir em quantidade.
+- Entre 1.000 e ~4.000 unidades, a escolha entre impressão 3D, molde de alumínio e molde
+  de aço depende da quantidade prevista (ponto de equilíbrio na F4).
+
+## F7. Investimentos iniciais (uma vez só)
+
+| Investimento | Valor estimado | Necessário a partir de |
+|---|---|---|
+| Projeto e protótipos da placa de circuito | R$ 5–20 mil | pequena série |
+| Homologação Anatel (produto com Wi-Fi) | R$ 10–30 mil | qualquer venda |
+| Impressoras 3D para ~1.000 un./ano (~4 × R$ 6.776) | ≈ R$ 27 mil | pequena série (se produção própria) |
+| Moldes de injeção (aço) | R$ 210–390 mil | série |
+| Consulta de enquadramento na Anvisa | variável | antes da venda |
+
+## F8. Preço de venda e viabilidade
+
+Produtos de hardware costumam chegar ao consumidor por **2,5 a 4 vezes o custo de
+fabricação**. Essa margem cobre impostos sobre a venda, distribuição, garantia,
+assistência técnica e lucro.
+
+| Escala | Custo total por unidade | Preço de venda estimado (× 2,5 a × 4) |
+|---|---|---|
+| Lote piloto (100) | R$ 392–747 | R$ 980–2.990 |
+| Pequena série (1.000) | R$ 269–449 | R$ 670–1.800 |
+| Série (10.000) | R$ 167–270 | **R$ 420–1.080** |
+
+**Como leitura acadêmica:** em série, o Zelo+ ficaria na faixa de **R$ 420 a R$ 1.080**
+para o consumidor. O **custo de entrada** (moldes, placa própria e homologação) fica
+entre **R$ 225 mil e R$ 440 mil**, e só se paga com volumes a partir de alguns milhares
+de unidades. Antes disso, o caminho viável é o **lote piloto em impressão 3D**, que exige
+pouco investimento.
+
+## F9. Limitações da estimativa
+
+- **Dimensões:** vêm de uma imagem de referência, com incerteza de ±15 % nas medidas.
+- **Preços:** são faixas de mercado, não cotações. Os moldes, em especial, exigem
+  orçamento com o desenho 3D final.
+- **Câmbio:** variou de R$ 4,88 a R$ 5,61 em 52 semanas (±9 %), o que afeta direto o
+  custo dos componentes.
+- **Impostos:** o fator de 1,8 é uma simplificação; o valor real depende do regime
+  tributário da empresa e da classificação fiscal de cada peça.
+- **Durabilidade:** para uso diário por anos, recomenda-se trocar o SG90 pelo **MG90S**
+  (engrenagem de metal): **+R$ 3–5 por servo**.
+- **Não incluídos:** frete até o cliente, marketing, impostos sobre a venda e custos
+  administrativos. Bateria de lítio tem regras próprias de transporte.
+- **Anvisa:** é preciso confirmar se um dispenser com alarme de medicação se enquadra
+  como dispositivo médico. Se sim, custos e prazos aumentam.
+
+## F10. Fontes (setembro de 2026)
+
+[Revista Fórum — cotação do dólar em 24/09/2026](https://revistaforum.com.br/economia/preco-dolar-24-09-2026/) ·
+[InfoMoney — dólar em setembro](https://www.infomoney.com.br/mercados/o-que-esperar-do-dolar-em-setembro-veja-ate-onde-a-moeda-pode-ir/) ·
+[InfoMoney — Aneel projeta alta média de 8 % nas tarifas](https://www.infomoney.com.br/economia/aneel-projeta-alta-media-de-8-para-tarifas-de-consumidores-de-energia-eletrica/) ·
+[pv magazine — projeção tarifária de 2026](https://www.pv-magazine-brasil.com/2026/03/17/aneel-projeta-aumento-tarifario-medio-de-8-em-2026/) ·
+[Leroy Merlin — PLA Voolt3D 1 kg](https://www.leroymerlin.com.br/filamento-pla-preto-premium-1kg-voolt3d-oficial_1570566287) ·
+[Wemak — PLA Voolt3D 1 kg](https://www.wemak.com.br/produtos/filamento-3d-pla-1kg-impressao-3d-premium-1-75mm-voolt3d-cor-preto/) ·
+[Kabum — Creality K1 Max](https://www.kabum.com.br/produto/495704/impressora-3d-creality-k1-max-velocidade-maxima-600mm-s-1202080002) ·
+[Galpão das Máquinas — custo por peça na impressão 3D](https://galpaodasmaquinas.com.br/blog/plastico/custo-peca-impressora-3d/) ·
+[Octet3D — guia de preços de impressão 3D 2026](https://octet3d.com/blog/quanto-custa-imprimir-em-3d) ·
+[Metalúrgica Ferri — quanto custa um molde de injeção](https://www.metalferri.com.br/blog/quanto-custa-molde-injecao-plastica) ·
+[NTC — custo de molde de injeção](https://ntc.ind.br/custo-de-molde-injecao-plastico/) ·
+[ChenHsong Brasil — custo da hora-homem-máquina em injetoras](https://chenhsong.com.br/news/custo-da-hora-homem-maquina-para-operadores-de-injetoras/) ·
+[Mil Plásticos — ABS granulado](https://www.milplasticos.com.br/abs-granulado-preco)
