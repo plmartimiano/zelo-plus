@@ -1575,7 +1575,7 @@ encontrar na hora da compra.
 | **Fonte de tomada 5 V / 3 A, saída USB-C** · 1 un.<br>bivolt · 15 W · com certificação Inmetro | <img src="docs/componentes/fonte.svg" width="110" alt="fonte"> | Energia da rua para o dispenser e para carregar a bateria. | R$ 35,98–50 | R$ \_\_\_\_\_\_\_\_\_ |
 | **Módulo IP5306 5 V 2,1 A (power bank)** · 1 un.<br>IP5306 · entrada USB-C · pads IN, B+/B−, OUT | <img src="docs/componentes/ip5306.svg" width="110" alt="ip5306"> | Carrega a bateria e entrega 5 V estáveis, com ou sem energia da rua. | R$ 15–25 \* | R$ \_\_\_\_\_\_\_\_\_ |
 | **Bateria Li-ion 18650** · 1 un.<br>Onistek ON-18650 · 3,7 V · rótulo 3.800 mAh (real provável 1.500–2.500 mAh) | <img src="docs/componentes/bateria18650.svg" width="110" alt="bateria18650"> | Mantém o dispenser ligado se faltar energia (~4–10 h, conforme a capacidade real). *(Você já tem.)* | R$ 17,15 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Suporte para 1 bateria 18650** · 1 un.<br>com fios vermelho/preto (preferível) ou com pinos "True Hole" | <img src="docs/componentes/suporte18650.svg" width="110" alt="suporte18650"> | Segura a bateria e evita soldar direto nela. | R$ 12,94 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Suporte para 1 bateria 18650** · 1 un.<br>com fios vermelho/preto | <img src="docs/componentes/suporte18650.svg" width="110" alt="suporte18650"> | Segura a bateria e evita soldar direto nela. | R$ 9,17 | R$ \_\_\_\_\_\_\_\_\_ |
 | **Cabo USB-C macho com fios (pigtail)** · 1 un.<br>2 fios **com resistor 5,1 kΩ** interno, ou 6 fios (CC1/CC2 expostos) · 20–22 AWG | <img src="docs/componentes/cabo_usbc.svg" width="110" alt="cabo_usbc"> | Leva a energia da fonte até o IP5306; a ponta de fios é **soldada** na entrada do módulo. | R$ 20–30 \* | R$ \_\_\_\_\_\_\_\_\_ |
 | **Resistor 5,1 kΩ, ¼ W** · pacote com 10 *(só se o cabo for de 6 fios)*<br>faixas: verde-marrom-vermelho-dourado | <img src="docs/componentes/resistor5k1.svg" width="110" alt="resistor5k1"> | Um em cada pino CC (CC1 e CC2) até o GND: faz a fonte USB-C liberar os 5 V. | R$ 0,60 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
 | **Capacitor eletrolítico 1000 µF / 16 V** · 1 un.<br>105 °C · tem polaridade (faixa "−") | <img src="docs/componentes/capacitor.svg" width="110" alt="capacitor"> | Absorve o pico de corrente dos servos e evita que o ESP32 reinicie. | R$ 0,73–3 | R$ \_\_\_\_\_\_\_\_\_ |
@@ -1616,10 +1616,10 @@ emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, s�
 | Grupo | Faixa pesquisada | Total anotado |
 |---|---|---|
 | E1. Eletrônica do dispenser | R$ 134 – 147 | R$ \_\_\_\_\_\_\_\_\_ |
-| E2. Energia autônoma *(com a bateria)* | R$ 102 – 139 | R$ \_\_\_\_\_\_\_\_\_ |
+| E2. Energia autônoma *(com a bateria)* | R$ 98 – 135 | R$ \_\_\_\_\_\_\_\_\_ |
 | E3. Montagem e ligações | R$ 46 – 96 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Total para montar o dispenser** | **≈ R$ 282 – 382** | **R$ \_\_\_\_\_\_\_\_\_** |
-| *Total sem a bateria (que você já tem)* | *≈ R$ 265 – 365* | R$ \_\_\_\_\_\_\_\_\_ |
+| **Total para montar o dispenser** | **≈ R$ 278 – 378** | **R$ \_\_\_\_\_\_\_\_\_** |
+| *Total sem a bateria (que você já tem)* | *≈ R$ 261 – 361* | R$ \_\_\_\_\_\_\_\_\_ |
 | E4. Relógio sem internet (sugerido, à parte) | + R$ 38 – 60 | R$ \_\_\_\_\_\_\_\_\_ |
 
 **Não inclui:** ferramentas (E5), frete e a estrutura física do dispenser (caixa, portas e
