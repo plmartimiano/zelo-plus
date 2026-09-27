@@ -7,6 +7,8 @@ Versão atual: **3 compartimentos** — até 3 medicamentos diferentes para o me
 paciente, cada um fixo no seu compartimento (detalhes em
 [`docs/compartimentos.md`](docs/compartimentos.md)).
 
+> 🛒 **Lista completa de componentes, com ilustrações e preços estimados:** Parte E do
+> guia didático.
 > 📘 **Material pedagógico:** [`README-DIDATICO.md`](README-DIDATICO.md) explica o
 > funcionamento passo a passo, com o trecho de código de cada etapa.
 > Versão para impressão: [`docs/Zelo-Guia-Didatico.pdf`](docs/Zelo-Guia-Didatico.pdf).
