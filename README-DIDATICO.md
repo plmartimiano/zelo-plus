@@ -535,9 +535,14 @@ void migrarCadastroAntigo() {
 
   Medicamento& m = medicamentos[0];
   m.nome = prefsCadastro.getString("remedio", "");
+  m.nome.trim();
   m.totalHorarios = lerHorarios("total", "horas", "minutos", m.hora, m.minuto, m.jaDisparado);
   salvarMedicamento(0);
 ```
+
+- `trim()` tira espaços do começo e do fim do nome. Versões antigas podiam gravar
+  "Losartana " (com espaço), e sem essa limpeza o sistema achava que o remédio tinha
+  mudado e abria o compartimento sem necessidade.
 
 ## Passo 7 — A página de cadastro
 
