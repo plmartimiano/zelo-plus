@@ -95,28 +95,10 @@ porta movida por um servo motor.
 <figcaption><b>Imagem de referência</b> — conceito visual do produto final (ilustrativo), com o botão à esquerda, o LCD no centro e a luz de alerta à direita.</figcaption>
 </figure>
 
-**Rotina do dia a dia:**
-
-```text
- CUIDADOR               DISPENSER                  PACIENTE
- ────────               ─────────                  ────────
- 1. Cadastra os    ──►  2. Abre o compartimento
-    remédios na            de cada remédio novo
-    página web             para abastecer
-                        3. No horário: buzzer,
-                           LED e nome no LCD  ──►  4. Aperta
-                                                      o botão
-                        5. Abre as portas     ◄──
-                           da dose                 6. Retira e
-                        7. Fecha as portas    ◄──     aperta de
-                                                      novo
-          ─ ─ ─ Se o paciente não aparecer ─ ─ ─
- 8. Recebe aviso   ◄──  6 min: avisa o cuidador
-    no Telegram         12 min: avisa todos
-```
-
-Tudo o que o dispenser precisa saber (remédios, horários, contatos, histórico) fica
-guardado na **memória interna** da placa e sobrevive a quedas de energia.
+<figure markdown="1">
+![Rotina do dia a dia com o Zelo+](docs/rotina-dia-a-dia.jpg)
+<figcaption><b>Rotina do dia a dia</b> — cuidador, dispenser e paciente, do cadastro dos remédios aos avisos pelo Telegram.</figcaption>
+</figure>
 
 ## A2. Materiais e ligações
 
