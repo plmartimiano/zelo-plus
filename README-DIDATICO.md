@@ -49,9 +49,8 @@
 - [Parte D — Juntando tudo](#parte-d--juntando-tudo)
   - [D1. Linha do tempo de uma dose](#d1-linha-do-tempo-de-uma-dose)
   - [D2. Referência rápida](#d2-referência-rápida)
-  - [D3. Para praticar](#d3-para-praticar)
-- [Parte E — Uso autônomo, sem o laptop (condicional)](#parte-e--uso-autônomo-sem-o-laptop-condicional)
-  - [E1. Condição para aplicar](#e1-condição-para-aplicar)
+- [Parte E — Uso autônomo, sem o laptop](#parte-e--uso-autônomo-sem-o-laptop)
+  - [E1. Pré-requisitos e validação](#e1-pré-requisitos-e-validação)
   - [E2. Por que o laptop não é necessário](#e2-por-que-o-laptop-não-é-necessário)
   - [E3. A solução: fonte 5 V/3 A + IP5306 + bateria 18650](#e3-a-solução-fonte-5-v3-a--ip5306--bateria-18650)
   - [E4. Lista de compras](#e4-lista-de-compras)
@@ -78,7 +77,7 @@
   - [G7. Investimentos iniciais (uma vez só)](#g7-investimentos-iniciais-uma-vez-só)
   - [G8. Preço de venda e viabilidade](#g8-preço-de-venda-e-viabilidade)
   - [G9. Limitações da estimativa](#g9-limitações-da-estimativa)
-  - [G10. Fontes (setembro de 2026)](#g10-fontes-setembro-de-2026)
+- [Referências](#referências)
 
 ---
 
@@ -256,7 +255,7 @@ O gabinete do Zelo+ mede **210 × 130 × 100 mm** (comprimento × profundidade �
 Ele tem três compartimentos iguais na frente, uma área técnica na parte de trás (servos)
 e uma faixa de eletrônica na base, onde ficam o LCD, o botão e a luz de alerta.
 Os componentes citados nesta parte são explicados em detalhe nas Partes
-[C](#parte-c--o-código-passo-a-passo) (programa) e [E](#parte-e--uso-autônomo-sem-o-laptop-condicional)
+[C](#parte-c--o-código-passo-a-passo) (programa) e [E](#parte-e--uso-autônomo-sem-o-laptop)
 (energia autônoma e relógio).
 
 ## B1. Desenho técnico dimensional
@@ -378,7 +377,7 @@ const int ANGULO_FECHADO[NUM_COMPARTIMENTOS] = {0, 0, 0};
 const int ANGULO_ABERTO[NUM_COMPARTIMENTOS] = {90, 90, 90};
 ```
 
-> 💡 `PINOS_SERVO[0]` é o compartimento **1** (em programação, a contagem começa
+> `PINOS_SERVO[0]` é o compartimento **1** (em programação, a contagem começa
 > em zero). Esse detalhe aparece no código inteiro: índice `c` = compartimento `c + 1`.
 
 Por fim, os **objetos** que representam cada peça:
@@ -799,7 +798,7 @@ compara o nome antigo (guardado em `data-original`) com o novo e pede confirmaç
   html += "      if (!confirm('O compartimento ' + (c + 1) + ' (' + CORES[c] + ') tinha ' + antigo + '. Retire todos os comprimidos antigos antes de colocar ' + novo + '. Confirmar troca?')) return false;";
 ```
 
-> 🔒 **Segurança:** todo texto digitado passa por `escaparHTML()` antes de entrar na
+> **Segurança:** todo texto digitado passa por `escaparHTML()` antes de entrar na
 > página. Assim, um nome como `D'Ávila` ou `<b>` não quebra o HTML.
 >
 > ```cpp
@@ -1570,11 +1569,11 @@ No rodapé, abaixo de "Trocar rede Wi-Fi", aparece o estado do módulo:
 
 As mensagens do Serial Monitor de cada situação estão na [E9](#e9-módulo-de-relógio-ds3231).
 
-> ⚡ **Instalar o módulo depois:** desligue o dispenser da energia, ligue os 4 fios e
+> **Instalar o módulo depois:** desligue o dispenser da energia, ligue os 4 fios e
 > religue. Não é preciso gravar o programa de novo. O módulo só é procurado **ao
 > ligar**; por isso o religamento é necessário.
 
-> 📚 A biblioteca `RTClib` está no `platformio.ini`
+> A biblioteca `RTClib` está no `platformio.ini`
 > (`adafruit/RTClib^2.1.4`). O PlatformIO baixa sozinho no próximo **Build**.
 
 ---
@@ -1638,49 +1637,29 @@ acesso", LCD `Dose pendente!`, e o botão ainda abre os dois compartimentos depo
 | Familiares | 5 |
 | Doses no histórico | 60 |
 
-## D3. Para praticar
-
-Sugestões de exercícios, do mais simples ao mais desafiador:
-
-1. **Mudar o tempo da trava** de 7 s para 5 s (Passo 13: `TRAVA_BOTAO`).
-2. **Trocar o bip**: fazer o buzzer inverter a cada 300 ms em vez de 150 ms (Passo 12).
-3. **Mensagem no LCD**: mostrar `Bom dia!` na linha 2 entre 6h e 12h quando não houver
-   dose pendente (Passo 17, `atualizarLCDRelogio()`).
-4. **Ângulo diferente**: o compartimento 3 abre só até 70° (Passo 1: `ANGULO_ABERTO`).
-5. **Quarto compartimento**: o que precisaria mudar? (Dica: `NUM_COMPARTIMENTOS`,
-   `PINOS_SERVO`, os ângulos… e a página já se adapta sozinha.)
-6. **Relógio no LCD:** mostrar um `R` no canto da linha 1 quando a hora veio do
-   DS3231 e ainda não houve internet (Passos 17 e 19: `horaDoRtc`).
-7. **Desafio:** enviar pelo Telegram um resumo diário de adesão às 21h (Passos 11, 15 e 16).
 
 ---
 
-# Parte E — Uso autônomo, sem o laptop (condicional)
+# Parte E — Uso autônomo, sem o laptop
 
-> ⚠️ **Esta parte é condicional.** Ela descreve a montagem para o dispenser funcionar
-> sozinho, na tomada e com bateria para faltas de energia. **Só deve ser aplicada depois
-> que os testes forem concluídos e a versão final for gravada** (ver E1). Até lá,
-> continua valendo a **montagem de bancada** da seção
-> [A2](#a2-materiais-e-ligações): ESP32 no USB do laptop e servos na fonte de 5 V
-> separada.
+> Esta parte descreve a montagem do dispenser para funcionamento independente do
+> computador: alimentação pela tomada, com bateria para as faltas de energia. Ela é
+> aplicada depois da validação do protótipo em bancada (E1). Durante o desenvolvimento
+> e os ensaios, utiliza-se a **montagem de bancada** da seção
+> [A2](#a2-materiais-e-ligações): ESP32 alimentado pela USB do computador e servos na
+> fonte de 5 V separada.
 
-## E1. Condição para aplicar
+## E1. Pré-requisitos e validação
 
-Marque tudo antes de passar para a montagem autônoma:
+A passagem para a montagem autônoma segue as etapas abaixo, na ordem:
 
-- [ ] **Testes da bancada aprovados:** histórico (no horário, com atraso, sem acesso e
-  planilha), alerta de 60 s no Telegram para cuidador e familiares, abastecimento
-  guiado, reposição por remédio, dois remédios no mesmo horário, migração do cadastro
-  e o novo visual da página no celular.
-- [ ] **Tempos reais ligados:** no `src/main.cpp`, trocar `#define MODO_TESTE 1` por
-  `#define MODO_TESTE 0` (Passo 18), fazer **Build** e **Upload** e conferir no Serial
-  Monitor que a linha `ATENCAO: MODO_TESTE ativo` **não** aparece mais.
-- [ ] **Um dia inteiro de uso assistido**, ainda no laptop, com os horários reais do
-  paciente, sem falhas.
-- [ ] **IP fixo:** no roteador, reservar o IP do dispenser ("reserva de DHCP"), para o
-  endereço da página não mudar quando o roteador reiniciar.
-- [ ] **Etiquetas coloridas** nas portas: 1 azul, 2 verde, 3 roxo (as mesmas cores da
-  página).
+| Etapa | Procedimento | Critério de aprovação |
+|---|---|---|
+| 1. Ensaios funcionais em bancada | Histórico (dose no horário, com atraso, sem acesso e exportação CSV); aviso de 60 s pelo Telegram a cuidador e familiares; abastecimento guiado; reposição por remédio; dois remédios no mesmo horário; migração do cadastro; página no celular | Comportamento igual ao descrito nas Partes C e D, em todos os casos |
+| 2. Tempos definitivos | `#define MODO_TESTE 0` no `src/main.cpp` (Passo 18), seguido de compilação e gravação | A mensagem `ATENCAO: MODO_TESTE ativo` não aparece no Serial Monitor |
+| 3. Operação assistida | 24 horas de funcionamento com os horários reais de medicação, ainda alimentado pelo computador | Nenhuma falha de alarme, abertura de porta ou aviso |
+| 4. Endereço fixo na rede | Reserva de DHCP no roteador para o endereço do dispenser | O endereço da página se mantém após o roteador reiniciar |
+| 5. Identificação das portas | Etiquetas nas cores da página: 1 azul, 2 verde, 3 roxo | Cores iguais às do cadastro |
 
 ## E2. Por que o laptop não é necessário
 
@@ -1749,14 +1728,14 @@ ligado a elas se identifica, por meio de um **resistor de 5,1 kΩ no pino CC**. 
 
 ## E4. Lista de compras
 
-> 🛒 Esta é a lista **só da parte de energia**. A lista **completa do dispenser**, com
+> Esta é a lista **só da parte de energia**. A lista **completa do dispenser**, com
 > ilustrações e preços estimados, está na [Parte F](#parte-f--lista-completa-de-componentes-com-preços).
 
 | # | Item | Qtd | Especificação / observação |
 |---|---|---|---|
 | 1 | **Fonte de tomada 5 V / 3 A** | 1 | Saída **USB-C**, 5 V, 3 A (15 W). Preferir marca conhecida, com certificação Inmetro. |
 | 2 | **Módulo IP5306** | 1 | "Módulo carregador power bank IP5306 5V 2.1A 18650", com **pads de solda** de entrada (5V/GND), de bateria (B+/B−) e de saída (OUT). |
-| 3 | **Bateria 18650** | 1 | Li-ion 3,7 V, **2.500–3.000 mAh reais** (Samsung, LG, Sony/Murata, Panasonic). Desconfiar de "9.800 mAh". *Você já tem.* |
+| 3 | **Bateria 18650** | 1 | Li-ion 3,7 V, **2.500–3.000 mAh reais** (Samsung, LG, Sony/Murata, Panasonic). Desconfiar de "9.800 mAh". |
 | 4 | **Suporte (case) para 1× 18650** | 1 | Com fios vermelho/preto. Evita soldar direto na bateria. |
 | 5 | **Conector USB-C fêmea de painel com 2 fios** | 1 | Preso na caixa; a fonte encaixa nele. Os **2 fios** (vermelho/preto) são **soldados** nos pads de entrada do IP5306. De preferência **com resistores 5,1 kΩ no CC** (ver acima). |
 | 6 | **Capacitor eletrolítico 1000 µF / 16 V** | 1 | Entre +5 V e GND, perto dos servos. Tem polaridade (faixa "−" no GND). |
@@ -1767,13 +1746,13 @@ ligado a elas se identifica, por meio de um **resistor de 5,1 kΩ no pino CC**. 
 | 11 | Ferro de solda + estanho | — | Para os pads do IP5306 e as emendas. |
 | 12 | *Módulo relógio DS3231 + bateria LIR2032* (opcional) | 1 | Ver [E9](#e9-módulo-de-relógio-ds3231): mantém a hora certa sem internet. |
 
-> 💡 Módulos IP5306 costumam vir também com uma **saída USB-A**. Ela entrega os mesmos
+> Módulos IP5306 costumam vir também com uma **saída USB-A**. Ela entrega os mesmos
 > 5 V, mas para o dispenser use os **pads de saída soldados**: a ligação fica firme e não
 > depende de um conector que pode se soltar.
 
 ## E5. Montagem passo a passo
 
-> ⚡ Monte **sem a bateria e sem a fonte ligadas**. Só energize nas etapas indicadas.
+> Monte **sem a bateria e sem a fonte ligadas**. Só energize nas etapas indicadas.
 
 1. **Conector de entrada:** fixe o conector USB-C fêmea na caixa e solde os 2 fios nos
    pads de **entrada** do IP5306: **vermelho → 5V (IN+)** e **preto → GND (IN−)**. Isole
@@ -1800,7 +1779,7 @@ Com o dispenser funcionando (relógio no LCD):
 
 1. **Tire a fonte da tomada.** O dispenser deve **continuar ligado**, agora pela bateria.
 2. Observe o LCD:
-   - Se o relógio **continua normal**, a troca foi perfeita. ✅
+   - Se o relógio **continua normal**, a troca foi perfeita.
    - Se aparecer **"Iniciando..."**, o ESP32 reiniciou no instante da troca. Nada se
      perde (cadastro, horários e histórico ficam salvos) e ele volta sozinho em poucos
      segundos. Para evitar, confira se o capacitor está perto dos servos e firme.
@@ -1840,13 +1819,13 @@ dispenser fica ligado.
 | **Falta energia (até ~8–10 h)** | O dispenser **continua funcionando pela bateria**. Os alarmes tocam; o Telegram depende de a internet (roteador) também estar ligada. |
 | **Falta energia por mais tempo** (bateria acaba) | O dispenser desliga. Cadastro, horários e histórico **ficam salvos**; horários que passarem desligado **não tocam** depois. |
 | **Energia volta, com internet** | Liga sozinho, conecta no Wi-Fi, acerta a hora e volta ao normal; a bateria recarrega. |
-| **Energia volta, sem internet — sem o DS3231** | ⚠️ **Sem hora certa, os alarmes não tocam** até a internet voltar (o dispenser fica no modo de configuração). |
-| **Energia volta, sem internet — com o DS3231** | ✅ Liga com a hora do relógio (`Sem internet` / `Hora do relogio` no LCD): **os alarmes tocam normalmente**. O Wi-Fi é tentado a cada 30 s; o Telegram volta junto com a internet. |
+| **Energia volta, sem internet — sem o DS3231** | **Sem hora certa, os alarmes não tocam** até a internet voltar (o dispenser fica no modo de configuração). |
+| **Energia volta, sem internet — com o DS3231** | Liga com a hora do relógio (`Sem internet` / `Hora do relogio` no LCD): **os alarmes tocam normalmente**. O Wi-Fi é tentado a cada 30 s; o Telegram volta junto com a internet. |
 | **Internet cai, energia ok** | O relógio interno continua contando: **os alarmes tocam normalmente**. Só as mensagens do Telegram não saem. |
 
 ## E9. Módulo de relógio DS3231
 
-> ✅ **Já suportado pelo programa** ([Passo 19](#passo-19--relógio-ds3231-opcional)). O
+> **Já suportado pelo programa** ([Passo 19](#passo-19--relógio-ds3231-opcional)). O
 > módulo é **opcional**: sem ele, tudo funciona pela internet. Com ele, o dispenser
 > **sabe a hora mesmo sem internet**, inclusive depois de a bateria acabar e a energia
 > voltar.
@@ -1873,7 +1852,7 @@ de 3V3.
 | SDA | GPIO 21 (junto com o SDA do LCD) |
 | SCL | GPIO 22 (junto com o SCL do LCD) |
 
-> ⚠️ Muitos módulos DS3231 vêm com um circuito que tenta **recarregar** a bateria. Com
+> Muitos módulos DS3231 vêm com um circuito que tenta **recarregar** a bateria. Com
 > uma **CR2032 comum (não recarregável)**, isso pode estragar a bateria. Use uma
 > **LIR2032** (recarregável) ou peça para alguém retirar o resistor/diodo de carga do
 > módulo.
@@ -1904,20 +1883,19 @@ de 3V3.
 |---|---|
 | `DS3231 nao encontrado - usando so a internet` | Módulo ausente ou mal ligado (confira SDA/SCL). |
 | `DS3231 sem hora valida - aguardando a internet` | Módulo novo ou bateria LIR2032 descarregada. |
-| `DS3231: hora carregada do relogio` | Hora certa já ao ligar. ✅ |
-| `DS3231: hora gravada (vinda da internet)` | O NTP acertou a hora e o módulo foi atualizado. ✅ |
+| `DS3231: hora carregada do relogio` | Hora certa já ao ligar. |
+| `DS3231: hora gravada (vinda da internet)` | O NTP acertou a hora e o módulo foi atualizado. |
 | `Sem internet: alarmes pela hora do DS3231` | Ligou sem internet, funcionando pelo relógio. |
 
-**Testes do relógio:**
+**Ensaios do relógio:**
 
-- [ ] Rodapé da página mostra "Relógio DS3231: conectado".
-- [ ] **Sem internet:** desligue o roteador, desligue e religue o dispenser. O LCD
-  mostra `Sem internet` / `Hora do relogio` e depois o relógio **com a hora certa**.
-- [ ] Um alarme de teste toca no horário **com o roteador desligado**.
-- [ ] Religue o roteador: em até ~30 s o dispenser volta a se conectar (a página volta a
-  abrir e o Telegram funciona).
-- [ ] **Sem o módulo** (fios soltos, dispenser desligado antes): o rodapé mostra "não
-  instalado" e tudo funciona pela internet.
+| Ensaio | Resultado esperado |
+|---|---|
+| Página aberta com o módulo instalado | Rodapé mostra "Relógio DS3231: conectado" |
+| Religamento sem internet (roteador desligado) | LCD mostra `Sem internet` / `Hora do relogio` e, em seguida, a hora correta |
+| Horário de dose com o roteador desligado | O alarme toca no horário |
+| Retorno da internet | Em até ~30 s o dispenser reconecta; a página e o Telegram voltam a funcionar |
+| Religamento sem o módulo | Rodapé mostra "não instalado"; hora obtida pela internet |
 
 ## E10. Atualizar o programa depois de montado
 
@@ -1934,58 +1912,55 @@ A montagem autônoma não impede atualizações:
 
 # Parte F — Lista completa de componentes, com preços
 
-Tudo o que é preciso comprar para montar o Zelo+ na **versão autônoma** (tomada +
-bateria, Parte E). As ilustrações são desenhos simplificados para ajudar a reconhecer
-cada peça na loja. A última coluna fica **em branco** para você anotar o preço que
-encontrar na hora da compra.
+Relação dos componentes necessários para montar o Zelo+ na **versão autônoma** (tomada +
+bateria, Parte E). As ilustrações são desenhos simplificados para identificar cada peça.
 
-> 💰 **Sobre os preços:** valores pesquisados em lojas brasileiras de eletrônica em
-> **setembro de 2026** (fontes no fim desta parte); bateria e suporte com os preços
-> levantados pelo responsável do projeto no Mercado Livre. Itens marcados com **\*** não tiveram
+> **Sobre os preços:** valores pesquisados em lojas brasileiras de eletrônica em
+> **setembro de 2026** (ver [Referências](#referências)). Itens marcados com **\*** não tiveram
 > o preço exibido em loja nacional na pesquisa: o valor é uma **estimativa** a partir de
 > preços internacionais convertidos. Preços mudam com frequência e **não incluem frete**.
 > Ferramentas **não** entram na conta (ver [F5](#f5-ferramentas-necessárias-fora-do-custo)).
 
 ## F1. Eletrônica do dispenser
 
-| Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
-|---|:---:|---|---|---|
-| **Placa ESP32 DevKit V1 — 30 pinos** · 1 un.<br>ESP32-WROOM-32 · chip ESP32-D0WD-V3 · USB CP2102 | <img src="docs/componentes/esp32.svg" width="110" alt="esp32"> | O "cérebro": roda o programa, cria a página web, conecta no Wi-Fi e manda os avisos. | R$ 54,90 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Micro servo SG90 9 g** · 3 un.<br>TowerPro SG90 · 180° · 1,6 kgf·cm · 4,8–6 V | <img src="docs/componentes/servo.svg" width="110" alt="servo"> | Abre e fecha a porta de cada compartimento (um servo por compartimento). | R$ 13,33–16,90 cada<br>**R$ 40–51** (3 un.) | R$ \_\_\_\_\_\_\_\_\_ |
-| **Display LCD 16x2 com módulo I2C** · 1 un.<br>HD44780 + PCF8574 · endereço 0x27 · fundo azul | <img src="docs/componentes/lcd.svg" width="110" alt="lcd"> | Mostra o relógio, o nome do remédio e os avisos (abrindo, fechando, dose pendente). | R$ 24,90 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Buzzer ativo 5 V** · 1 un.<br>12 mm · "auto-oscilante" · 3,5–5 V | <img src="docs/componentes/buzzer.svg" width="110" alt="buzzer"> | Apita no horário do remédio (alarme sonoro). | R$ 2,50 | R$ \_\_\_\_\_\_\_\_\_ |
-| **LED difuso 5 mm vermelho** · 1 un. | <img src="docs/componentes/led.svg" width="110" alt="led"> | Pisca junto com o buzzer (alarme visual). | R$ 0,15 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Resistor 220 Ω, ¼ W** · pacote com 10<br>faixas: vermelho-vermelho-marrom-dourado | <img src="docs/componentes/resistor220.svg" width="110" alt="resistor220"> | Limita a corrente do LED para ele não queimar (usa 1; sobram reservas). | R$ 0,90 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
-| **Chave táctil (push button) 12×12 mm com capa** · kit com 10 | <img src="docs/componentes/botao.svg" width="110" alt="botao"> | O botão que o paciente aperta para abrir e fechar os compartimentos (usa 1). | R$ 10,20 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
+| Componente e códigos | Ilustração | Função | Preço de referência |
+|---|:---:|---|---|
+| **Placa ESP32 DevKit V1 — 30 pinos** · 1 un.<br>ESP32-WROOM-32 · chip ESP32-D0WD-V3 · USB CP2102 | <img src="docs/componentes/esp32.svg" width="110" alt="esp32"> | O "cérebro": roda o programa, cria a página web, conecta no Wi-Fi e manda os avisos. | R$ 54,90 |
+| **Micro servo SG90 9 g** · 3 un.<br>TowerPro SG90 · 180° · 1,6 kgf·cm · 4,8–6 V | <img src="docs/componentes/servo.svg" width="110" alt="servo"> | Abre e fecha a porta de cada compartimento (um servo por compartimento). | R$ 13,33–16,90 cada<br>**R$ 40–51** (3 un.) |
+| **Display LCD 16x2 com módulo I2C** · 1 un.<br>HD44780 + PCF8574 · endereço 0x27 · fundo azul | <img src="docs/componentes/lcd.svg" width="110" alt="lcd"> | Mostra o relógio, o nome do remédio e os avisos (abrindo, fechando, dose pendente). | R$ 24,90 |
+| **Buzzer ativo 5 V** · 1 un.<br>12 mm · "auto-oscilante" · 3,5–5 V | <img src="docs/componentes/buzzer.svg" width="110" alt="buzzer"> | Apita no horário do remédio (alarme sonoro). | R$ 2,50 |
+| **LED difuso 5 mm vermelho** · 1 un. | <img src="docs/componentes/led.svg" width="110" alt="led"> | Pisca junto com o buzzer (alarme visual). | R$ 0,15 |
+| **Resistor 220 Ω, ¼ W** · pacote com 10<br>faixas: vermelho-vermelho-marrom-dourado | <img src="docs/componentes/resistor220.svg" width="110" alt="resistor220"> | Limita a corrente do LED para ele não queimar (usa 1; sobram reservas). | R$ 0,90 (10 un.) |
+| **Chave táctil (push button) 12×12 mm com capa** · kit com 10 | <img src="docs/componentes/botao.svg" width="110" alt="botao"> | O botão que o paciente aperta para abrir e fechar os compartimentos (usa 1). | R$ 10,20 (10 un.) |
 
 ## F2. Energia autônoma
 
-| Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
-|---|:---:|---|---|---|
-| **Fonte de tomada 5 V / 3 A, saída USB-C** · 1 un.<br>bivolt · 15 W · com certificação Inmetro | <img src="docs/componentes/fonte.svg" width="110" alt="fonte"> | Energia da rua para o dispenser e para carregar a bateria. | R$ 35,98–50 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Módulo IP5306 5 V 2,1 A (power bank)** · 1 un.<br>IP5306 · entrada USB-C · pads IN, B+/B−, OUT | <img src="docs/componentes/ip5306.svg" width="110" alt="ip5306"> | Carrega a bateria e entrega 5 V estáveis, com ou sem energia da rua. | R$ 15–25 \* | R$ \_\_\_\_\_\_\_\_\_ |
-| **Bateria Li-ion 18650** · 1 un.<br>Onistek ON-18650 · 3,7 V · rótulo 3.800 mAh (real provável 1.500–2.500 mAh) | <img src="docs/componentes/bateria18650.svg" width="110" alt="bateria18650"> | Mantém o dispenser ligado se faltar energia (~4–10 h, conforme a capacidade real). *(Você já tem.)* | R$ 17,15 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Suporte para 1 bateria 18650** · 1 un.<br>com fios vermelho/preto | <img src="docs/componentes/suporte18650.svg" width="110" alt="suporte18650"> | Segura a bateria e evita soldar direto nela. | R$ 9,17 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Conector USB-C fêmea de painel, com 2 fios** · 1 un.<br>"jack USB tipo C fêmea com rabicho 2 fios" · 5 V · ≥ 2,5 A · de preferência com resistores 5,1 kΩ | <img src="docs/componentes/conector_usbc.svg" width="110" alt="conector_usbc"> | Entrada de energia na caixa: a fonte encaixa nele e os 2 fios são **soldados** na entrada (IN) do IP5306. | R$ 12–30 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Resistor 5,1 kΩ, ¼ W** · pacote com 10 *(plano B: só se usar o módulo USB-C de 6 pinos)*<br>faixas: verde-marrom-vermelho-dourado | <img src="docs/componentes/resistor5k1.svg" width="110" alt="resistor5k1"> | Um em cada pino CC (CC1 e CC2) até o GND: faz a fonte USB-C liberar os 5 V. | R$ 0,60 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
-| **Capacitor eletrolítico 1000 µF / 16 V** · 1 un.<br>105 °C · tem polaridade (faixa "−") | <img src="docs/componentes/capacitor.svg" width="110" alt="capacitor"> | Absorve o pico de corrente dos servos e evita que o ESP32 reinicie. | R$ 0,73–3 | R$ \_\_\_\_\_\_\_\_\_ |
+| Componente e códigos | Ilustração | Função | Preço de referência |
+|---|:---:|---|---|
+| **Fonte de tomada 5 V / 3 A, saída USB-C** · 1 un.<br>bivolt · 15 W · com certificação Inmetro | <img src="docs/componentes/fonte.svg" width="110" alt="fonte"> | Energia da rua para o dispenser e para carregar a bateria. | R$ 35,98–50 |
+| **Módulo IP5306 5 V 2,1 A (power bank)** · 1 un.<br>IP5306 · entrada USB-C · pads IN, B+/B−, OUT | <img src="docs/componentes/ip5306.svg" width="110" alt="ip5306"> | Carrega a bateria e entrega 5 V estáveis, com ou sem energia da rua. | R$ 15–25 \* |
+| **Bateria Li-ion 18650** · 1 un.<br>Onistek ON-18650 · 3,7 V · rótulo 3.800 mAh (real provável 1.500–2.500 mAh) | <img src="docs/componentes/bateria18650.svg" width="110" alt="bateria18650"> | Mantém o dispenser ligado se faltar energia (~4–10 h, conforme a capacidade real). | R$ 17,15 |
+| **Suporte para 1 bateria 18650** · 1 un.<br>com fios vermelho/preto | <img src="docs/componentes/suporte18650.svg" width="110" alt="suporte18650"> | Segura a bateria e evita soldar direto nela. | R$ 9,17 |
+| **Conector USB-C fêmea de painel, com 2 fios** · 1 un.<br>"jack USB tipo C fêmea com rabicho 2 fios" · 5 V · ≥ 2,5 A · de preferência com resistores 5,1 kΩ | <img src="docs/componentes/conector_usbc.svg" width="110" alt="conector_usbc"> | Entrada de energia na caixa: a fonte encaixa nele e os 2 fios são **soldados** na entrada (IN) do IP5306. | R$ 12–30 |
+| **Resistor 5,1 kΩ, ¼ W** · pacote com 10 *(plano B: só se usar o módulo USB-C de 6 pinos)*<br>faixas: verde-marrom-vermelho-dourado | <img src="docs/componentes/resistor5k1.svg" width="110" alt="resistor5k1"> | Um em cada pino CC (CC1 e CC2) até o GND: faz a fonte USB-C liberar os 5 V. | R$ 0,60 (10 un.) |
+| **Capacitor eletrolítico 1000 µF / 16 V** · 1 un.<br>105 °C · tem polaridade (faixa "−") | <img src="docs/componentes/capacitor.svg" width="110" alt="capacitor"> | Absorve o pico de corrente dos servos e evita que o ESP32 reinicie. | R$ 0,73–3 |
 
 ## F3. Montagem e ligações
 
-| Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
-|---|:---:|---|---|---|
-| **Placa perfurada ilhada 7×9 cm** · 1 un.<br>fenolite ou fibra de vidro | <img src="docs/componentes/placa.svg" width="110" alt="placa"> | Base firme, soldada, para os trilhos de +5 V e GND (mais durável que protoboard). | R$ 3,90–12,50 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Jumpers macho/fêmea 20 cm** · 1 kit (40 un.) | <img src="docs/componentes/jumpers.svg" width="110" alt="jumpers"> | Ligações entre o ESP32, o LCD, os servos e a placa. | R$ 8,90 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Fio flexível 22 AWG** · vermelho e preto, ~2 m de cada | <img src="docs/componentes/fio22awg.svg" width="110" alt="fio22awg"> | Ligações de energia: saída do IP5306 → VIN e servos. | R$ 1,20–3 por metro<br>**R$ 5–12** (4 m) | R$ \_\_\_\_\_\_\_\_\_ |
-| **Tubo termo-retrátil** · 1 kit sortido | <img src="docs/componentes/termo.svg" width="110" alt="termo"> | Isola as emendas soldadas (evita curto-circuito). | R$ 16,88–43 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Cabo USB-A → micro-USB (dados)** · 1 un. | <img src="docs/componentes/cabo_microusb.svg" width="110" alt="cabo_microusb"> | Gravar e atualizar o programa pelo laptop. | a partir de R$ 11,69 | R$ \_\_\_\_\_\_\_\_\_ |
+| Componente e códigos | Ilustração | Função | Preço de referência |
+|---|:---:|---|---|
+| **Placa perfurada ilhada 7×9 cm** · 1 un.<br>fenolite ou fibra de vidro | <img src="docs/componentes/placa.svg" width="110" alt="placa"> | Base firme, soldada, para os trilhos de +5 V e GND (mais durável que protoboard). | R$ 3,90–12,50 |
+| **Jumpers macho/fêmea 20 cm** · 1 kit (40 un.) | <img src="docs/componentes/jumpers.svg" width="110" alt="jumpers"> | Ligações entre o ESP32, o LCD, os servos e a placa. | R$ 8,90 |
+| **Fio flexível 22 AWG** · vermelho e preto, ~2 m de cada | <img src="docs/componentes/fio22awg.svg" width="110" alt="fio22awg"> | Ligações de energia: saída do IP5306 → VIN e servos. | R$ 1,20–3 por metro<br>**R$ 5–12** (4 m) |
+| **Tubo termo-retrátil** · 1 kit sortido | <img src="docs/componentes/termo.svg" width="110" alt="termo"> | Isola as emendas soldadas (evita curto-circuito). | R$ 16,88–43 |
+| **Cabo USB-A → micro-USB (dados)** · 1 un. | <img src="docs/componentes/cabo_microusb.svg" width="110" alt="cabo_microusb"> | Gravar e atualizar o programa pelo laptop. | a partir de R$ 11,69 |
 
 ## F4. Relógio sem internet (opcional)
 
-| Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
-|---|:---:|---|---|---|
-| **Módulo RTC DS3231** · 1 un.<br>DS3231 + EEPROM AT24C32 · I2C 0x68 · 3,3–5 V | <img src="docs/componentes/ds3231.svg" width="110" alt="ds3231"> | Guarda a hora certa mesmo sem internet e sem energia (ver E9). | R$ 26–30,91 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Bateria LIR2032 (recarregável)** · 1 un.<br>3,6 V · tipo moeda | <img src="docs/componentes/lir2032.svg" width="110" alt="lir2032"> | Alimenta o relógio do DS3231 quando o dispenser está desligado. | R$ 11,90–28,50 | R$ \_\_\_\_\_\_\_\_\_ |
+| Componente e códigos | Ilustração | Função | Preço de referência |
+|---|:---:|---|---|
+| **Módulo RTC DS3231** · 1 un.<br>DS3231 + EEPROM AT24C32 · I2C 0x68 · 3,3–5 V | <img src="docs/componentes/ds3231.svg" width="110" alt="ds3231"> | Guarda a hora certa mesmo sem internet e sem energia (ver E9). | R$ 26–30,91 |
+| **Bateria LIR2032 (recarregável)** · 1 un.<br>3,6 V · tipo moeda | <img src="docs/componentes/lir2032.svg" width="110" alt="lir2032"> | Alimenta o relógio do DS3231 quando o dispenser está desligado. | R$ 11,90–28,50 |
 
 ## F5. Ferramentas necessárias (fora do custo)
 
@@ -2003,74 +1978,38 @@ emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, s�
 
 ## F6. Resumo do investimento
 
-| Grupo | Faixa pesquisada | Total anotado |
-|---|---|---|
-| F1. Eletrônica do dispenser | R$ 134 – 147 | R$ \_\_\_\_\_\_\_\_\_ |
-| F2. Energia autônoma *(com a bateria)* | R$ 90 – 135 | R$ \_\_\_\_\_\_\_\_\_ |
-| F3. Montagem e ligações | R$ 46 – 96 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Total para montar o dispenser** | **≈ R$ 270 – 378** | **R$ \_\_\_\_\_\_\_\_\_** |
-| *Total sem a bateria (que você já tem)* | *≈ R$ 253 – 361* | R$ \_\_\_\_\_\_\_\_\_ |
-| F4. Relógio sem internet (opcional, à parte) | + R$ 38 – 60 | R$ \_\_\_\_\_\_\_\_\_ |
+| Grupo | Faixa de preço |
+|---|---|
+| F1. Eletrônica do dispenser | R$ 134 – 147 |
+| F2. Energia autônoma *(com a bateria)* | R$ 90 – 135 |
+| F3. Montagem e ligações | R$ 46 – 96 |
+| **Total para montar o dispenser** | **≈ R$ 270 – 378** |
+| F4. Relógio sem internet (opcional, à parte) | + R$ 38 – 60 |
 
 **Não inclui:** ferramentas (F5), frete e a estrutura física do dispenser (caixa, portas e
 divisórias dos compartimentos), que depende do material escolhido (MDF, acrílico ou
 impressão 3D). O custo da caixa em impressão 3D e em plástico injetado, e o custo por
 unidade em produção, estão nas Partes [B](#parte-b--desenho-técnico-do-gabinete) (desenho técnico) e [G](#parte-g--custo-de-produção-estimativa-para-viabilidade) (custos).
 
-**Dicas de compra:**
+**Observações sobre os componentes:**
 
-- Prefira lojas de eletrônica conhecidas para o **ESP32, a bateria e a fonte**: são as
-  peças em que imitações dão mais problema.
-- Bateria 18650 com "9.800 mAh" ou "12.000 mAh" no rótulo é **falsa**; uma 18650 real tem
-  no máximo cerca de 3.500 mAh.
-- Resistores, botões e termo-retrátil saem em pacotes: o preço por unidade cai e sobram
-  peças de reserva.
-- Comprar tudo numa mesma loja costuma compensar o frete.
-
-**Fontes dos preços e modelos** (pesquisa de setembro de 2026):
-[Eletrogate — ESP32 30 pinos](https://www.eletrogate.com/modulo-wifi-esp32-bluetooth-30-pinos) ·
-[WJ Componentes — Servo SG90](https://www.wjcomponentes.com.br/micro-servo-sg90-9g/) ·
-[Curto Circuito — Servo SG90](https://curtocircuito.com.br/servo-motor-9g-sg90.html) ·
-[Eletrogate — módulo I2C / LCD](https://www.eletrogate.com/modulo-serial-i2c-para-display-lcd-para-arduino) ·
-[Amazon.com.br — LCD 16x2 I2C](https://www.amazon.com.br/Display-PCF8574-Endere%C3%A7o-Controlador-80x35mm/dp/B0H346LHKM) ·
-[Vamuino — buzzer ativo](https://lojinha.vamuino.com.br/produto/buzzer-ativo-5v/) ·
-[Eletrogate — LED difuso 5 mm vermelho](https://www.eletrogate.com/led-difuso-5mm-vermelho) ·
-[Eletrogate — resistor 220R](https://www.eletrogate.com/resistor-220r-1-4w-10-unidades) ·
-[Eletrogate — resistor 5K1](https://www.eletrogate.com/resistor-5k1-1-4w-10-unidades) ·
-[MakerHero — chave táctil 12x12](https://www.makerhero.com/produto/capa-para-chave-tactil-push-button-12x12-mm/) ·
-[Magazine Luiza — fonte 5 V 3 A USB-C](https://www.magazineluiza.com.br/busca/fonte+5v+3a+usb-c/) ·
-[MakerHero — fonte 5 V 3 A USB-C](https://www.makerhero.com/produto/fonte-dc-chaveada-5v-3a-usb-tipo-c/) ·
-[Mercado Livre — IP5306](https://www.mercadolivre.com.br/modulo-carga-y-descarga-bateria-18650-ip5306-2a-5v-usb-c/p/MLB2064132227) ·
-[eBay — IP5306 (referência internacional)](https://www.ebay.de/itm/134628665112) ·
-Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo responsável do projeto) ·
-[Mercado Shops — conector USB-C fêmea com rabicho 2 fios (1 un. e kit com 5)](https://ralphcouch.mercadoshops.com.br/MLB-3667070205-kit-com-5-conector-jack-tipo-c-com-rabicho-2-fios-fmea-_JM) ·
-[Usinainfo — conector USB-C fêmea com rabicho para painel](https://www.usinainfo.com.br/conector-usb/conector-usb-c-femea-com-rabicho-de-alimentacao-2-fios-para-painel-diy-9169.html) ·
-[Mamute Eletrônica — conector USB tipo C fêmea com rabicho](https://www.mamuteeletronica.com.br/conector-jack-usb-tipo-c-femea-com-rabicho-2-fios-22739) ·
-[Amazon.com.br — módulo USB-C fêmea 6 pinos (plano B)](https://www.amazon.com.br/naughtystarts-pe%C3%A7as-breakout-conector-direito/dp/B0B19TP2MX) ·
-[Nova Trida — capacitor 1000 µF](https://www.novatridaeletronica.com.br/capacitor-eletrolitico-1000uf-x-16v) ·
-[Fermarc — placa perfurada 7x9](https://www.fermarc.com/placa-de-circuito-perfurada-face-simples-7x9) ·
-[SmartProjects — placa perfurada 7x9](https://www.smartprojectsbrasil.com.br/placa-fenolite-perfurada-ilhada-fibra-de-vidro-7x9-cm) ·
-[Eletrogate — jumpers M/F](https://www.eletrogate.com/jumpers-macho-femea-40-unidades-de-20-cm) ·
-[Multcomercial — cabinho 22 AWG](https://www.multcomercial.com.br/fios-e-cabos/cabinho-flexivel/flex-0-32mm-22-awg.html) ·
-[Termotubos — kit termo-retrátil](https://loja.termotubos.com.br/kits/termo-retrateis-variados) ·
-[Submarino — cabo micro-USB](https://www.submarino.com.br/busca/cabo-micro-usb-1-metro) ·
-[Mercado Livre — RTC DS3231](https://www.mercadolivre.com.br/modulo-rtc-real-time-clock-ds3231-arduino-esp8266-esp32-rasp/p/MLB42966007) ·
-[Orielec — bateria LIR2032](https://www.lojaorielec.com.br/acessorios/baterias-e-suportes/bateria-de-litio-lir2032) ·
-[Ferro de Solda Profissional — modelos com controle de temperatura (HK-936B, Yaxun 936)](https://ferrodesoldaprofissional.com.br/ferro-de-solda/) ·
-[Casa da Robótica — Hikari SC-60 (sem ajuste de temperatura)](https://www.casadarobotica.com/prototipagem-e-ferramentas/prototipagem/soldas/ferro-de-solda-hk-plus-hikari-profissional-sc-60w-220v) ·
-[Baú da Eletrônica — estanho Cobix 0,5 mm](https://www.baudaeletronica.com.br/produto/rolo-de-solda-estanho-500g-05mm-cobix.html) ·
-[Loja do Mecânico — multímetro Hikari HM-1001](https://www.lojadomecanico.com.br/produto/123563/3/47/multimetro-digital-hm-1001-hikari-21n240) ·
-[LC Ferragens — multímetros (Minipa ET-1002)](https://www.lcferragens.com.br/produto/multimetro-hikari-digital-hm-1000/)
+- **ESP32, bateria e fonte** são os componentes com maior incidência de imitações no
+  mercado; recomenda-se adquiri-los de fornecedores especializados em eletrônica.
+- Uma bateria 18650 genuína tem no máximo cerca de 3.500 mAh; valores como "9.800 mAh" ou
+  "12.000 mAh" no rótulo indicam produto falsificado.
+- Resistores, botões e termo-retrátil são vendidos em pacotes; o preço indicado é o do
+  pacote.
 
 ---
 
 # Parte G — Custo de produção (estimativa para viabilidade)
 
-> 📐 **Natureza desta parte:** estimativa acadêmica para avaliar a **viabilidade** de
+> **Natureza desta parte:** estimativa acadêmica para avaliar a **viabilidade** de
 > produzir o Zelo+ em série. **Data-base: setembro de 2026.** Não é orçamento: os
 > valores são faixas (mínimo–máximo) calculadas a partir de premissas declaradas, e
 > cada número pode ser refeito trocando a premissa correspondente. As medidas do
 > gabinete são as do desenho técnico (Parte B).
+> As fontes dos valores estão na seção [Referências](#referências).
 
 <figure markdown="1">
 ![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
@@ -2191,7 +2130,7 @@ nervuras, por isso as faixas acima são maiores.*
  molde de aço:      R$ 180–325 mil ÷ R$ 79–143  ≈ 1.260 a 4.100 unidades
 ```
 
-➡️ **Abaixo de ~1.000 unidades, a impressão 3D é mais barata. Acima de ~4.000, o molde
+**Conclusão:** **Abaixo de ~1.000 unidades, a impressão 3D é mais barata. Acima de ~4.000, o molde
 de aço compensa com folga.**
 
 ## G5. Componentes eletrônicos no atacado
@@ -2310,18 +2249,107 @@ pouco investimento.
 - **Anvisa:** é preciso confirmar se um dispenser com alarme de medicação se enquadra
   como dispositivo médico. Se sim, custos e prazos aumentam.
 
-## G10. Fontes (setembro de 2026)
+---
 
-[Revista Fórum — cotação do dólar em 24/09/2026](https://revistaforum.com.br/economia/preco-dolar-24-09-2026/) ·
-[InfoMoney — dólar em setembro](https://www.infomoney.com.br/mercados/o-que-esperar-do-dolar-em-setembro-veja-ate-onde-a-moeda-pode-ir/) ·
-[InfoMoney — Aneel projeta alta média de 8 % nas tarifas](https://www.infomoney.com.br/economia/aneel-projeta-alta-media-de-8-para-tarifas-de-consumidores-de-energia-eletrica/) ·
-[pv magazine — projeção tarifária de 2026](https://www.pv-magazine-brasil.com/2026/03/17/aneel-projeta-aumento-tarifario-medio-de-8-em-2026/) ·
-[Leroy Merlin — PLA Voolt3D 1 kg](https://www.leroymerlin.com.br/filamento-pla-preto-premium-1kg-voolt3d-oficial_1570566287) ·
-[Wemak — PLA Voolt3D 1 kg](https://www.wemak.com.br/produtos/filamento-3d-pla-1kg-impressao-3d-premium-1-75mm-voolt3d-cor-preto/) ·
-[Kabum — Creality K1 Max](https://www.kabum.com.br/produto/495704/impressora-3d-creality-k1-max-velocidade-maxima-600mm-s-1202080002) ·
-[Galpão das Máquinas — custo por peça na impressão 3D](https://galpaodasmaquinas.com.br/blog/plastico/custo-peca-impressora-3d/) ·
-[Octet3D — guia de preços de impressão 3D 2026](https://octet3d.com/blog/quanto-custa-imprimir-em-3d) ·
-[Metalúrgica Ferri — quanto custa um molde de injeção](https://www.metalferri.com.br/blog/quanto-custa-molde-injecao-plastica) ·
-[NTC — custo de molde de injeção](https://ntc.ind.br/custo-de-molde-injecao-plastico/) ·
-[ChenHsong Brasil — custo da hora-homem-máquina em injetoras](https://chenhsong.com.br/news/custo-da-hora-homem-maquina-para-operadores-de-injetoras/) ·
-[Mil Plásticos — ABS granulado](https://www.milplasticos.com.br/abs-granulado-preco)
+# Referências
+
+Fontes consultadas para os preços, as especificações dos componentes e os parâmetros
+de custo utilizados nas Partes F e G (consulta em setembro de 2026).
+
+<div class="referencias" markdown="1">
+
+AMAZON.COM.BR. **Display LCD 16x2 com módulo I2C PCF8574**. Disponível em: <https://www.amazon.com.br/Display-PCF8574-Endere%C3%A7o-Controlador-80x35mm/dp/B0H346LHKM>. Acesso em: 27 set. 2026.
+
+AMAZON.COM.BR. **Placa breakout USB tipo C fêmea, 6 pinos**. Disponível em: <https://www.amazon.com.br/naughtystarts-pe%C3%A7as-breakout-conector-direito/dp/B0B19TP2MX>. Acesso em: 27 set. 2026.
+
+BAÚ DA ELETRÔNICA. **Rolo de solda estanho 500 g, 0,5 mm, Cobix**. Disponível em: <https://www.baudaeletronica.com.br/produto/rolo-de-solda-estanho-500g-05mm-cobix.html>. Acesso em: 27 set. 2026.
+
+CASA DA ROBÓTICA. **Ferro de solda Hikari SC-60, 60 W**. Disponível em: <https://www.casadarobotica.com/prototipagem-e-ferramentas/prototipagem/soldas/ferro-de-solda-hk-plus-hikari-profissional-sc-60w-220v>. Acesso em: 27 set. 2026.
+
+CHEN HSONG BRASIL. **Custo da hora-homem-máquina para operadores de injetoras**. Disponível em: <https://chenhsong.com.br/news/custo-da-hora-homem-maquina-para-operadores-de-injetoras/>. Acesso em: 27 set. 2026.
+
+CURTO CIRCUITO. **Servo motor 9 g SG90**. Disponível em: <https://curtocircuito.com.br/servo-motor-9g-sg90.html>. Acesso em: 27 set. 2026.
+
+EBAY. **Módulo carregador IP5306, 2,1 A**. Disponível em: <https://www.ebay.de/itm/134628665112>. Acesso em: 27 set. 2026.
+
+ELETROGATE. **Jumpers macho-fêmea, 40 unidades de 20 cm**. Disponível em: <https://www.eletrogate.com/jumpers-macho-femea-40-unidades-de-20-cm>. Acesso em: 27 set. 2026.
+
+ELETROGATE. **LED difuso 5 mm vermelho**. Disponível em: <https://www.eletrogate.com/led-difuso-5mm-vermelho>. Acesso em: 27 set. 2026.
+
+ELETROGATE. **Módulo WiFi ESP32 Bluetooth, 30 pinos**. Disponível em: <https://www.eletrogate.com/modulo-wifi-esp32-bluetooth-30-pinos>. Acesso em: 27 set. 2026.
+
+ELETROGATE. **Módulo serial I2C para display LCD**. Disponível em: <https://www.eletrogate.com/modulo-serial-i2c-para-display-lcd-para-arduino>. Acesso em: 27 set. 2026.
+
+ELETROGATE. **Resistor 220 Ω, 1/4 W, 10 unidades**. Disponível em: <https://www.eletrogate.com/resistor-220r-1-4w-10-unidades>. Acesso em: 27 set. 2026.
+
+ELETROGATE. **Resistor 5,1 kΩ, 1/4 W, 10 unidades**. Disponível em: <https://www.eletrogate.com/resistor-5k1-1-4w-10-unidades>. Acesso em: 27 set. 2026.
+
+FERMARC. **Placa de circuito perfurada face simples, 7 × 9 cm**. Disponível em: <https://www.fermarc.com/placa-de-circuito-perfurada-face-simples-7x9>. Acesso em: 27 set. 2026.
+
+FERRO DE SOLDA PROFISSIONAL. **Ferros de solda com controle de temperatura**. Disponível em: <https://ferrodesoldaprofissional.com.br/ferro-de-solda/>. Acesso em: 27 set. 2026.
+
+GALPÃO DAS MÁQUINAS. **Como calcular o custo por peça na impressão 3D**. Disponível em: <https://galpaodasmaquinas.com.br/blog/plastico/custo-peca-impressora-3d/>. Acesso em: 27 set. 2026.
+
+INFOMONEY. **Aneel projeta alta média de 8% para tarifas de consumidores de energia elétrica**. Disponível em: <https://www.infomoney.com.br/economia/aneel-projeta-alta-media-de-8-para-tarifas-de-consumidores-de-energia-eletrica/>. Acesso em: 27 set. 2026.
+
+INFOMONEY. **O que esperar do dólar em setembro? Veja até onde a moeda pode ir**. Disponível em: <https://www.infomoney.com.br/mercados/o-que-esperar-do-dolar-em-setembro-veja-ate-onde-a-moeda-pode-ir/>. Acesso em: 27 set. 2026.
+
+KABUM. **Impressora 3D Creality K1 Max**. Disponível em: <https://www.kabum.com.br/produto/495704/impressora-3d-creality-k1-max-velocidade-maxima-600mm-s-1202080002>. Acesso em: 27 set. 2026.
+
+LC FERRAGENS. **Multímetro digital Hikari HM-1000**. Disponível em: <https://www.lcferragens.com.br/produto/multimetro-hikari-digital-hm-1000/>. Acesso em: 27 set. 2026.
+
+LEROY MERLIN. **Filamento PLA premium 1 kg Voolt3D**. Disponível em: <https://www.leroymerlin.com.br/filamento-pla-preto-premium-1kg-voolt3d-oficial_1570566287>. Acesso em: 27 set. 2026.
+
+LOJA DO MECÂNICO. **Multímetro digital HM-1001 Hikari**. Disponível em: <https://www.lojadomecanico.com.br/produto/123563/3/47/multimetro-digital-hm-1001-hikari-21n240>. Acesso em: 27 set. 2026.
+
+MAGAZINE LUIZA. **Fonte 5 V 3 A com saída USB-C**. Disponível em: <https://www.magazineluiza.com.br>. Acesso em: 27 set. 2026.
+
+MAKERHERO. **Capa para chave táctil push button 12 × 12 mm**. Disponível em: <https://www.makerhero.com/produto/capa-para-chave-tactil-push-button-12x12-mm/>. Acesso em: 27 set. 2026.
+
+MAKERHERO. **Fonte DC chaveada 5 V 3 A USB tipo C**. Disponível em: <https://www.makerhero.com/produto/fonte-dc-chaveada-5v-3a-usb-tipo-c/>. Acesso em: 27 set. 2026.
+
+MAMUTE ELETRÔNICA. **Conector jack USB tipo C fêmea com rabicho de 2 fios**. Disponível em: <https://www.mamuteeletronica.com.br/conector-jack-usb-tipo-c-femea-com-rabicho-2-fios-22739>. Acesso em: 27 set. 2026.
+
+MERCADO LIVRE. **Bateria 18650 3,7 V 3.800 mAh Onistek**. Disponível em: <https://www.mercadolivre.com.br>. Acesso em: 27 set. 2026.
+
+MERCADO LIVRE. **Módulo RTC (real time clock) DS3231**. Disponível em: <https://www.mercadolivre.com.br/modulo-rtc-real-time-clock-ds3231-arduino-esp8266-esp32-rasp/p/MLB42966007>. Acesso em: 27 set. 2026.
+
+MERCADO LIVRE. **Módulo de carga e descarga para bateria 18650 IP5306, 2 A, 5 V, USB-C**. Disponível em: <https://www.mercadolivre.com.br/modulo-carga-y-descarga-bateria-18650-ip5306-2a-5v-usb-c/p/MLB2064132227>. Acesso em: 27 set. 2026.
+
+MERCADO LIVRE. **Suporte para 1 bateria 18650**. Disponível em: <https://www.mercadolivre.com.br>. Acesso em: 27 set. 2026.
+
+MERCADO SHOPS. **Kit com 5 conectores jack tipo C fêmea com rabicho de 2 fios**. Disponível em: <https://ralphcouch.mercadoshops.com.br/MLB-3667070205-kit-com-5-conector-jack-tipo-c-com-rabicho-2-fios-fmea-_JM>. Acesso em: 27 set. 2026.
+
+METALÚRGICA FERRI. **Quanto custa um molde de injeção plástica: como o orçamento é formado**. Disponível em: <https://www.metalferri.com.br/blog/quanto-custa-molde-injecao-plastica>. Acesso em: 27 set. 2026.
+
+MIL PLÁSTICOS. **ABS granulado: preço**. Disponível em: <https://www.milplasticos.com.br/abs-granulado-preco>. Acesso em: 27 set. 2026.
+
+MULTCOMERCIAL. **Cabinho flexível 0,32 mm² (22 AWG)**. Disponível em: <https://www.multcomercial.com.br/fios-e-cabos/cabinho-flexivel/flex-0-32mm-22-awg.html>. Acesso em: 27 set. 2026.
+
+NOVA TRIDA ELETRÔNICA. **Capacitor eletrolítico 1000 µF × 16 V**. Disponível em: <https://www.novatridaeletronica.com.br/capacitor-eletrolitico-1000uf-x-16v>. Acesso em: 27 set. 2026.
+
+NTC. **Custo de molde de injeção de plástico**. Disponível em: <https://ntc.ind.br/custo-de-molde-injecao-plastico/>. Acesso em: 27 set. 2026.
+
+OCTET3D. **Quanto custa imprimir em 3D? Guia de preços 2026**. Disponível em: <https://octet3d.com/blog/quanto-custa-imprimir-em-3d>. Acesso em: 27 set. 2026.
+
+ORIELEC. **Bateria de lítio LIR2032**. Disponível em: <https://www.lojaorielec.com.br/acessorios/baterias-e-suportes/bateria-de-litio-lir2032>. Acesso em: 27 set. 2026.
+
+PV MAGAZINE BRASIL. **Aneel projeta aumento tarifário médio de 8% em 2026**. Disponível em: <https://www.pv-magazine-brasil.com/2026/03/17/aneel-projeta-aumento-tarifario-medio-de-8-em-2026/>. Acesso em: 27 set. 2026.
+
+REVISTA FÓRUM. **Preço do dólar hoje: veja a cotação da moeda em reais atualizada**. Disponível em: <https://revistaforum.com.br/economia/preco-dolar-24-09-2026/>. Acesso em: 27 set. 2026.
+
+SMARTPROJECTS. **Placa fenolite perfurada ilhada, 7 × 9 cm**. Disponível em: <https://www.smartprojectsbrasil.com.br/placa-fenolite-perfurada-ilhada-fibra-de-vidro-7x9-cm>. Acesso em: 27 set. 2026.
+
+SUBMARINO. **Cabo micro-USB, 1 metro**. Disponível em: <https://www.submarino.com.br>. Acesso em: 27 set. 2026.
+
+TERMOTUBOS. **Kit de termo-retráteis variados**. Disponível em: <https://loja.termotubos.com.br/kits/termo-retrateis-variados>. Acesso em: 27 set. 2026.
+
+USINAINFO. **Conector USB-C fêmea com rabicho de alimentação de 2 fios para painel**. Disponível em: <https://www.usinainfo.com.br/conector-usb/conector-usb-c-femea-com-rabicho-de-alimentacao-2-fios-para-painel-diy-9169.html>. Acesso em: 27 set. 2026.
+
+VAMUINO. **Buzzer ativo 5 V**. Disponível em: <https://lojinha.vamuino.com.br/produto/buzzer-ativo-5v/>. Acesso em: 27 set. 2026.
+
+WEMAK. **Filamento PLA premium 1 kg Voolt3D**. Disponível em: <https://www.wemak.com.br/produtos/filamento-3d-pla-1kg-impressao-3d-premium-1-75mm-voolt3d-cor-preto/>. Acesso em: 27 set. 2026.
+
+WJ COMPONENTES. **Micro servo SG90 9 g**. Disponível em: <https://www.wjcomponentes.com.br/micro-servo-sg90-9g/>. Acesso em: 27 set. 2026.
+
+</div>
