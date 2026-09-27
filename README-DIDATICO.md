@@ -113,9 +113,10 @@ porta movida por um servo motor.
 | Relógio DS3231 + bateria LIR2032 *(opcional)* | 1 | Guarda a hora sem internet ([Passo 19](#passo-19--relógio-ds3231-opcional)). |
 | Protoboard e jumpers | — | Ligações. |
 
+<figure markdown="1">
 ![Diagrama de ligações do Zelo+](docs/ligacoes.png)
-
-*(versão vetorial, que pode ser ampliada sem perder qualidade: [`docs/ligacoes.svg`](docs/ligacoes.svg))*
+<figcaption><b>Diagrama de ligações da montagem de bancada.</b> Versão vetorial, que pode ser ampliada sem perda de qualidade: <code>docs/ligacoes.svg</code>.</figcaption>
+</figure>
 
 | Ligação | Pino do ESP32 | Detalhe |
 |---|---|---|
@@ -1686,9 +1687,10 @@ Esta é a **única montagem recomendada** para o uso autônomo do Zelo+:
                 └──────────────── GND comum em tudo ──────────────────┘
 ```
 
+<figure markdown="1">
 ![Montagem autônoma: fonte 5 V/3 A, IP5306 e bateria 18650](docs/ligacoes-autonomo.png)
-
-*(versão vetorial: [`docs/ligacoes-autonomo.svg`](docs/ligacoes-autonomo.svg))*
+<figcaption><b>Diagrama de ligações da montagem autônoma</b> (fonte 5 V/3 A, IP5306, bateria 18650 e relógio DS3231). Versão vetorial: <code>docs/ligacoes-autonomo.svg</code>.</figcaption>
+</figure>
 
 **Como funciona:** o **IP5306** é um módulo de *power bank* que faz três coisas numa
 placa só.
