@@ -96,17 +96,17 @@ Textos anteriores + nome do medicamento entre parênteses:
 - Histórico antigo é convertido para o novo formato.
 - Wi-Fi, contatos e token do Telegram não mudam.
 
-## 10. LCD (16 colunas, sem acentos)
+## 10. LCD (16 colunas; "ç" e "ã" como caracteres especiais)
 
 | Situação | Linha 1 | Linha 2 |
 |---|---|---|
-| Aguardando | `15:26:03` | `3 remedios` |
+| Aguardando | `15:26` (centralizado) | `Medicação em dia` |
 | Alarme | `Hora do remedio!` | `LOSARTANA (C1)` |
 | Retirada | `Retire: C1 C2` | `Fecha em: 170s` |
 | Abastecer | `Abast. compart.2` | `METFORMINA` |
 | Repor | `Repor compart.3` | `SINVASTATINA` |
 | Esvaziar | `Esvaziar comp.1` | `Retire tudo` |
-| Pendente | `15:40:10` | `Dose pendente!` |
+| Pendente | `15:40` (centralizado) | `Dose pendente!` |
 
 ## 11. Testes pendentes
 

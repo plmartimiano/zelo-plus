@@ -203,14 +203,26 @@ String escaparHTML(const String& texto) {
   return saida;
 }
 
-// O LCD nao mostra acentos: converte para maiusculas sem acento (ex.: "Losartana
-// Potássica" -> "LOSARTANA POTASSICA") e corta em 'largura' caracteres.
-String textoLCD(const String& texto, unsigned int largura = 16) {
+// O LCD 16x2 nao tem acentos. Dois caracteres especiais sao desenhados nele ao
+// ligar (setup): "ç" no codigo 1 e "ã" no codigo 2 (ex.: "Medicação em dia").
+const uint8_t LCD_CEDILHA = 1;
+const uint8_t LCD_A_TIL = 2;
+uint8_t DESENHO_CEDILHA[8] = {0b00000, 0b01110, 0b10000, 0b10000, 0b10001, 0b01110, 0b00100, 0b01100};
+uint8_t DESENHO_A_TIL[8] = {0b01101, 0b10010, 0b01110, 0b00001, 0b01111, 0b10001, 0b01111, 0b00000};
+
+// Prepara o texto para o LCD e corta em 'largura' caracteres. "ç" e "ã" usam os
+// caracteres especiais; as outras letras acentuadas perdem o acento. Com
+// maiusculas = true (nomes dos remedios), tudo vira maiusculas sem acento
+// (ex.: "Losartana Potássica" -> "LOSARTANA POTASSICA").
+String textoLCD(const String& texto, unsigned int largura = 16, bool maiusculas = false) {
   String saida;
   for (unsigned int i = 0; i < texto.length() && saida.length() < largura; i++) {
     uint8_t c = (uint8_t)texto[i];
     if (c == 0xC3 && i + 1 < texto.length()) {
-      uint8_t d = (uint8_t)texto[++i] | 0x20; // 0x80-0x9F (maiusculas) -> minusculas
+      uint8_t original = (uint8_t)texto[++i];
+      if (!maiusculas && original == 0xA7) { saida += (char)LCD_CEDILHA; continue; }
+      if (!maiusculas && original == 0xA3) { saida += (char)LCD_A_TIL; continue; }
+      uint8_t d = original | 0x20; // 0x80-0x9F (maiusculas) -> minusculas
       char base = '?';
       if (d >= 0xA0 && d <= 0xA5) base = 'A';
       else if (d == 0xA7) base = 'C';
@@ -219,13 +231,14 @@ String textoLCD(const String& texto, unsigned int largura = 16) {
       else if (d == 0xB1) base = 'N';
       else if (d >= 0xB2 && d <= 0xB6) base = 'O';
       else if (d >= 0xB9 && d <= 0xBC) base = 'U';
+      if (!maiusculas && original >= 0xA0 && base != '?') base = (char)tolower(base);
       saida += base;
     } else if (c >= 0x80) {
       // outro caractere especial: pula os bytes de continuacao
       while (i + 1 < texto.length() && ((uint8_t)texto[i + 1] & 0xC0) == 0x80) i++;
       saida += '?';
     } else {
-      saida += (char)toupper(c);
+      saida += maiusculas ? (char)toupper(c) : (char)c;
     }
   }
   return saida;
@@ -1262,7 +1275,7 @@ void iniciarAbastecimento(int c, ModoAbastecimento modo) {
 
   lcd.clear();
   escreverLinhaLCD(0, titulo);
-  escreverLinhaLCD(1, modo == ABAST_ESVAZIAR ? String("Retire tudo") : medicamentos[c].nome);
+  escreverLinhaLCD(1, modo == ABAST_ESVAZIAR ? String("Retire tudo") : textoLCD(medicamentos[c].nome, 16, true));
   abrirCompartimento(c);
   mascaraAberta = (uint8_t)(1 << c);
   estadoAtual = ABASTECENDO;
@@ -1648,17 +1661,18 @@ void atualizarLCDRelogio() {
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo, 10)) return;
 
-  char horaBuffer[17];
-  strftime(horaBuffer, sizeof(horaBuffer), "%H:%M:%S", &timeinfo);
-  escreverLinhaLCD(0, horaBuffer);
+  // Linha 1: hora e minuto, centralizados.
+  char horaBuffer[6];
+  strftime(horaBuffer, sizeof(horaBuffer), "%H:%M", &timeinfo);
+  escreverLinhaLCD(0, String("     ") + horaBuffer);
 
   int ativos = totalMedicamentosAtivos();
   if (dosePendente) {
     escreverLinhaLCD(1, "Dose pendente!");
   } else if (ativos > 0) {
-    escreverLinhaLCD(1, String(ativos) + (ativos == 1 ? " remedio" : " remedios"));
+    escreverLinhaLCD(1, "Medicação em dia");
   } else {
-    escreverLinhaLCD(1, "Sem remedio");
+    escreverLinhaLCD(1, "Sem remédio");
   }
 }
 
@@ -1785,6 +1799,8 @@ void setup() {
 
   lcd.init();
   lcd.backlight();
+  lcd.createChar(LCD_CEDILHA, DESENHO_CEDILHA);
+  lcd.createChar(LCD_A_TIL, DESENHO_A_TIL);
   lcd.print("Iniciando...");
 
   iniciarRelogioRTC();
@@ -1901,7 +1917,7 @@ void loop() {
           if (!temBit(doseMascara, c)) continue;
           nomeMostrado = c;
           String sufixo = " (C" + String(c + 1) + ")";
-          String nomeCurto = textoLCD(medicamentos[c].nome, 16 - sufixo.length());
+          String nomeCurto = textoLCD(medicamentos[c].nome, 16 - sufixo.length(), true);
           nomeCurto.trim();
           escreverLinhaLCD(1, nomeCurto + sufixo);
           break;
@@ -1976,7 +1992,7 @@ void loop() {
         bool mostrarNome = !travaLiberada || (decorrido / 2000) % 2 == 0;
         if (mostrarNome) {
           escreverLinhaLCD(1, modoAbastecimento == ABAST_ESVAZIAR ? String("Retire tudo")
-                                                                  : medicamentos[compartimentoAbastecendo].nome);
+                                                                  : textoLCD(medicamentos[compartimentoAbastecendo].nome, 16, true));
         } else {
           mostrarContagemLCD(abastecimentoAbertoEm, TEMPO_ABASTECIMENTO);
         }

@@ -1247,22 +1247,60 @@ o link **Baixar histórico (CSV)**, que abre no Excel/Google Planilhas:
 
 ## Passo 17 — Escrevendo no LCD
 
-**O problema:** o LCD 16x2 não tem acentos. "Potássica" apareceria com símbolos
-estranhos. **A solução:** converter para maiúsculas sem acento.
+**O problema:** o LCD 16x2 não tem letras acentuadas. "Medicação" apareceria com
+símbolos estranhos. **A solução:** duas técnicas combinadas.
 
-Em UTF-8 (o formato do texto), letras acentuadas usam **2 bytes**, e o primeiro é
-sempre `0xC3`. O segundo byte diz qual é a letra:
+**1. Caracteres especiais desenhados no LCD.** O LCD permite criar até 8 caracteres
+próprios, cada um desenhado numa grade de 5 × 8 pontos (cada linha da grade é um número
+binário: `1` = ponto aceso). O Zelo+ cria o **ç** e o **ã**, que aparecem na tela de
+espera:
+
+```cpp
+const uint8_t LCD_CEDILHA = 1;
+const uint8_t LCD_A_TIL = 2;
+uint8_t DESENHO_CEDILHA[8] = {0b00000, 0b01110, 0b10000, 0b10000, 0b10001, 0b01110, 0b00100, 0b01100};
+uint8_t DESENHO_A_TIL[8] = {0b01101, 0b10010, 0b01110, 0b00001, 0b01111, 0b10001, 0b01111, 0b00000};
+```
+
+```text
+  ç (código 1)      ã (código 2)
+  · · · · ·         · █ █ · █
+  · █ █ █ ·         █ · · █ ·
+  █ · · · ·         · █ █ █ ·
+  █ · · · ·         · · · · █
+  █ · · · █         · █ █ █ █
+  · █ █ █ ·         █ · · · █
+  · · █ · ·         · █ █ █ █
+  · █ █ · ·         · · · · ·
+```
+
+Os desenhos são gravados no LCD uma vez, ao ligar (no `setup()`):
+
+```cpp
+  lcd.createChar(LCD_CEDILHA, DESENHO_CEDILHA);
+  lcd.createChar(LCD_A_TIL, DESENHO_A_TIL);
+```
+
+**2. As outras letras acentuadas perdem o acento.** Em UTF-8 (o formato do texto), as
+letras acentuadas usam **2 bytes**, e o primeiro é sempre `0xC3`. O segundo byte diz
+qual é a letra. O "ç" (`0xA7`) e o "ã" (`0xA3`) viram os caracteres especiais; as
+outras viram a letra sem acento:
 
 ```cpp
     if (c == 0xC3 && i + 1 < texto.length()) {
-      uint8_t d = (uint8_t)texto[++i] | 0x20; // 0x80-0x9F (maiusculas) -> minusculas
+      uint8_t original = (uint8_t)texto[++i];
+      if (!maiusculas && original == 0xA7) { saida += (char)LCD_CEDILHA; continue; }
+      if (!maiusculas && original == 0xA3) { saida += (char)LCD_A_TIL; continue; }
+      uint8_t d = original | 0x20; // 0x80-0x9F (maiusculas) -> minusculas
       char base = '?';
       if (d >= 0xA0 && d <= 0xA5) base = 'A';
       else if (d == 0xA7) base = 'C';
       else if (d >= 0xA8 && d <= 0xAB) base = 'E';
 ```
 
-Resultado: `"Losartana Potássica"` → `"LOSARTANA POTASS"` (cortado em 16 colunas).
+Os **nomes dos remédios** são mostrados em **maiúsculas** (parâmetro `maiusculas`), o que
+facilita a leitura: `"Losartana Potássica"` → `"LOSARTANA POTASS"` (cortado em 16
+colunas).
 
 E uma função que **sempre preenche a linha inteira**, apagando restos de textos
 anteriores:
@@ -1276,13 +1314,33 @@ void escreverLinhaLCD(int linha, const String& texto) {
 }
 ```
 
+Na **tela de espera**, a linha 1 mostra a hora centralizada e a linha 2, a situação das
+doses:
+
+```cpp
+  // Linha 1: hora e minuto, centralizados.
+  char horaBuffer[6];
+  strftime(horaBuffer, sizeof(horaBuffer), "%H:%M", &timeinfo);
+  escreverLinhaLCD(0, String("     ") + horaBuffer);
+
+  int ativos = totalMedicamentosAtivos();
+  if (dosePendente) {
+    escreverLinhaLCD(1, "Dose pendente!");
+  } else if (ativos > 0) {
+    escreverLinhaLCD(1, "Medicação em dia");
+  } else {
+    escreverLinhaLCD(1, "Sem remédio");
+  }
+```
+
 | Situação | Linha 1 | Linha 2 |
 |---|---|---|
-| Aguardando | `15:26:03` | `3 remedios` |
+| Aguardando | `10:30` (centralizado) | `Medicação em dia` |
 | Alarme | `Hora do remedio!` | `LOSARTANA (C1)` (alterna a cada 2 s) |
 | Retirada | `Retire: C1 C2` | `Fecha em: 170s` |
 | Abastecer / Repor | `Abast. compart.2` / `Repor compart.2` | `METFORMINA` |
-| Dose pendente | `15:40:10` | `Dose pendente!` |
+| Dose pendente | `15:40` (centralizado) | `Dose pendente!` |
+| Nenhum remédio cadastrado | hora (centralizada) | `Sem remedio` |
 
 ## Passo 18 — Modo de teste
 
@@ -1958,7 +2016,7 @@ e uma faixa de eletrônica na base, onde ficam o LCD, o botão e a luz de alerta
 
 <figure markdown="1">
 ![Desenho técnico dimensional do gabinete](docs/desenho-tecnico.jpg)
-<figcaption><b>Desenho técnico dimensional do gabinete</b> — vista frontal, corte lateral, vista superior e resumo das medidas (em mm).</figcaption>
+<figcaption><b>Desenho técnico dimensional do gabinete</b> — vista frontal, corte lateral, vista superior e resumo das medidas (em mm; vistas sem escala).</figcaption>
 </figure>
 
 As vistas também estão em escala no arquivo vetorial
@@ -1990,7 +2048,7 @@ As vistas também estão em escala no arquivo vetorial
 
 <figure markdown="1">
 ![Imagens do produto Zelo+](docs/produto-imagens.jpg)
-<figcaption><b>Imagens do produto</b> — perspectiva, vistas e detalhes do compartimento aberto, da dobradiça e do encaixe (medidas em mm; imagens ilustrativas).</figcaption>
+<figcaption><b>Imagens do produto</b> — perspectiva, vistas e detalhes do compartimento aberto, da dobradiça e do encaixe (medidas em mm; vistas sem escala).</figcaption>
 </figure>
 
 ## F3. Critérios de projeto
