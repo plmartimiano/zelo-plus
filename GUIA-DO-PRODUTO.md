@@ -2006,7 +2006,7 @@ unidade em produção, estão nas Partes [B](#parte-b--desenho-técnico-do-gabin
 
 # Parte G — Custo de produção (estimativa para viabilidade)
 
-> **Natureza desta parte:** estimativa acadêmica para avaliar a **viabilidade** de
+> **Natureza desta parte:** estimativa para avaliar a **viabilidade** de
 > produzir o Zelo+ em série. **Data-base: setembro de 2026.** Não é orçamento: os
 > valores são faixas (mínimo–máximo) calculadas a partir de premissas declaradas, e
 > cada número pode ser refeito trocando a premissa correspondente. As medidas do
@@ -2228,7 +2228,7 @@ assistência técnica e lucro.
 | Pequena série (1.000) | R$ 244–408 | R$ 610–1.630 |
 | Série (10.000) | R$ 162–260 | **R$ 400–1.040** |
 
-**Como leitura acadêmica:** em série, o Zelo+ ficaria na faixa de **R$ 400 a R$ 1.040**
+**Síntese:** em série, o Zelo+ ficaria na faixa de **R$ 400 a R$ 1.040**
 para o consumidor. O **custo de entrada** (moldes, placa própria e homologação) fica
 entre **R$ 195 mil e R$ 375 mil**, e só se paga com volumes a partir de alguns milhares
 de unidades. Antes disso, o caminho viável é o **lote piloto em impressão 3D**, que exige
