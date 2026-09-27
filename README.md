@@ -9,6 +9,7 @@ paciente, cada um fixo no seu compartimento (detalhes em
 
 > 📘 **Material pedagógico:** [`README-DIDATICO.md`](README-DIDATICO.md) explica o
 > funcionamento passo a passo, com o trecho de código de cada etapa.
+> Versão para impressão: [`docs/Zelo-Guia-Didatico.pdf`](docs/Zelo-Guia-Didatico.pdf).
 > 🔌 **Ligações:** [`docs/ligacoes.png`](docs/ligacoes.png) ([SVG](docs/ligacoes.svg)).
 
 ```
