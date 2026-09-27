@@ -373,6 +373,9 @@ void carregarContato(const char* prefixo, Contato& contato) {
   contato.nome = prefsCadastro.getString((p + "_nome").c_str(), "");
   contato.telefone = prefsCadastro.getString((p + "_tel").c_str(), "");
   contato.chatId = prefsCadastro.getString((p + "_chat").c_str(), "");
+  contato.nome.trim();
+  contato.telefone.trim();
+  contato.chatId.trim();
 }
 
 String prefixoFamiliar(int i) {
@@ -429,6 +432,7 @@ void carregarMedicamento(int c) {
   Medicamento& m = medicamentos[c];
   String p = prefixoMedicamento(c);
   m.nome = prefsCadastro.getString((p + "_nome").c_str(), "");
+  m.nome.trim(); // versoes antigas podiam gravar espacos no fim do nome
   m.totalHorarios = lerHorarios((p + "_tot").c_str(), (p + "_hr").c_str(), (p + "_mn").c_str(),
                                 m.hora, m.minuto, m.jaDisparado);
 }
@@ -453,6 +457,7 @@ void migrarCadastroAntigo() {
 
   Medicamento& m = medicamentos[0];
   m.nome = prefsCadastro.getString("remedio", "");
+  m.nome.trim();
   m.totalHorarios = lerHorarios("total", "horas", "minutos", m.hora, m.minuto, m.jaDisparado);
   salvarMedicamento(0);
 
@@ -465,6 +470,7 @@ void migrarCadastroAntigo() {
 
 void carregarCadastro() {
   nomePaciente = prefsCadastro.getString("nome", "");
+  nomePaciente.trim();
 
   migrarCadastroAntigo();
   for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
@@ -1488,8 +1494,12 @@ void handleSalvar() {
   // Compartimentos que recebem um medicamento novo (ou trocado) abrem para
   // abastecimento, um de cada vez. So mudar horarios nao abre nada.
   for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
+    // Compara sem diferenciar maiusculas/minusculas nem espacos nas pontas:
+    // so um remedio realmente diferente abre o compartimento.
     String antigo = medicamentos[c].nome;
     String novo = novos[c].nome;
+    antigo.trim();
+    novo.trim();
     antigo.toLowerCase();
     novo.toLowerCase();
     if (novo != "" && novo != antigo) filaAbastecimento |= (uint8_t)(1 << c);
