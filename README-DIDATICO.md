@@ -14,6 +14,7 @@
   - [A2. Materiais e ligações](#a2-materiais-e-ligações)
   - [A3. Ambiente de desenvolvimento](#a3-ambiente-de-desenvolvimento)
   - [A4. Cinco conceitos antes de começar](#a4-cinco-conceitos-antes-de-começar)
+  - [A5. A página do Zelo+ (tela completa)](#a5-a-página-do-zelo-tela-completa)
 - [Parte B — O código, passo a passo](#parte-b--o-código-passo-a-passo)
   - [Passo 1 — Bibliotecas e pinos](#passo-1--bibliotecas-e-pinos)
   - [Passo 2 — Estruturas de dados](#passo-2--estruturas-de-dados)
@@ -50,21 +51,22 @@ porta movida por um servo motor.
 
 **Rotina do dia a dia:**
 
-```
- Cuidador                          Dispenser                         Paciente
- ────────                          ─────────                         ────────
- 1. Cadastra paciente, remédios,
-    horários e contatos pela
-    página web do dispenser  ───►  2. Abre o compartimento de cada
-                                      remédio novo para abastecer
-                                   3. No horário: buzzer + LED
-                                      + nome do remédio no LCD  ───►  4. Aperta o botão
-                                   5. Abre as portas da dose    ◄───
-                                                                      6. Retira e aperta de novo
-                                   7. Fecha as portas
-                                   ─ Se ninguém aparecer ─
- 8. Recebe aviso no Telegram ◄───  6 min: avisa o cuidador
-    (cuidador e familiares)        12 min: avisa todos
+```text
+ CUIDADOR               DISPENSER                  PACIENTE
+ ────────               ─────────                  ────────
+ 1. Cadastra os    ──►  2. Abre o compartimento
+    remédios na            de cada remédio novo
+    página web             para abastecer
+                        3. No horário: buzzer,
+                           LED e nome no LCD  ──►  4. Aperta
+                                                      o botão
+                        5. Abre as portas     ◄──
+                           da dose                 6. Retira e
+                        7. Fecha as portas    ◄──     aperta de
+                                                      novo
+          ─ ─ ─ Se o paciente não aparecer ─ ─ ─
+ 8. Recebe aviso   ◄──  6 min: avisa o cuidador
+    no Telegram         12 min: avisa todos
 ```
 
 Tudo o que o dispenser precisa saber (remédios, horários, contatos, histórico) fica
@@ -161,7 +163,7 @@ rodapé do VSCode.
 
 4. **Máscara de bits** — para dizer "compartimentos 1 e 3", o código usa um número
    em que cada **bit** representa um compartimento:
-   ```
+   ```text
    compartimento:   3 2 1
    bits:            1 0 1   = 5  →  compartimentos 1 e 3
    ```
@@ -170,6 +172,43 @@ rodapé do VSCode.
 5. **Memória permanente (Preferences/NVS)** — a variável comum some quando a energia
    cai. A biblioteca `Preferences` grava dados na **memória flash** da placa, que não
    se apaga ao desligar (como um pen drive).
+
+## A5. A página do Zelo+ (tela completa)
+
+É a página que o cuidador abre no celular, digitando o IP que aparece no LCD (ex.:
+`192.168.15.152`). As imagens abaixo foram geradas **pelo próprio firmware** (a função
+`handleRoot()` do Passo 7) com um cadastro de exemplo completo. A página é uma só,
+com rolagem; aqui ela foi dividida em três partes para caber lado a lado.
+
+| ① Paciente e compartimentos | ② Contatos e Telegram | ③ Resumo, histórico e reposição |
+|:---:|:---:|:---:|
+| ![Página do Zelo+, parte 1](docs/app-1.png) | ![Página do Zelo+, parte 2](docs/app-2.png) | ![Página do Zelo+, parte 3](docs/app-3.png) |
+
+**O que aparece em cada parte:**
+
+| Área da página | O que mostra / para que serve | Onde está no código |
+|---|---|---|
+| **Nome do paciente** | Campo obrigatório; aparece nas mensagens do Telegram | Passo 7 |
+| **Compartimento 1, 2 e 3** | Um cartão por compartimento: medicamento, horários (até 6), "+ Adicionar horário" | Passo 7 |
+| **📦 Coloque … no compartimento …** | Indica onde colocar cada remédio; muda enquanto se digita | Passo 7 |
+| **Esvaziar compartimento** | Apaga o remédio daquele compartimento e, se desejado, abre para retirar sobras | Passo 14 |
+| **Cuidador (obrigatório)** | Nome, celular e ID do Telegram de quem recebe o 1º aviso | Passos 8 e 15 |
+| **Familiar 1, 2… (opcional)** | Até 5; "Remover" e "+ Adicionar familiar". O aviso em laranja indica quem ainda não tem ID do Telegram | Passo 15 |
+| **Avisos pelo Telegram** | Token do bot (fica oculto depois de salvo), "Buscar IDs do Telegram" e passo a passo | Passo 15 |
+| **Salvar cadastro** | Envia tudo para a placa, que valida e grava na memória | Passo 8 |
+| **Resumo (caixa verde)** | Paciente e horários de cada compartimento já gravados | Passo 7 |
+| **Enviar mensagem de teste** | Manda uma mensagem para todos os contatos com ID | Passo 15 |
+| **Histórico de doses** | Adesão dos últimos 7 dias (geral e por remédio) e as 20 doses mais recentes, em cores | Passo 16 |
+| **Baixar histórico (CSV) / Apagar histórico** | Planilha para Excel/Google Planilhas; limpar os registros | Passo 16 |
+| **Abrir compartimento para reposição** | Pergunta qual remédio será reposto (imagem abaixo) e abre só o compartimento dele | Passo 14 |
+| **Trocar rede Wi-Fi** | Esquece o Wi-Fi salvo e volta ao modo de configuração | Passo 4 |
+
+**Reposição** — ao tocar em "Abrir compartimento para reposição", a página lista só os
+remédios cadastrados, cada um com o seu compartimento. Depois de escolher e tocar em
+"Continuar", ela ainda confirma ("Abrir o compartimento 2 para repor Metformina?")
+antes de abrir:
+
+![Escolha do medicamento na reposição](docs/app-reposicao.png)
 
 ---
 
@@ -646,7 +685,7 @@ void loop() {
 
 **Mapa dos estados:**
 
-```
+```text
                     horário chegou
    ┌────────────┐ ───────────────────► ┌──────────┐
    │ AGUARDANDO │                      │ TOCANDO  │
