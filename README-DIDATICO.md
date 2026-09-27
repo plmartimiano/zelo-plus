@@ -67,8 +67,9 @@
   - [F1. Desenho técnico V5 (original)](#f1-desenho-técnico-v5-original)
   - [F2. Conferência das medidas do V5](#f2-conferência-das-medidas-do-v5)
   - [F3. Medidas revisadas (V5.1)](#f3-medidas-revisadas-v51)
-  - [F4. Por que essas escolhas](#f4-por-que-essas-escolhas)
-  - [F5. Onde fica cada componente](#f5-onde-fica-cada-componente)
+  - [F4. Imagens do produto (V5.1)](#f4-imagens-do-produto-v51)
+  - [F5. Por que essas escolhas](#f5-por-que-essas-escolhas)
+  - [F6. Onde fica cada componente](#f6-onde-fica-cada-componente)
 - [Parte G — Custo de produção (estimativa para viabilidade)](#parte-g--custo-de-produção-estimativa-para-viabilidade)
   - [G1. Premissas e método](#g1-premissas-e-método)
   - [G2. Volume de plástico do gabinete V5.1](#g2-volume-de-plástico-do-gabinete-v51)
@@ -1983,25 +1984,26 @@ Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo
 
 ## F3. Medidas revisadas (V5.1)
 
-O desenho revisado completo, numa folha só, está em
-[`docs/gabinete-v51.png`](docs/gabinete-v51.png) (versão vetorial:
-[`docs/gabinete-v51.svg`](docs/gabinete-v51.svg)). Abaixo, cada vista em tamanho de
-leitura. Todas as somas fecham.
-
 <figure markdown="1">
-![Gabinete V5.1 — vista frontal](docs/gabinete-v51-frontal.png)
-<figcaption><b>V5.1 — vista frontal.</b> LCD no eixo central (105 mm); botão e acrílico à mesma distância do centro (69 mm).</figcaption>
+![Desenho técnico dimensional V5.1](docs/desenho-tecnico-v51.jpg)
+<figcaption><b>Desenho técnico dimensional V5.1 (revisado).</b> As cotas conferem com as tabelas abaixo; ver as notas de conferência logo a seguir.</figcaption>
 </figure>
 
-<figure markdown="1">
-![Gabinete V5.1 — corte lateral](docs/gabinete-v51-corte.png)
-<figcaption><b>V5.1 — corte lateral.</b> Faixa de eletrônica de 45 mm sob os compartimentos; compartimento com 50,5 mm úteis; área técnica com os servos.</figcaption>
-</figure>
-
-<figure markdown="1">
-![Gabinete V5.1 — vista superior](docs/gabinete-v51-superior.png)
-<figcaption><b>V5.1 — vista superior.</b> Aberturas de 65,7 × 75,7 mm para tampas de 65 × 75 mm (folga de 0,35 por lado); tampa técnica removível.</figcaption>
-</figure>
+> 🔎 **Notas de conferência do desenho V5.1**
+>
+> - ✅ **Todas as cotas e somas conferem:** frente 27 + 18 + 27 + 66 + 16 + 40 + 16 = 210;
+>   largura 3 + 65,7 + 3,45 + 65,7 + 3,45 + 65,7 + 3 = 210; profundidade
+>   3 + 75,7 + 2 + 46,3 + 3 = 130; alturas 100 / 45 / 22,5; tabela de resumo idêntica à
+>   V5.1.
+> - ✏️ **Vista frontal:** a cota "50,5 útil" está na faixa azul **externa**, que mede
+>   **55 mm**. Os 50,5 mm são a profundidade **interna** do compartimento (corretos no
+>   corte lateral).
+> - ✏️ **Corte lateral:** onde se lê "IPS306", leia-se **IP5306** (o módulo de carga).
+> - ✏️ **Subtítulo:** "tampas 2" aparece repetido.
+> - 📐 **Escala:** as vistas não estão em escala. A altura de 100 mm aparece como ~80 mm
+>   na vista frontal e ~87 mm no corte, e os 130 mm da vista superior aparecem como
+>   ~119 mm. **Valem as cotas escritas.** O desenho **em escala** está em
+>   [`docs/gabinete-v51.svg`](docs/gabinete-v51.svg) ([PNG](docs/gabinete-v51.png)).
 
 **Dimensões principais: 210 (C) × 130 (P) × 100 (A) mm.**
 
@@ -2025,7 +2027,32 @@ leitura. Todas as somas fecham.
 | Placa do LCD (atrás do painel) | 80 × 36 × ~25 (com módulo I2C) |
 | Recorte do USB-C (parede traseira) | 14,2 × 5,4, centro a ~15 da base |
 
-## F4. Por que essas escolhas
+## F4. Imagens do produto (V5.1)
+
+<figure markdown="1">
+![Imagens do produto V5.1](docs/produto-v51-imagens.jpg)
+<figcaption><b>Imagens do produto V5.1 (ilustrativas)</b> — perspectiva, vistas e detalhe do compartimento aberto, da dobradiça e do encaixe. Ver as notas de conferência abaixo.</figcaption>
+</figure>
+
+> 🔎 **Notas de conferência das imagens**
+>
+> - ✅ **Conferem:** conjunto 210 × 130 × 100; tampas 65 × 75 × 2; divisória de 3,45 mm
+>   no topo; espessura da tampa de 2 mm; dobradiças na borda traseira das tampas, junto à
+>   área técnica.
+> - ❌ **Detalhe do compartimento:** "22,5 (altura útil)" está **errado**. A altura útil
+>   é **50,5 mm**; 22,5 mm é a altura do **centro dos elementos frontais**. As medidas
+>   internas úteis são **65,7 × 75,7 × 50,5 mm**; 65 × 75 é o tamanho da **tampa**.
+> - ✏️ **Vista superior:** a legenda "Tampa fixa" deve ser **tampa removível** (4
+>   parafusos M3), para dar acesso à bateria e ao ESP32.
+> - ✏️ **Vista lateral:** a divisão inclinada entre azul e preto vem do V5. Na V5.1, a
+>   faixa preta é **reta, com 45 mm**.
+> - 📐 **Escala:** as vistas menores não estão em escala. A altura de 100 mm aparece como
+>   ~67 mm na vista frontal e ~59 mm na lateral.
+> - 💬 **Texto do LCD:** "10:30 / Medicação em dia" é ilustrativo. O programa mostra a
+>   hora com segundos e o número de remédios, sem acentos, por exemplo `15:26:03` /
+>   `3 remedios` (Passo 17).
+
+## F5. Por que essas escolhas
 
 - **Altura de 100 mm:**
   - A proporção fica **210 : 130 : 100** (≈ 2,1 : 1,3 : 1), com a altura em ~48 % da largura: perfil de caixa de mesa, estável e sem cara de "bloco".
@@ -2039,7 +2066,7 @@ leitura. Todas as somas fecham.
 - **Manutenção:** a tampa da área técnica é **removível** (4 parafusos M3), com acesso aos servos, à bateria e ao USB do ESP32 para atualizar o programa (D10).
 - **Energia:** o conector USB-C de painel fica na **parede traseira**, dentro da faixa de eletrônica.
 
-## F5. Onde fica cada componente
+## F6. Onde fica cada componente
 
 | Componente | Local no gabinete |
 |---|---|
