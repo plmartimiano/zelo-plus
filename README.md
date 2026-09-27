@@ -10,14 +10,18 @@ paciente, cada um fixo no seu compartimento (detalhes em
 > 📘 **Material pedagógico:** [`README-DIDATICO.md`](README-DIDATICO.md) explica o
 > funcionamento passo a passo, com o trecho de código de cada etapa.
 > Versão para impressão: [`docs/Zelo-Guia-Didatico.pdf`](docs/Zelo-Guia-Didatico.pdf).
-> 🔌 **Ligações:** [`docs/ligacoes.png`](docs/ligacoes.png) ([SVG](docs/ligacoes.svg)).
+> 🔌 **Ligações (bancada/testes):** [`docs/ligacoes.png`](docs/ligacoes.png) ([SVG](docs/ligacoes.svg)).
+> 🔋 **Uso autônomo, após testes e atualização** (fonte única, bateria e sugestão de
+> relógio DS3231): Parte D do guia didático e
+> [`docs/ligacoes-autonomo.png`](docs/ligacoes-autonomo.png) ([SVG](docs/ligacoes-autonomo.svg)).
 
 ```
 zelo-plus/
 ├── platformio.ini          # ambiente esp32dev + dependências
 ├── README-DIDATICO.md      # guia didático passo a passo
 ├── docs/compartimentos.md  # especificação aprovada dos 3 compartimentos
-├── docs/ligacoes.png/.svg  # diagrama de todas as ligações
+├── docs/ligacoes.png/.svg  # diagrama de todas as ligações (bancada)
+├── docs/ligacoes-autonomo.*# montagem autônoma: fonte única + DS3231 (sugerido)
 └── src/main.cpp            # firmware completo (máquina de estados + web + captive portal)
 ```
 

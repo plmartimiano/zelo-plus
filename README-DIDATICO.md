@@ -38,6 +38,15 @@
   - [C1. Linha do tempo de uma dose](#c1-linha-do-tempo-de-uma-dose)
   - [C2. Referência rápida](#c2-referência-rápida)
   - [C3. Para praticar](#c3-para-praticar)
+- [Parte D — Uso autônomo, sem o laptop (condicional)](#parte-d--uso-autônomo-sem-o-laptop-condicional)
+  - [D1. Condição para aplicar](#d1-condição-para-aplicar)
+  - [D2. Por que o laptop não é necessário](#d2-por-que-o-laptop-não-é-necessário)
+  - [D3. Opção A — carregador USB](#d3-opção-a--carregador-usb)
+  - [D4. Opção B — fonte única (montagem definitiva)](#d4-opção-b--fonte-única-montagem-definitiva)
+  - [D5. Opção C — bateria, power bank e "nobreak"](#d5-opção-c--bateria-power-bank-e-nobreak)
+  - [D6. Falta de energia e de internet](#d6-falta-de-energia-e-de-internet)
+  - [D7. Sugestão: módulo de relógio DS3231](#d7-sugestão-módulo-de-relógio-ds3231)
+  - [D8. Resumo: qual montagem usar](#d8-resumo-qual-montagem-usar)
 
 ---
 
@@ -1272,3 +1281,190 @@ Sugestões de exercícios, do mais simples ao mais desafiador:
 5. **Quarto compartimento**: o que precisaria mudar? (Dica: `NUM_COMPARTIMENTOS`,
    `PINOS_SERVO`, os ângulos… e a página já se adapta sozinha.)
 6. **Desafio:** enviar pelo Telegram um resumo diário de adesão às 21h (Passos 11, 15 e 16).
+
+---
+
+# Parte D — Uso autônomo, sem o laptop (condicional)
+
+> ⚠️ **Esta parte é condicional.** Ela descreve como deixar o dispenser funcionando
+> sozinho, ligado na tomada ou em bateria. **Só deve ser aplicada depois que os testes
+> forem concluídos e a versão final for gravada** (ver D1). Até lá, continua valendo a
+> **montagem de bancada** da seção [A2](#a2-materiais-e-ligações): ESP32 no USB do
+> laptop e servos na fonte de 5 V separada.
+
+## D1. Condição para aplicar
+
+Marque tudo antes de passar para a montagem autônoma:
+
+- [ ] **Testes da bancada aprovados:** histórico (no horário, com atraso, sem acesso e
+  planilha), alerta de 60 s no Telegram para cuidador e familiares, abastecimento
+  guiado, reposição por remédio, dois remédios no mesmo horário, migração do cadastro
+  e o novo visual da página no celular.
+- [ ] **Tempos reais ligados:** no `src/main.cpp`, trocar `#define MODO_TESTE 1` por
+  `#define MODO_TESTE 0` (Passo 18), fazer **Build** e **Upload** e conferir no Serial
+  Monitor que a linha `ATENCAO: MODO_TESTE ativo` **não** aparece mais.
+- [ ] **Um dia inteiro de uso assistido**, ainda no laptop, com os horários reais do
+  paciente, sem falhas.
+- [ ] **IP fixo:** no roteador, reservar o IP do dispenser ("reserva de DHCP"), para o
+  endereço da página não mudar quando o roteador reiniciar.
+- [ ] **Etiquetas coloridas** nas portas: 1 azul, 2 verde, 3 roxo (as mesmas cores da
+  página).
+
+## D2. Por que o laptop não é necessário
+
+O programa fica **gravado na memória flash** do ESP32 e roda sozinho sempre que a placa
+recebe energia. Durante os testes, o laptop faz só duas coisas:
+
+1. **Fornece energia** pela porta USB.
+2. **Mostra as mensagens** da placa no Serial Monitor (útil para testar, dispensável no
+   uso).
+
+Para funcionar sem o laptop, basta trocar a **fonte de energia**. O código não muda.
+
+## D3. Opção A — carregador USB
+
+A troca mais simples: no lugar do laptop, um **carregador de celular** no mesmo cabo
+USB do ESP32.
+
+- Carregador de **5 V e pelo menos 1 A**.
+- Cabo USB de boa qualidade (cabos muito finos derrubam a tensão).
+- Os servos **continuam** na fonte de 5 V separada, com o **GND ligado ao GND do
+  ESP32**, como na bancada.
+
+Serve bem para a fase de transição e para demonstrações.
+
+## D4. Opção B — fonte única (montagem definitiva)
+
+Uma única fonte de **5 V, de 2 A a 3 A**, alimenta o ESP32 (pelo pino **VIN**) e os
+três servos. Um **capacitor** perto dos servos absorve o pico de corrente quando eles
+começam a girar.
+
+![Montagem autônoma: fonte única e relógio DS3231](docs/ligacoes-autonomo.png)
+
+*(versão vetorial: [`docs/ligacoes-autonomo.svg`](docs/ligacoes-autonomo.svg))*
+
+**Ligações que mudam em relação à bancada:**
+
+| Ligação | Bancada (testes) | Autônoma (uso) |
+|---|---|---|
+| Energia do ESP32 | USB do laptop | **+5 V da fonte → pino VIN** |
+| Energia dos servos | Fonte 5 V separada | **A mesma fonte** de 5 V |
+| GND | Fonte ↔ ESP32 | Fonte ↔ ESP32 ↔ servos (**comum**) |
+| Capacitor | — | **470–1000 µF, 10 V ou mais**, entre +5 V e GND, perto dos servos |
+| USB | Sempre ligado | **Só para gravar/atualizar** |
+
+**Cuidados:**
+
+- Use fonte de **5 V exatos**. O VIN aceita um pouco mais, mas o regulador da placa
+  esquenta à toa.
+- O capacitor eletrolítico tem polaridade: a perna marcada com a **faixa "−" vai no
+  GND**. Invertido, ele pode estufar.
+- **Nunca ligue o USB e a fonte no VIN ao mesmo tempo.** Para atualizar o programa,
+  desligue a fonte, ligue o USB no laptop, grave e depois volte para a fonte.
+
+**Consumo aproximado** (para escolher a fonte):
+
+| Parte | Corrente típica |
+|---|---|
+| ESP32 com Wi-Fi ligado | 0,10 a 0,25 A |
+| LCD (com luz de fundo) + LED | cerca de 0,05 A |
+| Servo parado | poucos mA cada |
+| Servo em movimento (um de cada vez) | 0,15 a 0,25 A |
+| **Pico total** | **cerca de 0,6 A** |
+
+Uma fonte de **2 A** tem folga de sobra; 3 A deixa margem para acessórios futuros.
+
+## D5. Opção C — bateria, power bank e "nobreak"
+
+- **Power bank no USB:** funciona para uso portátil ou demonstração. Alguns modelos
+  **desligam sozinhos** quando o consumo é baixo; teste o seu antes.
+- **Autonomia estimada:** o dispenser gasta em média ~0,15–0,2 A em 5 V (≈ 1 W). Um
+  power bank de **10.000 mAh** dura algo em torno de **30 horas**. É uma estimativa:
+  para ter o número real, meça com um medidor USB de corrente.
+- **"Nobreak" simples:** um power bank com **carga e saída ao mesmo tempo**
+  (*pass-through*) fica ligado na tomada e alimenta o dispenser; se a luz cair, ele
+  segura o funcionamento sem interrupção. Confirme essa função na descrição do produto.
+- **Bateria de lítio (18650) + módulo elevador para 5 V:** opção para uma versão
+  futura, com carregador e proteção próprios.
+
+## D6. Falta de energia e de internet
+
+| Situação | O que acontece |
+|---|---|
+| **Energia cai** | Cadastro, horários, contatos e histórico **ficam salvos**. Horários que passarem com o dispenser desligado **não tocam** depois. |
+| **Energia volta, com internet** | Conecta no Wi-Fi, acerta a hora pela internet e volta ao normal. |
+| **Energia volta, sem internet** | ⚠️ **Sem hora certa, os alarmes não tocam** até a internet voltar. É a principal limitação da versão atual. |
+| **Internet cai, energia ok** | O relógio interno continua contando: **os alarmes tocam normalmente**. Só as mensagens do Telegram não saem. |
+
+O caso "energia volta sem internet" é justamente o que o módulo de relógio resolve.
+
+## D7. Sugestão: módulo de relógio DS3231
+
+> 💡 **Recomendação para a próxima versão:** incluir um **módulo de relógio de tempo
+> real (RTC) DS3231**, para que o dispenser **saiba a hora mesmo sem internet**, inclusive
+> logo depois de uma queda de energia.
+
+**O que é:** uma plaquinha com um relógio de alta precisão e uma **bateria tipo moeda
+(CR2032)**. Ela continua contando o tempo por anos, mesmo com o dispenser desligado.
+
+| Característica | Valor |
+|---|---|
+| Precisão | ±2 ppm (cerca de 1 minuto por ano) |
+| Comunicação | I2C, endereço `0x68` (não conflita com o LCD, que usa `0x27`) |
+| Alimentação | 3,3 V (pino 3V3 do ESP32) |
+| Bateria | CR2032, dura anos |
+| Preço aproximado | R$ 15 a R$ 30 |
+
+**Ligação:** no **mesmo barramento I2C do LCD**, em paralelo. Veja a caixa tracejada
+no diagrama da seção D4.
+
+| DS3231 | ESP32 |
+|---|---|
+| VCC | 3V3 |
+| GND | GND |
+| SDA | GPIO 21 (junto com o SDA do LCD) |
+| SCL | GPIO 22 (junto com o SCL do LCD) |
+
+> ⚠️ Muitos módulos DS3231 vêm com um circuito que tenta **recarregar** a bateria.
+> Com uma **CR2032 comum (não recarregável)**, isso pode estragar a bateria. Use uma
+> **LIR2032** (recarregável) ou peça para alguém retirar o resistor/diodo de carga do
+> módulo.
+
+**Como o firmware usaria o módulo** (proposta; **ainda não está no código atual**):
+
+1. **Ao ligar:** lê a hora do DS3231 e acerta o relógio do ESP32 na hora, sem esperar
+   a internet. Os alarmes passam a funcionar imediatamente.
+2. **Quando a internet estiver disponível:** busca a hora exata (NTP) e **corrige** o
+   DS3231, para ele nunca se afastar da hora certa.
+3. **Sem internet:** segue pelo DS3231. Os alarmes funcionam normalmente; só o Telegram
+   espera a internet voltar.
+
+Esboço, com a biblioteca `RTClib` (Adafruit):
+
+```c++
+#include <RTClib.h>
+RTC_DS3231 rtc;
+
+// no setup(), antes de conectar o Wi-Fi:
+if (rtc.begin() && !rtc.lostPower()) {
+  struct timeval agora = { (time_t)rtc.now().unixtime(), 0 };
+  settimeofday(&agora, nullptr);          // relógio certo já ao ligar
+}
+
+// depois que o NTP acertar a hora (com internet):
+rtc.adjust(DateTime((uint32_t)time(nullptr)));   // mantém o DS3231 corrigido
+```
+
+Com o módulo, a linha "Energia volta, sem internet" da seção D6 passa a ser: **os
+alarmes tocam normalmente; só o Telegram espera a internet**.
+
+## D8. Resumo: qual montagem usar
+
+| Momento | Montagem |
+|---|---|
+| **Testes e atualizações** | Bancada: ESP32 no USB do laptop + servos na fonte separada ([A2](#a2-materiais-e-ligações)) |
+| **Transição / demonstração** | Opção A: carregador USB no ESP32 + servos na fonte separada |
+| **Uso definitivo** (após D1) | Opção B: fonte única 5 V 2–3 A no VIN + servos + capacitor |
+| **Proteção contra falta de luz** | Opção C: power bank *pass-through* como "nobreak" |
+| **Próxima versão (recomendado)** | + módulo de relógio **DS3231**, para funcionar sem internet |
+
