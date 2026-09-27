@@ -1,14 +1,14 @@
-# Zelo+ — Guia didático do firmware
+# Zelo+ — Guia do produto
 
-> Material pedagógico que explica, **passo a passo e na ordem em que as coisas
-> acontecem**, como o dispenser Zelo+ funciona. Em cada etapa aparece só o
-> **trecho de código** responsável por ela (o arquivo completo está em
-> [`src/main.cpp`](src/main.cpp)).
+> Este guia apresenta o dispenser inteligente de medicamentos Zelo+: a concepção do
+> produto, o desenho técnico do gabinete, o funcionamento do programa (com o **trecho de
+> código** de cada etapa; o arquivo completo está em [`src/main.cpp`](src/main.cpp)), a
+> montagem para uso autônomo, a lista de componentes e a estimativa de custo de produção.
 
 <!-- so-github -->
 ![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
 
-*Imagem de referência — conceito visual do produto final (ilustrativo); não é o protótipo atual.*
+*Imagem de referência — conceito visual do produto final (ilustrativo).*
 <!-- /so-github -->
 
 ---

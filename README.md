@@ -12,26 +12,26 @@ paciente, cada um fixo no seu compartimento (detalhes em
 [`docs/compartimentos.md`](docs/compartimentos.md)).
 
 > 🛒 **Lista completa de componentes, com ilustrações e preços estimados:** Parte F do
-> guia didático.
+> guia do produto.
 > 📏 **Gabinete — 210 × 130 × 100 mm:** desenho técnico e imagens do produto na Parte B do
-> guia didático; vistas em escala em [`docs/gabinete.png`](docs/gabinete.png)
+> guia do produto; vistas em escala em [`docs/gabinete.png`](docs/gabinete.png)
 > ([SVG](docs/gabinete.svg)).
 > 🏭 **Custo de produção em série (estimativa de viabilidade, set/2026):** Parte G do
-> guia didático — impressão 3D × plástico injetado, componentes no atacado e custo por
+> guia do produto — impressão 3D × plástico injetado, componentes no atacado e custo por
 > unidade em 100, 1.000 e 10.000 unidades.
-> 📘 **Material pedagógico:** [`README-DIDATICO.md`](README-DIDATICO.md) explica o
+> 📘 **Guia do produto:** [`GUIA-DO-PRODUTO.md`](GUIA-DO-PRODUTO.md) explica o
 > funcionamento passo a passo, com o trecho de código de cada etapa.
-> Versão para impressão: [`docs/Zelo-Guia-Didatico.pdf`](docs/Zelo-Guia-Didatico.pdf).
+> Versão para impressão: [`docs/Zelo-Guia-do-Produto.pdf`](docs/Zelo-Guia-do-Produto.pdf).
 > 🔌 **Ligações (bancada/testes):** [`docs/ligacoes.png`](docs/ligacoes.png) ([SVG](docs/ligacoes.svg)).
 > 🔋 **Uso autônomo, após testes e atualização** — fonte 5 V/3 A + módulo **IP5306** +
 > bateria **18650** (lista de compras, montagem e teste) e relógio **DS3231**
-> (opcional): Parte E do guia didático e
+> (opcional): Parte E do guia do produto e
 > [`docs/ligacoes-autonomo.png`](docs/ligacoes-autonomo.png) ([SVG](docs/ligacoes-autonomo.svg)).
 
 ```
 zelo-plus/
 ├── platformio.ini          # ambiente esp32dev + dependências
-├── README-DIDATICO.md      # guia didático passo a passo
+├── GUIA-DO-PRODUTO.md      # guia do produto
 ├── docs/compartimentos.md  # especificação aprovada dos 3 compartimentos
 ├── docs/ligacoes.png/.svg  # diagrama de todas as ligações (bancada)
 ├── docs/ligacoes-autonomo.*# montagem autônoma: fonte + IP5306 + 18650 + DS3231
