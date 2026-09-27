@@ -10,6 +10,8 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <ESP32Servo.h>
+#include <RTClib.h>
+#include <esp_sntp.h>
 
 #define BUZZER_PIN 15
 #define LED_PIN 4
@@ -48,6 +50,16 @@ const int daylightOffset_sec = 0;
 
 bool modoConfig = false;
 String configErro = "";
+
+// ---------- RELOGIO DS3231 (opcional) ----------
+// Modulo de relogio ligado no I2C, junto com o LCD (endereco 0x68). Guarda a hora
+// certa mesmo sem internet e sem energia. Sem o modulo, tudo funciona como antes,
+// com a hora vinda da internet (NTP).
+RTC_DS3231 rtc;
+bool rtcPresente = false;             // o modulo respondeu no I2C ao ligar
+bool horaDoRtc = false;               // a hora atual veio do DS3231 ao ligar
+volatile bool ntpSincronizou = false; // avisado pelo NTP a cada acerto de hora
+const uint32_t HORA_MINIMA_VALIDA = 1704067200UL; // 01/01/2024: antes disso, hora invalida
 
 // Contato que recebe avisos pelo Telegram. O chatId e o numero que o Telegram
 // usa para identificar a conversa da pessoa com o bot do Zelo+ (a pessoa precisa
@@ -1119,6 +1131,9 @@ void handleRoot() {
   html += htmlHistorico();
 
   html += "<p class='rodape'><a href='/trocar-wifi' onclick=\"return confirm('O dispenser vai esquecer a rede Wi-Fi e reiniciar no modo de configuração. Continuar?')\">&#128246; Trocar rede Wi-Fi</a></p>";
+  html += "<p class='rodape' style='font-size:15px;color:#6b7280;margin-top:0'>&#128339; Relógio DS3231: ";
+  html += rtcPresente ? "conectado" : "não instalado (hora pela internet)";
+  html += "</p>";
   html += blocoTelegram(pendente);
 
   html += "<script>";
@@ -1659,17 +1674,83 @@ void mostrarContagemLCD(unsigned long abertoEm, unsigned long tempoTotal) {
   }
 }
 
+// ---------- RELOGIO DS3231 ----------
+
+// Chamada pelo NTP (fora do loop) sempre que a hora e acertada pela internet.
+void aoSincronizarNTP(struct timeval* tv) {
+  ntpSincronizou = true;
+}
+
+// Ao ligar: procura o DS3231. Se ele tiver uma hora valida, acerta o relogio do
+// ESP32 com ela na hora, sem esperar a internet.
+void iniciarRelogioRTC() {
+  rtcPresente = rtc.begin();
+  if (!rtcPresente) {
+    Serial.println("DS3231 nao encontrado - usando so a internet");
+    return;
+  }
+  if (rtc.lostPower()) {
+    Serial.println("DS3231 sem hora valida - aguardando a internet");
+    return;
+  }
+  uint32_t segundos = rtc.now().unixtime();
+  if (segundos < HORA_MINIMA_VALIDA) {
+    Serial.println("DS3231 com data antiga - aguardando a internet");
+    return;
+  }
+  struct timeval agora = { (time_t)segundos, 0 };
+  settimeofday(&agora, nullptr);
+  horaDoRtc = true;
+  Serial.println("DS3231: hora carregada do relogio");
+}
+
+// Depois de cada acerto pela internet, grava a hora certa no DS3231. Roda no
+// loop() para nao disputar os fios do I2C com o LCD.
+void gravarHoraNoRTC() {
+  if (!ntpSincronizou) return;
+  ntpSincronizou = false;
+  if (!rtcPresente) return;
+  time_t agora = time(nullptr);
+  if ((uint32_t)agora < HORA_MINIMA_VALIDA) return;
+  rtc.adjust(DateTime((uint32_t)agora));
+  Serial.println("DS3231: hora gravada (vinda da internet)");
+}
+
+// Sem internet, tenta a rede salva de novo a cada 30 s. Quando conecta, a pagina
+// volta a abrir no mesmo IP e o NTP acerta a hora (e o DS3231).
+void manterWiFi() {
+  static unsigned long ultimaTentativa = 0;
+  static bool estavaConectado = true;
+  bool conectado = (WiFi.status() == WL_CONNECTED);
+  if (conectado && !estavaConectado) {
+    Serial.print("Wi-Fi reconectado. Acesse: http://");
+    Serial.println(WiFi.localIP());
+  }
+  estavaConectado = conectado;
+  if (conectado || millis() - ultimaTentativa < 30000) return;
+  ultimaTentativa = millis();
+  WiFi.reconnect();
+}
+
 void iniciarModoNormal() {
   modoConfig = false;
 
+  sntp_set_time_sync_notification_cb(aoSincronizarNTP);
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
   lcd.clear();
-  lcd.print("IP do sistema:");
-  lcd.setCursor(0, 1);
-  lcd.print(WiFi.localIP());
-  Serial.print("Acesse: http://");
-  Serial.println(WiFi.localIP());
+  if (WiFi.status() == WL_CONNECTED) {
+    lcd.print("IP do sistema:");
+    lcd.setCursor(0, 1);
+    lcd.print(WiFi.localIP());
+    Serial.print("Acesse: http://");
+    Serial.println(WiFi.localIP());
+  } else {
+    lcd.print("Sem internet");
+    lcd.setCursor(0, 1);
+    lcd.print("Hora do relogio");
+    Serial.println("Sem internet: alarmes pela hora do DS3231");
+  }
   delay(6000);
   lcd.clear();
 
@@ -1706,6 +1787,8 @@ void setup() {
   lcd.backlight();
   lcd.print("Iniciando...");
 
+  iniciarRelogioRTC();
+
   prefsCadastro.begin("cadastro", false);
   carregarCadastro();
   prefsHistorico.begin("historico", false);
@@ -1728,6 +1811,10 @@ void setup() {
 
   if (WiFi.status() == WL_CONNECTED) {
     iniciarModoNormal();
+  } else if (ssidSalvo != "" && horaDoRtc) {
+    // Rede conhecida fora do ar, mas o DS3231 deu a hora: os alarmes funcionam
+    // e o Wi-Fi continua sendo tentado em segundo plano (manterWiFi).
+    iniciarModoNormal();
   } else {
     iniciarModoConfig();
   }
@@ -1743,6 +1830,8 @@ void loop() {
     return;
   }
 
+  manterWiFi();
+  gravarHoraNoRTC();
   verificarHorarios();
 
   switch (estadoAtual) {

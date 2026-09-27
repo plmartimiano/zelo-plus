@@ -34,6 +34,7 @@
   - [Passo 16 — Histórico de doses](#passo-16--histórico-de-doses)
   - [Passo 17 — Escrevendo no LCD](#passo-17--escrevendo-no-lcd)
   - [Passo 18 — Modo de teste](#passo-18--modo-de-teste)
+  - [Passo 19 — Relógio DS3231 (opcional)](#passo-19--relógio-ds3231-opcional)
 - [Parte C — Juntando tudo](#parte-c--juntando-tudo)
   - [C1. Linha do tempo de uma dose](#c1-linha-do-tempo-de-uma-dose)
   - [C2. Referência rápida](#c2-referência-rápida)
@@ -47,13 +48,13 @@
   - [D6. Teste de falta de energia](#d6-teste-de-falta-de-energia)
   - [D7. Autonomia da bateria](#d7-autonomia-da-bateria)
   - [D8. Falta de energia e de internet](#d8-falta-de-energia-e-de-internet)
-  - [D9. Sugestão: módulo de relógio DS3231](#d9-sugestão-módulo-de-relógio-ds3231)
+  - [D9. Módulo de relógio DS3231](#d9-módulo-de-relógio-ds3231)
   - [D10. Atualizar o programa depois de montado](#d10-atualizar-o-programa-depois-de-montado)
 - [Parte E — Lista completa de componentes, com preços](#parte-e--lista-completa-de-componentes-com-preços)
   - [E1. Eletrônica do dispenser](#e1-eletrônica-do-dispenser)
   - [E2. Energia autônoma](#e2-energia-autônoma)
   - [E3. Montagem e ligações](#e3-montagem-e-ligações)
-  - [E4. Relógio sem internet (sugerido)](#e4-relógio-sem-internet-sugerido)
+  - [E4. Relógio sem internet (opcional)](#e4-relógio-sem-internet-opcional)
   - [E5. Ferramentas necessárias (fora do custo)](#e5-ferramentas-necessárias-fora-do-custo)
   - [E6. Resumo do investimento](#e6-resumo-do-investimento)
 
@@ -101,6 +102,7 @@ guardado na **memória interna** da placa e sobrevive a quedas de energia.
 | LED + resistor 220–330 Ω | 1 | Pisca junto com o buzzer. |
 | Botão (push-button) | 1 | O paciente aperta para abrir/fechar. |
 | Fonte externa 5 V (≥ 2 A) | 1 | Alimenta os servos. |
+| Relógio DS3231 + bateria LIR2032 *(opcional)* | 1 | Guarda a hora sem internet ([Passo 19](#passo-19--relógio-ds3231-opcional)). |
 | Protoboard e jumpers | — | Ligações. |
 
 ![Diagrama de ligações do Zelo+](docs/ligacoes.png)
@@ -113,6 +115,7 @@ guardado na **memória interna** da placa e sobrevive a quedas de energia.
 | Servo compartimento 2 (sinal) | GPIO 14 | +5 V e GND na **fonte externa** |
 | Servo compartimento 3 (sinal) | GPIO 27 | +5 V e GND na **fonte externa** |
 | LCD — SDA / SCL | GPIO 21 / GPIO 22 | VCC → 3V3, GND → GND |
+| Relógio DS3231 — SDA / SCL *(opcional)* | GPIO 21 / GPIO 22 | em paralelo com o LCD; VCC → 3V3, GND → GND (desenho na [D3](#d3-a-solução-fonte-5-v3-a--ip5306--bateria-18650)) |
 | Botão | GPIO 5 | outra perna → GND (sem resistor) |
 | LED | GPIO 4 | via resistor; perna curta → GND |
 | Buzzer (+) | GPIO 15 | (−) → GND |
@@ -148,13 +151,15 @@ lib_deps =
     marcoschwartz/LiquidCrystal_I2C@^1.1.4
     madhephaestus/ESP32Servo@^3.0.5
     bblanchon/ArduinoJson@^7.0.4
+    adafruit/RTClib@^2.1.4
 ```
 
 - `upload_port`: porta USB onde a placa aparece no Windows (varia de PC para PC).
 - `monitor_speed`: velocidade do **Serial Monitor**, onde a placa escreve mensagens.
 - `huge_app.csv`: reserva mais espaço para o programa (a parte de internet segura,
   HTTPS, deixa o firmware grande).
-- `lib_deps`: bibliotecas do LCD, dos servos e de leitura de JSON (usada no Telegram).
+- `lib_deps`: bibliotecas do LCD, dos servos, de leitura de JSON (usada no Telegram)
+  e do relógio DS3231 (`RTClib`).
 
 **Para gravar:** ✓ (Build) → → (Upload) → 🔌 (Serial Monitor), na barra azul do
 rodapé do VSCode.
@@ -197,15 +202,6 @@ rodapé do VSCode.
 `192.168.15.152`). As imagens abaixo foram geradas **pelo próprio firmware** (a função
 `handleRoot()` do Passo 7) com um cadastro de exemplo completo.
 
-O visual segue três ideias, pensando em cuidadores e familiares com pouca
-familiaridade com tecnologia:
-
-- **Letras e botões grandes**, com bom contraste.
-- **Uma cor por compartimento** — 1 **azul**, 2 **verde**, 3 **roxo** — no cartão do
-  remédio, na dica de abastecimento, na reposição e no histórico.
-- **Menos informação na tela:** remédios, paciente, cuidador e familiares aparecem
-  **recolhidos** (só a faixa com o nome); um toque abre os detalhes.
-
 | ① Falta configurar o Telegram | ② Tudo configurado | ③ Blocos abertos |
 |:---:|:---:|:---:|
 | ![Página com aviso do Telegram](docs/app-1.png) | ![Página já configurada](docs/app-2.png) | ![Página com blocos abertos](docs/app-3.png) |
@@ -217,6 +213,15 @@ familiaridade com tecnologia:
 - **③** O que aparece ao tocar: compartimento 1 em edição (nome, horários, dica
   "coloque no compartimento 1 (azul)"), o familiar João aberto, o formulário de um
   **familiar novo** e a **reposição**, com a escolha do remédio pelas cores.
+
+O visual segue três ideias, pensando em cuidadores e familiares com pouca
+familiaridade com tecnologia:
+
+- **Letras e botões grandes**, com bom contraste.
+- **Uma cor por compartimento** — 1 **azul**, 2 **verde**, 3 **roxo** — no cartão do
+  remédio, na dica de abastecimento, na reposição e no histórico.
+- **Menos informação na tela:** remédios, paciente, cuidador e familiares aparecem
+  **recolhidos** (só a faixa com o nome); um toque abre os detalhes.
 
 **O que tem em cada bloco:**
 
@@ -231,6 +236,7 @@ familiaridade com tecnologia:
 | **Repor remédio** | Botão laranja | Escolha do remédio (por cor) e confirmação | 14 |
 | **Histórico de doses** | % de adesão, contagem e adesão por remédio | "Ver últimas doses": tabela, planilha, apagar | 16 |
 | **Trocar rede Wi-Fi** | Link (pede confirmação) | — | 4 |
+| **Relógio DS3231** (rodapé) | "conectado" ou "não instalado" | — | 19 |
 | **Avisos pelo Telegram** | "configurado ✓" ou "falta configurar" | Token, "Buscar IDs", ID de cada pessoa, teste | 15 |
 
 ---
@@ -255,6 +261,8 @@ falar em `BUTTON_PIN` em vez de "5".
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <ESP32Servo.h>
+#include <RTClib.h>
+#include <esp_sntp.h>
 
 #define BUZZER_PIN 15
 #define LED_PIN 4
@@ -273,6 +281,7 @@ falar em `BUTTON_PIN` em vez de "5".
 | `time.h` | Relógio (hora certa pela internet) |
 | `Wire`, `LiquidCrystal_I2C` | LCD pelo barramento I2C |
 | `ESP32Servo` | Controlar os servos |
+| `RTClib`, `esp_sntp.h` | Relógio DS3231 e aviso de "hora acertada pela internet" ([Passo 19](#passo-19--relógio-ds3231-opcional)) |
 
 Os pinos e ângulos de cada servo ficam em **vetores** (listas), um item por
 compartimento:
@@ -393,6 +402,17 @@ liga o LCD, **lê a memória** e tenta conectar no Wi-Fi.
   não precisa de resistor externo, e "apertado" é `digitalRead(BUTTON_PIN) == LOW`.
 - O `for` percorre os 3 servos, liga cada um no seu pino e fecha a porta.
 
+Em seguida liga o LCD e **procura o relógio DS3231** (se ele não estiver instalado, o
+programa só anota isso e segue — detalhes no [Passo 19](#passo-19--relógio-ds3231-opcional)):
+
+```cpp
+  lcd.init();
+  lcd.backlight();
+  lcd.print("Iniciando...");
+
+  iniciarRelogioRTC();
+```
+
 Depois, carrega a memória e decide o modo de Wi-Fi:
 
 ```cpp
@@ -409,13 +429,21 @@ Depois, carrega a memória e decide o modo de Wi-Fi:
 ```cpp
   if (WiFi.status() == WL_CONNECTED) {
     iniciarModoNormal();
+  } else if (ssidSalvo != "" && horaDoRtc) {
+    // Rede conhecida fora do ar, mas o DS3231 deu a hora: os alarmes funcionam
+    // e o Wi-Fi continua sendo tentado em segundo plano (manterWiFi).
+    iniciarModoNormal();
   } else {
     iniciarModoConfig();
   }
 ```
 
 - Se existe rede salva e a conexão funciona → **modo normal** (Passo 5).
-- Se não → **modo de configuração** (Passo 4).
+- Se a rede salva **não respondeu**, mas o **DS3231 deu a hora certa** → também modo
+  normal, **sem internet**: os alarmes funcionam e o Wi-Fi é tentado de novo a cada
+  30 s (Passo 19).
+- Nos outros casos (nenhuma rede salva, ou sem internet e sem relógio) → **modo de
+  configuração** (Passo 4).
 
 ## Passo 4 — Wi-Fi sem senha no código (captive portal)
 
@@ -468,11 +496,34 @@ const int daylightOffset_sec = 0;
 ```
 
 ```cpp
+  sntp_set_time_sync_notification_cb(aoSincronizarNTP);
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 ```
 
 - **NTP** é um serviço da internet que informa a hora exata. `-10800` segundos =
   3 horas a menos que o horário mundial (UTC) = horário de Brasília.
+- A primeira linha pede ao NTP para **avisar** (chamando `aoSincronizarNTP`) toda vez
+  que acertar a hora. É esse aviso que faz o programa gravar a hora no DS3231
+  (Passo 19).
+
+Em seguida o LCD mostra o **IP** da página ou, se o dispenser ligou sem internet
+usando a hora do DS3231, o aviso `Sem internet` / `Hora do relogio`:
+
+```cpp
+  lcd.clear();
+  if (WiFi.status() == WL_CONNECTED) {
+    lcd.print("IP do sistema:");
+    lcd.setCursor(0, 1);
+    lcd.print(WiFi.localIP());
+    Serial.print("Acesse: http://");
+    Serial.println(WiFi.localIP());
+  } else {
+    lcd.print("Sem internet");
+    lcd.setCursor(0, 1);
+    lcd.print("Hora do relogio");
+    Serial.println("Sem internet: alarmes pela hora do DS3231");
+  }
+```
 
 As **rotas** ligam um endereço a uma função:
 
@@ -768,10 +819,15 @@ void loop() {
     return;
   }
 
+  manterWiFi();
+  gravarHoraNoRTC();
   verificarHorarios();
 
   switch (estadoAtual) {
 ```
+
+- `manterWiFi()` e `gravarHoraNoRTC()` cuidam do relógio e da reconexão (Passo 19).
+  As duas voltam na hora quando não há nada a fazer, então não atrasam o alarme.
 
 **Mapa dos estados:**
 
@@ -1225,6 +1281,159 @@ const unsigned long TEMPO_ALERTA_FINAL = 12UL * 60UL * 1000UL;
 - O `UL` ("unsigned long") evita que a conta estoure: `12 * 60 * 1000` passa do
   limite de um `int` em algumas placas.
 
+## Passo 19 — Relógio DS3231 (opcional)
+
+**O que faz:** se o **módulo de relógio DS3231** estiver ligado, o dispenser sabe a
+hora **mesmo sem internet**. Sem o módulo, nada muda: a hora continua vindo da
+internet (Passo 5). O **mesmo programa** serve para os dois casos, então o módulo pode
+ser ligado depois, sem gravar o programa de novo.
+
+**Por que existe:** o relógio interno do ESP32 **zera quando a placa desliga**. Ao
+religar, ele só volta a saber a hora quando a internet responde. Se a energia voltar
+com o roteador ainda desligado, os alarmes não tocariam. O DS3231 tem **bateria
+própria** (LIR2032) e continua contando o tempo com o dispenser desligado.
+
+**Ligação:** no mesmo barramento I2C do LCD, em paralelo — SDA → GPIO 21, SCL → GPIO 22,
+VCC → 3V3, GND → GND (diagrama na [D3](#d3-a-solução-fonte-5-v3-a--ip5306--bateria-18650);
+detalhes do módulo na [D9](#d9-módulo-de-relógio-ds3231)). O LCD usa o endereço `0x27` e
+o relógio `0x68`, por isso os dois dividem os mesmos fios sem conflito.
+
+**1. As variáveis do relógio**
+
+```cpp
+// ---------- RELOGIO DS3231 (opcional) ----------
+// Modulo de relogio ligado no I2C, junto com o LCD (endereco 0x68). Guarda a hora
+// certa mesmo sem internet e sem energia. Sem o modulo, tudo funciona como antes,
+// com a hora vinda da internet (NTP).
+RTC_DS3231 rtc;
+bool rtcPresente = false;             // o modulo respondeu no I2C ao ligar
+bool horaDoRtc = false;               // a hora atual veio do DS3231 ao ligar
+volatile bool ntpSincronizou = false; // avisado pelo NTP a cada acerto de hora
+const uint32_t HORA_MINIMA_VALIDA = 1704067200UL; // 01/01/2024: antes disso, hora invalida
+```
+
+- `rtc` é o objeto que conversa com o módulo (biblioteca `RTClib`, da Adafruit).
+- `HORA_MINIMA_VALIDA` é 1º de janeiro de 2024, contado em **segundos desde 1970**
+  (o jeito que computadores guardam datas). Uma hora anterior a isso só pode estar
+  errada — por exemplo, um módulo novo que nunca foi acertado.
+- `volatile` avisa o compilador de que a variável pode mudar "por fora" do `loop()`:
+  quem a muda é o NTP, que roda em paralelo.
+
+**2. Ao ligar: procurar o módulo e usar a hora dele**
+
+```cpp
+void iniciarRelogioRTC() {
+  rtcPresente = rtc.begin();
+  if (!rtcPresente) {
+    Serial.println("DS3231 nao encontrado - usando so a internet");
+    return;
+  }
+  if (rtc.lostPower()) {
+    Serial.println("DS3231 sem hora valida - aguardando a internet");
+    return;
+  }
+  uint32_t segundos = rtc.now().unixtime();
+  if (segundos < HORA_MINIMA_VALIDA) {
+    Serial.println("DS3231 com data antiga - aguardando a internet");
+    return;
+  }
+  struct timeval agora = { (time_t)segundos, 0 };
+  settimeofday(&agora, nullptr);
+  horaDoRtc = true;
+  Serial.println("DS3231: hora carregada do relogio");
+}
+```
+
+- `rtc.begin()` "chama" o endereço `0x68`. **Sem o módulo, ninguém responde** e a
+  função devolve `false` em uma fração de segundo: o programa anota e segue.
+- `rtc.lostPower()` avisa se o módulo **perdeu a hora** (nunca foi acertado ou ficou
+  sem bateria). Nesse caso o programa não confia nele e espera a internet.
+- `settimeofday()` acerta o **relógio interno do ESP32** com a hora do módulo. Daí em
+  diante, `getLocalTime()` (usado no relógio do LCD e na conferência dos horários)
+  funciona normalmente, com ou sem internet.
+
+**3. Com internet: manter o módulo sempre certo**
+
+```cpp
+// Chamada pelo NTP (fora do loop) sempre que a hora e acertada pela internet.
+void aoSincronizarNTP(struct timeval* tv) {
+  ntpSincronizou = true;
+}
+```
+
+```cpp
+void gravarHoraNoRTC() {
+  if (!ntpSincronizou) return;
+  ntpSincronizou = false;
+  if (!rtcPresente) return;
+  time_t agora = time(nullptr);
+  if ((uint32_t)agora < HORA_MINIMA_VALIDA) return;
+  rtc.adjust(DateTime((uint32_t)agora));
+  Serial.println("DS3231: hora gravada (vinda da internet)");
+}
+```
+
+- O NTP acerta a hora ao conectar e depois **a cada hora**, mais ou menos. A cada
+  acerto, `aoSincronizarNTP` só levanta uma "bandeira".
+- Quem grava no módulo é `gravarHoraNoRTC()`, chamada pelo `loop()` (Passo 10). Assim a
+  gravação nunca acontece no meio de uma escrita no LCD, que usa os mesmos fios.
+- `rtc.adjust()` grava a hora e **apaga o aviso de hora perdida**: no próximo
+  religamento, `lostPower()` já responde que a hora é confiável.
+- O módulo guarda a hora **mundial (UTC)**; o fuso de Brasília é aplicado pelo
+  `configTime()` na hora de mostrar. Por isso a hora não "anda" 3 horas ao religar.
+
+**4. Sem internet: continuar tentando o Wi-Fi**
+
+```cpp
+void manterWiFi() {
+  static unsigned long ultimaTentativa = 0;
+  static bool estavaConectado = true;
+  bool conectado = (WiFi.status() == WL_CONNECTED);
+  if (conectado && !estavaConectado) {
+    Serial.print("Wi-Fi reconectado. Acesse: http://");
+    Serial.println(WiFi.localIP());
+  }
+  estavaConectado = conectado;
+  if (conectado || millis() - ultimaTentativa < 30000) return;
+  ultimaTentativa = millis();
+  WiFi.reconnect();
+}
+```
+
+- Sem internet, tenta a rede salva **a cada 30 s**, sem travar o programa (o alarme
+  continua funcionando enquanto isso).
+- Quando conecta, a página volta a abrir **no mesmo IP**, o Telegram volta a funcionar e
+  o NTP acerta a hora (e o DS3231 é regravado).
+
+**5. Na página: o relógio foi encontrado?**
+
+No rodapé, abaixo de "Trocar rede Wi-Fi", aparece o estado do módulo:
+
+```cpp
+  html += "<p class='rodape' style='font-size:15px;color:#6b7280;margin-top:0'>&#128339; Relógio DS3231: ";
+  html += rtcPresente ? "conectado" : "não instalado (hora pela internet)";
+  html += "</p>";
+```
+
+**Resumo: o que acontece ao ligar**
+
+| Situação ao ligar | O que o programa faz |
+|---|---|
+| **Sem o módulo** | Segue como antes: hora pela internet. Página: "não instalado". |
+| **Módulo novo** (nunca acertado) | Espera a internet; no primeiro acerto, **grava a hora no módulo**. |
+| **Módulo com hora, com internet** | Usa a hora do módulo na hora; o NTP confere e regrava a cada acerto. |
+| **Módulo com hora, sem internet** | Modo normal **sem internet**: LCD `Sem internet` / `Hora do relogio`; **alarmes funcionam**; Wi-Fi tentado a cada 30 s. |
+| **Nenhuma rede cadastrada** | Modo de configuração (Passo 4), como antes. |
+
+As mensagens do Serial Monitor de cada situação estão na [D9](#d9-módulo-de-relógio-ds3231).
+
+> ⚡ **Instalar o módulo depois:** desligue o dispenser da energia, ligue os 4 fios e
+> religue. Não é preciso gravar o programa de novo. O módulo só é procurado **ao
+> ligar**; por isso o religamento é necessário.
+
+> 📚 A biblioteca `RTClib` está no `platformio.ini`
+> (`adafruit/RTClib@^2.1.4`). O PlatformIO baixa sozinho no próximo **Build**.
+
 ---
 
 # Parte C — Juntando tudo
@@ -1260,6 +1469,14 @@ acesso", LCD `Dose pendente!`, e o botão ainda abre os dois compartimentos depo
 | `TEMPO_ALERTA_FINAL` | 12 min | 60 s |
 | `TRAVA_BOTAO` | 7 s | 7 s |
 | `TEMPO_PORTA_ABERTA` / `TEMPO_ABASTECIMENTO` | 3 min | 3 min |
+| Nova tentativa de Wi-Fi (sem internet) | 30 s | 30 s |
+
+**Endereços I2C** (mesmos fios: GPIO 21 = SDA, GPIO 22 = SCL)
+
+| Peça | Endereço |
+|---|---|
+| LCD 16x2 (módulo PCF8574) | `0x27` |
+| Relógio DS3231 *(opcional)* | `0x68` |
 
 **Memória (Preferences)**
 
@@ -1289,7 +1506,9 @@ Sugestões de exercícios, do mais simples ao mais desafiador:
 4. **Ângulo diferente**: o compartimento 3 abre só até 70° (Passo 1: `ANGULO_ABERTO`).
 5. **Quarto compartimento**: o que precisaria mudar? (Dica: `NUM_COMPARTIMENTOS`,
    `PINOS_SERVO`, os ângulos… e a página já se adapta sozinha.)
-6. **Desafio:** enviar pelo Telegram um resumo diário de adesão às 21h (Passos 11, 15 e 16).
+6. **Relógio no LCD:** mostrar um `R` no canto da linha 1 quando a hora veio do
+   DS3231 e ainda não houve internet (Passos 17 e 19: `horaDoRtc`).
+7. **Desafio:** enviar pelo Telegram um resumo diário de adesão às 21h (Passos 11, 15 e 16).
 
 ---
 
@@ -1403,7 +1622,7 @@ ligado a elas se identifica, por meio de um **resistor de 5,1 kΩ no pino CC**. 
 | 9 | **Termo-retrátil** sortido | 1 kit | Isolar as emendas soldadas. |
 | 10 | **Multímetro** | 1 | Conferir polaridade e os 5 V da saída **antes** de ligar o ESP32. |
 | 11 | Ferro de solda + estanho | — | Para os pads do IP5306 e as emendas. |
-| 12 | *Módulo relógio DS3231 + bateria LIR2032* (sugerido) | 1 | Ver [D9](#d9-sugestão-módulo-de-relógio-ds3231): mantém a hora certa sem internet. |
+| 12 | *Módulo relógio DS3231 + bateria LIR2032* (opcional) | 1 | Ver [D9](#d9-módulo-de-relógio-ds3231): mantém a hora certa sem internet. |
 
 > 💡 Módulos IP5306 costumam vir também com uma **saída USB-A**. Ela entrega os mesmos
 > 5 V, mas para o dispenser use os **pads de saída soldados**: a ligação fica firme e não
@@ -1478,14 +1697,16 @@ dispenser fica ligado.
 | **Falta energia (até ~8–10 h)** | O dispenser **continua funcionando pela bateria**. Os alarmes tocam; o Telegram depende de a internet (roteador) também estar ligada. |
 | **Falta energia por mais tempo** (bateria acaba) | O dispenser desliga. Cadastro, horários e histórico **ficam salvos**; horários que passarem desligado **não tocam** depois. |
 | **Energia volta, com internet** | Liga sozinho, conecta no Wi-Fi, acerta a hora e volta ao normal; a bateria recarrega. |
-| **Energia volta, sem internet** | ⚠️ **Sem hora certa, os alarmes não tocam** até a internet voltar (resolvido com o DS3231, abaixo). |
+| **Energia volta, sem internet — sem o DS3231** | ⚠️ **Sem hora certa, os alarmes não tocam** até a internet voltar (o dispenser fica no modo de configuração). |
+| **Energia volta, sem internet — com o DS3231** | ✅ Liga com a hora do relógio (`Sem internet` / `Hora do relogio` no LCD): **os alarmes tocam normalmente**. O Wi-Fi é tentado a cada 30 s; o Telegram volta junto com a internet. |
 | **Internet cai, energia ok** | O relógio interno continua contando: **os alarmes tocam normalmente**. Só as mensagens do Telegram não saem. |
 
-## D9. Sugestão: módulo de relógio DS3231
+## D9. Módulo de relógio DS3231
 
-> 💡 **Recomendação para a próxima versão:** incluir um **módulo de relógio de tempo
-> real (RTC) DS3231**, para que o dispenser **saiba a hora mesmo sem internet**, inclusive
-> depois de a bateria acabar e a energia voltar.
+> ✅ **Já suportado pelo programa** ([Passo 19](#passo-19--relógio-ds3231-opcional)). O
+> módulo é **opcional**: sem ele, tudo funciona pela internet. Com ele, o dispenser
+> **sabe a hora mesmo sem internet**, inclusive depois de a bateria acabar e a energia
+> voltar.
 
 **O que é:** uma plaquinha com um relógio de alta precisão e uma **bateria tipo moeda**.
 Ela continua contando o tempo por anos, mesmo com o dispenser desligado.
@@ -1496,7 +1717,7 @@ Ela continua contando o tempo por anos, mesmo com o dispenser desligado.
 | Comunicação | I2C, endereço `0x68` (não conflita com o LCD, que usa `0x27`) |
 | Alimentação | 3,3 V (pino 3V3 do ESP32) |
 | Bateria | LIR2032 (recarregável) — ver aviso abaixo |
-| Preço aproximado | R$ 15 a R$ 30 |
+| Preço aproximado | R$ 26 a R$ 31 (ver [E4](#e4-relógio-sem-internet-opcional)) |
 
 **Ligação:** no **mesmo barramento I2C do LCD**, em paralelo: os fios SDA e SCL do
 DS3231 se juntam aos do LCD (ponto ● no diagrama da seção D3), e o VCC sai do mesmo fio
@@ -1514,33 +1735,46 @@ de 3V3.
 > **LIR2032** (recarregável) ou peça para alguém retirar o resistor/diodo de carga do
 > módulo.
 
-**Como o firmware usaria o módulo** (proposta; **ainda não está no código atual**):
+**Como o programa usa o módulo** (código completo no [Passo 19](#passo-19--relógio-ds3231-opcional)):
 
-1. **Ao ligar:** lê a hora do DS3231 e acerta o relógio do ESP32 na hora, sem esperar
-   a internet. Os alarmes passam a funcionar imediatamente.
-2. **Quando a internet estiver disponível:** busca a hora exata (NTP) e **corrige** o
-   DS3231, para ele nunca se afastar da hora certa.
-3. **Sem internet:** segue pelo DS3231. Os alarmes funcionam normalmente; só o Telegram
-   espera a internet voltar.
+1. **Ao ligar:** procura o DS3231. Se ele tiver uma hora válida, acerta o relógio do
+   ESP32 na hora, sem esperar a internet. Os alarmes passam a funcionar imediatamente.
+2. **Com internet:** a cada acerto de hora pelo NTP (ao conectar e depois a cada ~1 h),
+   **grava a hora certa no DS3231**, para ele nunca se afastar da hora certa.
+3. **Sem internet:** segue pelo DS3231. Os alarmes funcionam normalmente; o Wi-Fi é
+   tentado a cada 30 s e só o Telegram espera a internet voltar.
+4. **Sem o módulo:** o programa percebe na hora de ligar e segue como antes.
 
-Esboço, com a biblioteca `RTClib` (Adafruit):
+**Instalar o módulo:**
 
-```c++
-#include <RTClib.h>
-RTC_DS3231 rtc;
+1. **Desligue o dispenser da energia** (fonte e bateria/IP5306).
+2. Coloque a **LIR2032** no módulo e ligue os 4 fios: VCC → 3V3, GND → GND, SDA →
+   GPIO 21, SCL → GPIO 22.
+3. Religue **com internet**. No Serial Monitor deve aparecer
+   `DS3231 sem hora valida - aguardando a internet` e, em seguida,
+   `DS3231: hora gravada (vinda da internet)`. Na página, o rodapé mostra
+   **"Relógio DS3231: conectado"**.
 
-// no setup(), antes de conectar o Wi-Fi:
-if (rtc.begin() && !rtc.lostPower()) {
-  struct timeval agora = { (time_t)rtc.now().unixtime(), 0 };
-  settimeofday(&agora, nullptr);          // relógio certo já ao ligar
-}
+**Mensagens no Serial Monitor**
 
-// depois que o NTP acertar a hora (com internet):
-rtc.adjust(DateTime((uint32_t)time(nullptr)));   // mantém o DS3231 corrigido
-```
+| Mensagem | Significado |
+|---|---|
+| `DS3231 nao encontrado - usando so a internet` | Módulo ausente ou mal ligado (confira SDA/SCL). |
+| `DS3231 sem hora valida - aguardando a internet` | Módulo novo ou bateria LIR2032 descarregada. |
+| `DS3231: hora carregada do relogio` | Hora certa já ao ligar. ✅ |
+| `DS3231: hora gravada (vinda da internet)` | O NTP acertou a hora e o módulo foi atualizado. ✅ |
+| `Sem internet: alarmes pela hora do DS3231` | Ligou sem internet, funcionando pelo relógio. |
 
-Com o módulo, a linha "Energia volta, sem internet" da seção D8 passa a ser: **os
-alarmes tocam normalmente; só o Telegram espera a internet**.
+**Testes do relógio:**
+
+- [ ] Rodapé da página mostra "Relógio DS3231: conectado".
+- [ ] **Sem internet:** desligue o roteador, desligue e religue o dispenser. O LCD
+  mostra `Sem internet` / `Hora do relogio` e depois o relógio **com a hora certa**.
+- [ ] Um alarme de teste toca no horário **com o roteador desligado**.
+- [ ] Religue o roteador: em até ~30 s o dispenser volta a se conectar (a página volta a
+  abrir e o Telegram funciona).
+- [ ] **Sem o módulo** (fios soltos, dispenser desligado antes): o rodapé mostra "não
+  instalado" e tudo funciona pela internet.
 
 ## D10. Atualizar o programa depois de montado
 
@@ -1603,7 +1837,7 @@ encontrar na hora da compra.
 | **Tubo termo-retrátil** · 1 kit sortido | <img src="docs/componentes/termo.svg" width="110" alt="termo"> | Isola as emendas soldadas (evita curto-circuito). | R$ 16,88–43 | R$ \_\_\_\_\_\_\_\_\_ |
 | **Cabo USB-A → micro-USB (dados)** · 1 un. | <img src="docs/componentes/cabo_microusb.svg" width="110" alt="cabo_microusb"> | Gravar e atualizar o programa pelo laptop. | a partir de R$ 11,69 | R$ \_\_\_\_\_\_\_\_\_ |
 
-## E4. Relógio sem internet (sugerido)
+## E4. Relógio sem internet (opcional)
 
 | Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
 |---|:---:|---|---|---|
@@ -1633,7 +1867,7 @@ emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, s�
 | E3. Montagem e ligações | R$ 46 – 96 | R$ \_\_\_\_\_\_\_\_\_ |
 | **Total para montar o dispenser** | **≈ R$ 270 – 378** | **R$ \_\_\_\_\_\_\_\_\_** |
 | *Total sem a bateria (que você já tem)* | *≈ R$ 253 – 361* | R$ \_\_\_\_\_\_\_\_\_ |
-| E4. Relógio sem internet (sugerido, à parte) | + R$ 38 – 60 | R$ \_\_\_\_\_\_\_\_\_ |
+| E4. Relógio sem internet (opcional, à parte) | + R$ 38 – 60 | R$ \_\_\_\_\_\_\_\_\_ |
 
 **Não inclui:** ferramentas (E5), frete e a estrutura física do dispenser (caixa, portas e
 divisórias dos compartimentos), que depende do material escolhido (MDF, acrílico ou

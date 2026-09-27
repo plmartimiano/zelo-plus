@@ -14,8 +14,8 @@ paciente, cada um fixo no seu compartimento (detalhes em
 > Versão para impressão: [`docs/Zelo-Guia-Didatico.pdf`](docs/Zelo-Guia-Didatico.pdf).
 > 🔌 **Ligações (bancada/testes):** [`docs/ligacoes.png`](docs/ligacoes.png) ([SVG](docs/ligacoes.svg)).
 > 🔋 **Uso autônomo, após testes e atualização** — fonte 5 V/3 A + módulo **IP5306** +
-> bateria **18650** (lista de compras, montagem e teste) e sugestão de relógio
-> **DS3231**: Parte D do guia didático e
+> bateria **18650** (lista de compras, montagem e teste) e relógio **DS3231**
+> (opcional): Parte D do guia didático e
 > [`docs/ligacoes-autonomo.png`](docs/ligacoes-autonomo.png) ([SVG](docs/ligacoes-autonomo.svg)).
 
 ```
@@ -78,6 +78,23 @@ zelo-plus/
 - O GPIO 12 foi evitado: ele interfere na inicialização do ESP32.
 - Etiquetas **1, 2 e 3** na caixa, na mesma ordem da página.
 - LCD: GND→GND, VCC→3V3, SDA→21, SCL→22.
+
+## Relógio DS3231 (opcional)
+
+Módulo RTC no mesmo I2C do LCD, em paralelo (`0x68`): VCC→3V3, GND→GND, SDA→21,
+SCL→22, bateria **LIR2032**. Biblioteca `adafruit/RTClib`.
+
+- **Sem o módulo:** `rtc.begin()` falha ao ligar e tudo segue pela hora da internet
+  (NTP), como antes. O módulo pode ser instalado depois, sem regravar o firmware
+  (com o dispenser desligado).
+- **Ao ligar:** se o módulo tem hora válida (`!lostPower()` e data ≥ 2024), acerta o
+  relógio do ESP32 com `settimeofday()` antes do Wi-Fi.
+- **Com internet:** a cada sincronização do NTP (callback do SNTP) a hora é gravada no
+  módulo pelo `loop()`, sem disputar o I2C com o LCD. O módulo guarda UTC.
+- **Sem internet ao ligar:** com rede salva e hora do módulo, entra no modo normal
+  (LCD `Sem internet` / `Hora do relogio`), os alarmes funcionam e o Wi-Fi é tentado a
+  cada 30 s. Sem o módulo, o comportamento continua o de antes (portal de configuração).
+- O rodapé da página mostra "Relógio DS3231: conectado" ou "não instalado".
 
 ## Wi-Fi (captive portal)
 
