@@ -54,7 +54,7 @@
   - [E2. Energia autônoma](#e2-energia-autônoma)
   - [E3. Montagem e ligações](#e3-montagem-e-ligações)
   - [E4. Relógio sem internet (sugerido)](#e4-relógio-sem-internet-sugerido)
-  - [E5. Ferramentas (se ainda não tiver)](#e5-ferramentas-se-ainda-não-tiver)
+  - [E5. Ferramentas necessárias (fora do custo)](#e5-ferramentas-necessárias-fora-do-custo)
   - [E6. Resumo do investimento](#e6-resumo-do-investimento)
 
 ---
@@ -1544,81 +1544,86 @@ A montagem autônoma não impede atualizações:
 
 # Parte E — Lista completa de componentes, com preços
 
-Tudo o que é preciso para montar o Zelo+ na **versão autônoma** (tomada + bateria,
-Parte D). As ilustrações são desenhos simplificados para ajudar a reconhecer cada peça
-na loja.
+Tudo o que é preciso comprar para montar o Zelo+ na **versão autônoma** (tomada +
+bateria, Parte D). As ilustrações são desenhos simplificados para ajudar a reconhecer
+cada peça na loja. A última coluna fica **em branco** para você anotar o preço que
+encontrar na hora da compra.
 
-> 💰 **Sobre os preços:** valores **estimados** em reais, pesquisados em lojas
-> brasileiras de eletrônica em **setembro de 2026** (fontes no fim desta parte). Os itens
-> marcados com **\*** não tinham preço claro em loja nacional: o valor foi estimado a
-> partir de preços internacionais e de kits. Preços mudam com frequência e **não incluem
-> frete**. Comprar tudo numa mesma loja costuma compensar o frete.
+> 💰 **Sobre os preços:** valores pesquisados em lojas brasileiras de eletrônica em
+> **setembro de 2026** (fontes no fim desta parte). Itens marcados com **\*** não tiveram
+> o preço exibido em loja nacional na pesquisa: o valor é uma **estimativa** a partir de
+> preços internacionais convertidos. Preços mudam com frequência e **não incluem frete**.
+> Ferramentas **não** entram na conta (ver [E5](#e5-ferramentas-necessárias-fora-do-custo)).
 
 ## E1. Eletrônica do dispenser
 
-| Componente e códigos | Ilustração | Função | Preço estimado |
-|---|:---:|---|---|
-| **Placa ESP32 DevKit V1 — 30 pinos** · 1 un.<br>ESP32-WROOM-32 · chip ESP32-D0WD-V3 · USB CP2102 | <img src="docs/componentes/esp32.svg" width="110" alt="esp32"> | O "cérebro": roda o programa, cria a página web, conecta no Wi-Fi e manda os avisos. | R$ 52–55 |
-| **Micro servo SG90 9 g** · 3 un.<br>TowerPro SG90 · 180° · 1,6 kgf·cm · 4,8–6 V | <img src="docs/componentes/servo.svg" width="110" alt="servo"> | Abre e fecha a porta de cada compartimento (um servo por compartimento). | R$ 13–20 cada<br>**R$ 40–60** (3 un.) |
-| **Display LCD 16x2 com módulo I2C** · 1 un.<br>HD44780 + PCF8574 · endereço 0x27 · fundo azul | <img src="docs/componentes/lcd.svg" width="110" alt="lcd"> | Mostra o relógio, o nome do remédio e os avisos (abrindo, fechando, dose pendente). | R$ 24–25 |
-| **Buzzer ativo 5 V** · 1 un.<br>12 mm · "auto-oscilante" · 3,5–5 V | <img src="docs/componentes/buzzer.svg" width="110" alt="buzzer"> | Apita no horário do remédio (alarme sonoro). | R$ 2,50–5 |
-| **LED 5 mm vermelho** · 1 un. | <img src="docs/componentes/led.svg" width="110" alt="led"> | Pisca junto com o buzzer (alarme visual). | R$ 0,30–1 \* |
-| **Resistor 220 Ω, ¼ W** · 1 un.<br>faixas: vermelho-vermelho-marrom-dourado | <img src="docs/componentes/resistor220.svg" width="110" alt="resistor220"> | Limita a corrente do LED para ele não queimar. | R$ 0,10–0,50 \* |
-| **Chave táctil (push button) 12×12 mm com capa** · 1 un. | <img src="docs/componentes/botao.svg" width="110" alt="botao"> | O botão que o paciente aperta para abrir e fechar os compartimentos. | R$ 1–2 |
-| **Etiquetas adesivas coloridas** · 1 cartela<br>azul · verde · roxo | <img src="docs/componentes/etiquetas.svg" width="110" alt="etiquetas"> | Identificam as portas 1, 2 e 3 com as mesmas cores da página. | R$ 5–10 \* |
+| Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
+|---|:---:|---|---|---|
+| **Placa ESP32 DevKit V1 — 30 pinos** · 1 un.<br>ESP32-WROOM-32 · chip ESP32-D0WD-V3 · USB CP2102 | <img src="docs/componentes/esp32.svg" width="110" alt="esp32"> | O "cérebro": roda o programa, cria a página web, conecta no Wi-Fi e manda os avisos. | R$ 54,90 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Micro servo SG90 9 g** · 3 un.<br>TowerPro SG90 · 180° · 1,6 kgf·cm · 4,8–6 V | <img src="docs/componentes/servo.svg" width="110" alt="servo"> | Abre e fecha a porta de cada compartimento (um servo por compartimento). | R$ 13,33–16,90 cada<br>**R$ 40–51** (3 un.) | R$ \_\_\_\_\_\_\_\_\_ |
+| **Display LCD 16x2 com módulo I2C** · 1 un.<br>HD44780 + PCF8574 · endereço 0x27 · fundo azul | <img src="docs/componentes/lcd.svg" width="110" alt="lcd"> | Mostra o relógio, o nome do remédio e os avisos (abrindo, fechando, dose pendente). | R$ 24,90 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Buzzer ativo 5 V** · 1 un.<br>12 mm · "auto-oscilante" · 3,5–5 V | <img src="docs/componentes/buzzer.svg" width="110" alt="buzzer"> | Apita no horário do remédio (alarme sonoro). | R$ 2,50 | R$ \_\_\_\_\_\_\_\_\_ |
+| **LED difuso 5 mm vermelho** · 1 un. | <img src="docs/componentes/led.svg" width="110" alt="led"> | Pisca junto com o buzzer (alarme visual). | R$ 0,15 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Resistor 220 Ω, ¼ W** · pacote com 10<br>faixas: vermelho-vermelho-marrom-dourado | <img src="docs/componentes/resistor220.svg" width="110" alt="resistor220"> | Limita a corrente do LED para ele não queimar (usa 1; sobram reservas). | R$ 0,90 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
+| **Chave táctil (push button) 12×12 mm com capa** · kit com 10 | <img src="docs/componentes/botao.svg" width="110" alt="botao"> | O botão que o paciente aperta para abrir e fechar os compartimentos (usa 1). | R$ 10,20 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
 
 ## E2. Energia autônoma
 
-| Componente e códigos | Ilustração | Função | Preço estimado |
-|---|:---:|---|---|
-| **Fonte de tomada 5 V / 3 A, saída USB-C** · 1 un.<br>bivolt · 15 W · com certificação Inmetro | <img src="docs/componentes/fonte.svg" width="110" alt="fonte"> | Energia da rua para o dispenser e para carregar a bateria. | R$ 35–50 |
-| **Módulo IP5306 5 V 2,1 A (power bank)** · 1 un.<br>IP5306 · entrada USB-C · pads IN, B+/B−, OUT | <img src="docs/componentes/ip5306.svg" width="110" alt="ip5306"> | Carrega a bateria e entrega 5 V estáveis, com ou sem energia da rua. | R$ 15–25 \* |
-| **Bateria Li-ion 18650** · 1 un.<br>3,7 V · 2.500–3.000 mAh reais (Samsung, LG, Sony, Panasonic) | <img src="docs/componentes/bateria18650.svg" width="110" alt="bateria18650"> | Mantém o dispenser ligado por ~8–10 h se faltar energia. **Você já tem.** | R$ 30–45 \*<br>(já possui) |
-| **Suporte para 1 bateria 18650, com fios** · 1 un.<br>ex.: SB186-1 · fios vermelho/preto | <img src="docs/componentes/suporte18650.svg" width="110" alt="suporte18650"> | Segura a bateria e evita soldar direto nela. | R$ 4–8 \* |
-| **Cabo USB-C macho com fios (pigtail)** · 1 un.<br>2 fios **com resistor 5,1 kΩ** interno, ou 6 fios (CC1/CC2 expostos) · 20–22 AWG | <img src="docs/componentes/cabo_usbc.svg" width="110" alt="cabo_usbc"> | Leva a energia da fonte até o IP5306; a ponta de fios é **soldada** na entrada do módulo. | R$ 15–30 \* |
-| **Resistor 5,1 kΩ, ¼ W** · 2 un. *(só se o cabo for de 6 fios)*<br>faixas: verde-marrom-vermelho-dourado | <img src="docs/componentes/resistor5k1.svg" width="110" alt="resistor5k1"> | Um em cada pino CC (CC1 e CC2) até o GND: faz a fonte USB-C liberar os 5 V. | R$ 0,10–0,50 cada \* |
-| **Capacitor eletrolítico 1000 µF / 16 V** · 1 un.<br>105 °C · tem polaridade (faixa "−") | <img src="docs/componentes/capacitor.svg" width="110" alt="capacitor"> | Absorve o pico de corrente dos servos e evita que o ESP32 reinicie. | R$ 0,73–3 |
+| Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
+|---|:---:|---|---|---|
+| **Fonte de tomada 5 V / 3 A, saída USB-C** · 1 un.<br>bivolt · 15 W · com certificação Inmetro | <img src="docs/componentes/fonte.svg" width="110" alt="fonte"> | Energia da rua para o dispenser e para carregar a bateria. | R$ 35,98–50 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Módulo IP5306 5 V 2,1 A (power bank)** · 1 un.<br>IP5306 · entrada USB-C · pads IN, B+/B−, OUT | <img src="docs/componentes/ip5306.svg" width="110" alt="ip5306"> | Carrega a bateria e entrega 5 V estáveis, com ou sem energia da rua. | R$ 15–25 \* | R$ \_\_\_\_\_\_\_\_\_ |
+| **Bateria Li-ion 18650** · 1 un.<br>3,7 V · 2.600 mAh · sem "9.800 mAh" falsos | <img src="docs/componentes/bateria18650.svg" width="110" alt="bateria18650"> | Mantém o dispenser ligado por ~8–10 h se faltar energia. *(Você já tem.)* | R$ 39,90 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Suporte para 1 bateria 18650, com fios** · 1 un.<br>SB186-1 · fios vermelho/preto 12–15 cm | <img src="docs/componentes/suporte18650.svg" width="110" alt="suporte18650"> | Segura a bateria e evita soldar direto nela. | R$ 5–8 \* | R$ \_\_\_\_\_\_\_\_\_ |
+| **Cabo USB-C macho com fios (pigtail)** · 1 un.<br>2 fios **com resistor 5,1 kΩ** interno, ou 6 fios (CC1/CC2 expostos) · 20–22 AWG | <img src="docs/componentes/cabo_usbc.svg" width="110" alt="cabo_usbc"> | Leva a energia da fonte até o IP5306; a ponta de fios é **soldada** na entrada do módulo. | R$ 20–30 \* | R$ \_\_\_\_\_\_\_\_\_ |
+| **Resistor 5,1 kΩ, ¼ W** · pacote com 10 *(só se o cabo for de 6 fios)*<br>faixas: verde-marrom-vermelho-dourado | <img src="docs/componentes/resistor5k1.svg" width="110" alt="resistor5k1"> | Um em cada pino CC (CC1 e CC2) até o GND: faz a fonte USB-C liberar os 5 V. | R$ 0,60 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
+| **Capacitor eletrolítico 1000 µF / 16 V** · 1 un.<br>105 °C · tem polaridade (faixa "−") | <img src="docs/componentes/capacitor.svg" width="110" alt="capacitor"> | Absorve o pico de corrente dos servos e evita que o ESP32 reinicie. | R$ 0,73–3 | R$ \_\_\_\_\_\_\_\_\_ |
 
 ## E3. Montagem e ligações
 
-| Componente e códigos | Ilustração | Função | Preço estimado |
-|---|:---:|---|---|
-| **Placa perfurada ilhada 7×9 cm** · 1 un.<br>fenolite ou fibra de vidro | <img src="docs/componentes/placa.svg" width="110" alt="placa"> | Base firme, soldada, para os trilhos de +5 V e GND (mais durável que protoboard). | R$ 4–12,50 |
-| **Jumpers macho/fêmea 20 cm** · 1 kit (40 un.) | <img src="docs/componentes/jumpers.svg" width="110" alt="jumpers"> | Ligações entre o ESP32, o LCD, os servos e a placa. | R$ 8,90 |
-| **Fio flexível 22 AWG** · vermelho e preto, ~2 m de cada | <img src="docs/componentes/fio22awg.svg" width="110" alt="fio22awg"> | Ligações de energia: saída do IP5306 → VIN e servos. | R$ 1,20–3 por metro<br>**≈ R$ 10** |
-| **Tubo termo-retrátil** · 1 kit sortido | <img src="docs/componentes/termo.svg" width="110" alt="termo"> | Isola as emendas soldadas (evita curto-circuito). | R$ 17–43 |
-| **Cabo USB-A → micro-USB (dados)** · 1 un. | <img src="docs/componentes/cabo_microusb.svg" width="110" alt="cabo_microusb"> | Gravar e atualizar o programa pelo laptop. Provavelmente você já tem. | R$ 10–20 \* |
+| Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
+|---|:---:|---|---|---|
+| **Placa perfurada ilhada 7×9 cm** · 1 un.<br>fenolite ou fibra de vidro | <img src="docs/componentes/placa.svg" width="110" alt="placa"> | Base firme, soldada, para os trilhos de +5 V e GND (mais durável que protoboard). | R$ 3,90–12,50 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Jumpers macho/fêmea 20 cm** · 1 kit (40 un.) | <img src="docs/componentes/jumpers.svg" width="110" alt="jumpers"> | Ligações entre o ESP32, o LCD, os servos e a placa. | R$ 8,90 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Fio flexível 22 AWG** · vermelho e preto, ~2 m de cada | <img src="docs/componentes/fio22awg.svg" width="110" alt="fio22awg"> | Ligações de energia: saída do IP5306 → VIN e servos. | R$ 1,20–3 por metro<br>**R$ 5–12** (4 m) | R$ \_\_\_\_\_\_\_\_\_ |
+| **Tubo termo-retrátil** · 1 kit sortido | <img src="docs/componentes/termo.svg" width="110" alt="termo"> | Isola as emendas soldadas (evita curto-circuito). | R$ 16,88–43 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Cabo USB-A → micro-USB (dados)** · 1 un. | <img src="docs/componentes/cabo_microusb.svg" width="110" alt="cabo_microusb"> | Gravar e atualizar o programa pelo laptop. | a partir de R$ 11,69 | R$ \_\_\_\_\_\_\_\_\_ |
 
 ## E4. Relógio sem internet (sugerido)
 
-| Componente e códigos | Ilustração | Função | Preço estimado |
-|---|:---:|---|---|
-| **Módulo RTC DS3231** · 1 un.<br>DS3231 + EEPROM AT24C32 · I2C 0x68 · 3,3–5 V | <img src="docs/componentes/ds3231.svg" width="110" alt="ds3231"> | Guarda a hora certa mesmo sem internet e sem energia (ver D9). | R$ 26–31 |
-| **Bateria LIR2032 (recarregável)** · 1 un.<br>3,6 V · tipo moeda | <img src="docs/componentes/lir2032.svg" width="110" alt="lir2032"> | Alimenta o relógio do DS3231 quando o dispenser está desligado. | R$ 8–15 \* |
+| Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
+|---|:---:|---|---|---|
+| **Módulo RTC DS3231** · 1 un.<br>DS3231 + EEPROM AT24C32 · I2C 0x68 · 3,3–5 V | <img src="docs/componentes/ds3231.svg" width="110" alt="ds3231"> | Guarda a hora certa mesmo sem internet e sem energia (ver D9). | R$ 26–30,91 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Bateria LIR2032 (recarregável)** · 1 un.<br>3,6 V · tipo moeda | <img src="docs/componentes/lir2032.svg" width="110" alt="lir2032"> | Alimenta o relógio do DS3231 quando o dispenser está desligado. | R$ 11,90–28,50 | R$ \_\_\_\_\_\_\_\_\_ |
 
-## E5. Ferramentas (se ainda não tiver)
+## E5. Ferramentas necessárias (fora do custo)
 
-| Ferramenta | Ilustração | Função | Preço estimado |
+As ferramentas **não entram na soma** do projeto: são de uso geral e costumam ser
+emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, são
+**necessárias** para a montagem autônoma, que tem soldas em peças pequenas.
+
+| Ferramenta | Ilustração | Para quê | Modelo recomendado e ajustes |
 |---|:---:|---|---|
-| **Ferro de solda 40–60 W** | <img src="docs/componentes/ferro.svg" width="110" alt="ferro"> | Soldar os fios no IP5306, na placa perfurada e no cabo USB-C. | R$ 40–90 \* |
-| **Estanho 0,8 mm (tubinho)** | <img src="docs/componentes/estanho.svg" width="110" alt="estanho"> | Material da solda. | R$ 10–25 \* |
-| **Multímetro digital** | <img src="docs/componentes/multimetro.svg" width="110" alt="multimetro"> | Conferir os 5 V da saída e a polaridade antes de ligar o ESP32. | R$ 40–80 \* |
+| **Ferro de solda com ajuste de temperatura** | <img src="docs/componentes/ferro.svg" width="110" alt="ferro"> | Soldar os fios nos pads do IP5306, no cabo USB-C e na placa perfurada. | **Estação ou ferro com controle de temperatura**, 50–60 W, faixa ~200–480 °C (ex.: **Hikari HK-936B** ou **Yaxun 936**).<br>• **Temperatura:** **320–350 °C** para os pads pequenos (IP5306, pinos, resistores); até **370 °C** para os fios 22 AWG e os trilhos da placa.<br>• **Ponta:** cônica fina (0,5–1 mm) ou chanfrada pequena (~1,6 mm).<br>• Evite ferros simples **sem ajuste** (ex.: linhas "60 W" comuns, que passam de 500 °C): o excesso de calor pode **soltar os pads** do IP5306 e danificar a bateria se encostar nela. |
+| **Estanho (solda) 60/40 com fluxo, 0,5 mm** | <img src="docs/componentes/estanho.svg" width="110" alt="estanho"> | Material da solda. | Fio **0,5 mm** (fino, próprio para peças pequenas), liga **60/40** com **fluxo resinoso** (ex.: **Cobix 0,5 mm RA T2**, carretel pequeno de 250 g ou tubinho). |
+| **Multímetro digital** | <img src="docs/componentes/multimetro.svg" width="110" alt="multimetro"> | Conferir os 5 V da saída e a polaridade **antes** de ligar o ESP32. | Modelo básico com **tensão DC** e **teste de continuidade** (bip) (ex.: **Hikari HM-1001** ou **Minipa ET-1002**). |
+| **Acessórios de bancada** | — | Preparar fios e corrigir erros. | Suporte com esponja para o ferro (costuma vir com a estação) · **alicate de corte rente** pequeno · **decapador** para fio 22 AWG · **malha dessoldadora** ou sugador · pinça · "terceira mão" com lupa (opcional) · isqueiro ou soprador para o termo-retrátil. |
+| **Segurança** | — | — | **Óculos de proteção**, ambiente **ventilado** (fumaça do fluxo) e **lavar as mãos** depois de usar estanho com chumbo. Nunca soldar com a bateria encaixada no suporte. |
 
 ## E6. Resumo do investimento
 
-| Grupo | Faixa estimada |
-|---|---|
-| E1. Eletrônica do dispenser | R$ 125 – 160 |
-| E2. Energia autônoma *(sem a bateria, que você já tem)* | R$ 70 – 120 |
-| E3. Montagem e ligações | R$ 45 – 95 |
-| **Total para montar o dispenser** | **≈ R$ 240 – 375** |
-| E4. Relógio sem internet (sugerido) | + R$ 35 – 45 |
-| E5. Ferramentas (se não tiver) | + R$ 90 – 195 |
-| Bateria 18650 (se precisar de outra) | + R$ 30 – 45 |
+| Grupo | Faixa pesquisada | Total anotado |
+|---|---|---|
+| E1. Eletrônica do dispenser | R$ 134 – 147 | R$ \_\_\_\_\_\_\_\_\_ |
+| E2. Energia autônoma *(com a bateria)* | R$ 117 – 157 | R$ \_\_\_\_\_\_\_\_\_ |
+| E3. Montagem e ligações | R$ 46 – 96 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Total para montar o dispenser** | **≈ R$ 297 – 400** | **R$ \_\_\_\_\_\_\_\_\_** |
+| *Total sem a bateria (que você já tem)* | *≈ R$ 257 – 360* | R$ \_\_\_\_\_\_\_\_\_ |
+| E4. Relógio sem internet (sugerido, à parte) | + R$ 38 – 60 | R$ \_\_\_\_\_\_\_\_\_ |
 
-**Não inclui** a estrutura física do dispenser (caixa, portas e divisórias dos
-compartimentos), que depende do material escolhido (MDF, acrílico ou impressão 3D), nem o
-frete.
+**Não inclui:** ferramentas (E5), frete e a estrutura física do dispenser (caixa, portas e
+divisórias dos compartimentos), que depende do material escolhido (MDF, acrílico ou
+impressão 3D).
 
 **Dicas de compra:**
 
@@ -1626,30 +1631,41 @@ frete.
   peças em que imitações dão mais problema.
 - Bateria 18650 com "9.800 mAh" ou "12.000 mAh" no rótulo é **falsa**; uma 18650 real tem
   no máximo cerca de 3.500 mAh.
-- Kits (resistores, LEDs, botões, termo-retrátil) saem mais baratos por unidade e sobram
-  peças de reserva para o projeto.
+- Resistores, botões e termo-retrátil saem em pacotes: o preço por unidade cai e sobram
+  peças de reserva.
+- Comprar tudo numa mesma loja costuma compensar o frete.
 
-**Fontes dos preços** (pesquisa de setembro de 2026):
+**Fontes dos preços e modelos** (pesquisa de setembro de 2026):
 [Eletrogate — ESP32 30 pinos](https://www.eletrogate.com/modulo-wifi-esp32-bluetooth-30-pinos) ·
 [WJ Componentes — Servo SG90](https://www.wjcomponentes.com.br/micro-servo-sg90-9g/) ·
 [Curto Circuito — Servo SG90](https://curtocircuito.com.br/servo-motor-9g-sg90.html) ·
+[Eletrogate — módulo I2C / LCD](https://www.eletrogate.com/modulo-serial-i2c-para-display-lcd-para-arduino) ·
 [Amazon.com.br — LCD 16x2 I2C](https://www.amazon.com.br/Display-PCF8574-Endere%C3%A7o-Controlador-80x35mm/dp/B0H346LHKM) ·
-[Eletrogate — módulo I2C](https://www.eletrogate.com/modulo-serial-i2c-para-display-lcd-para-arduino) ·
 [Vamuino — buzzer ativo](https://lojinha.vamuino.com.br/produto/buzzer-ativo-5v/) ·
-[MakerHero — capa de botão 12x12](https://www.makerhero.com/produto/capa-para-chave-tactil-push-button-12x12-mm/) ·
+[Eletrogate — LED difuso 5 mm vermelho](https://www.eletrogate.com/led-difuso-5mm-vermelho) ·
+[Eletrogate — resistor 220R](https://www.eletrogate.com/resistor-220r-1-4w-10-unidades) ·
+[Eletrogate — resistor 5K1](https://www.eletrogate.com/resistor-5k1-1-4w-10-unidades) ·
+[MakerHero — chave táctil 12x12](https://www.makerhero.com/produto/capa-para-chave-tactil-push-button-12x12-mm/) ·
 [Magazine Luiza — fonte 5 V 3 A USB-C](https://www.magazineluiza.com.br/busca/fonte+5v+3a+usb-c/) ·
 [MakerHero — fonte 5 V 3 A USB-C](https://www.makerhero.com/produto/fonte-dc-chaveada-5v-3a-usb-tipo-c/) ·
-[Shopee — IP5306](https://shopee.com.br/3-Modulo-Carregador-Descarregador-Ip5306-5v-2a-Tipo-c-i.439351414.58210993234) ·
+[Mercado Livre — IP5306](https://www.mercadolivre.com.br/modulo-carga-y-descarga-bateria-18650-ip5306-2a-5v-usb-c/p/MLB2064132227) ·
 [eBay — IP5306 (referência internacional)](https://www.ebay.de/itm/134628665112) ·
-[IMR Batteries — Samsung 26J 18650 (referência internacional)](https://imrbatteries.com/products/samsung-26j-18650-2600mah-5-2a-battery) ·
-[Usinainfo — suporte 18650](https://www.usinainfo.com.br/suporte-para-pilhas/suporte-para-bateria-18650-li-ion-1-slot-4978.html) ·
+[AutoCore Robótica — bateria 18650 2600 mAh](https://www.autocorerobotica.com.br/bateria-li-ion-37v-18650-2600mah) ·
+[RS Robótica — bateria 18650 2600 mAh](https://www.rsrobotica.com.br/produto/bateria-cr18650-37v-2600mah-li-ion.html) ·
+[Usinainfo — suporte 18650](https://www.usinainfo.com.br/eletroeletronica/suporte-para-1-bateria-18650-litio-4978.html) ·
 [Amazon.com.br — cabo USB-C pigtail](https://www.amazon.com.br/ELNONE-alimenta%C3%A7%C3%A3o-Pigtail-r%C3%A1pida-pigtail/dp/B0CGVNG7Y4) ·
+[eBay — cabo USB-C pigtail (referência internacional)](https://www.ebay.de/itm/226762117675) ·
 [Nova Trida — capacitor 1000 µF](https://www.novatridaeletronica.com.br/capacitor-eletrolitico-1000uf-x-16v) ·
 [Fermarc — placa perfurada 7x9](https://www.fermarc.com/placa-de-circuito-perfurada-face-simples-7x9) ·
 [SmartProjects — placa perfurada 7x9](https://www.smartprojectsbrasil.com.br/placa-fenolite-perfurada-ilhada-fibra-de-vidro-7x9-cm) ·
 [Eletrogate — jumpers M/F](https://www.eletrogate.com/jumpers-macho-femea-40-unidades-de-20-cm) ·
 [Multcomercial — cabinho 22 AWG](https://www.multcomercial.com.br/fios-e-cabos/cabinho-flexivel/flex-0-32mm-22-awg.html) ·
 [Termotubos — kit termo-retrátil](https://loja.termotubos.com.br/kits/termo-retrateis-variados) ·
-[Leroy Merlin — kit termo-retrátil](https://www.leroymerlin.com.br/kit-tubos-termo-retratil-com-98-unidades-colorido_1572374101) ·
-[Mercado Livre — RTC DS3231](https://www.mercadolivre.com.br/modulo-rtc-real-time-clock-ds3231-arduino-esp8266-esp32-rasp/p/MLB42966007)
-
+[Submarino — cabo micro-USB](https://www.submarino.com.br/busca/cabo-micro-usb-1-metro) ·
+[Mercado Livre — RTC DS3231](https://www.mercadolivre.com.br/modulo-rtc-real-time-clock-ds3231-arduino-esp8266-esp32-rasp/p/MLB42966007) ·
+[Orielec — bateria LIR2032](https://www.lojaorielec.com.br/acessorios/baterias-e-suportes/bateria-de-litio-lir2032) ·
+[Ferro de Solda Profissional — modelos com controle de temperatura (HK-936B, Yaxun 936)](https://ferrodesoldaprofissional.com.br/ferro-de-solda/) ·
+[Casa da Robótica — Hikari SC-60 (sem ajuste de temperatura)](https://www.casadarobotica.com/prototipagem-e-ferramentas/prototipagem/soldas/ferro-de-solda-hk-plus-hikari-profissional-sc-60w-220v) ·
+[Baú da Eletrônica — estanho Cobix 0,5 mm](https://www.baudaeletronica.com.br/produto/rolo-de-solda-estanho-500g-05mm-cobix.html) ·
+[Loja do Mecânico — multímetro Hikari HM-1001](https://www.lojadomecanico.com.br/produto/123563/3/47/multimetro-digital-hm-1001-hikari-21n240) ·
+[LC Ferragens — multímetros (Minipa ET-1002)](https://www.lcferragens.com.br/produto/multimetro-hikari-digital-hm-1000/)
