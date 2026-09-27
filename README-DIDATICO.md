@@ -41,12 +41,14 @@
 - [Parte D — Uso autônomo, sem o laptop (condicional)](#parte-d--uso-autônomo-sem-o-laptop-condicional)
   - [D1. Condição para aplicar](#d1-condição-para-aplicar)
   - [D2. Por que o laptop não é necessário](#d2-por-que-o-laptop-não-é-necessário)
-  - [D3. Opção A — carregador USB](#d3-opção-a--carregador-usb)
-  - [D4. Opção B — fonte única (montagem definitiva)](#d4-opção-b--fonte-única-montagem-definitiva)
-  - [D5. Opção C — bateria, power bank e "nobreak"](#d5-opção-c--bateria-power-bank-e-nobreak)
-  - [D6. Falta de energia e de internet](#d6-falta-de-energia-e-de-internet)
-  - [D7. Sugestão: módulo de relógio DS3231](#d7-sugestão-módulo-de-relógio-ds3231)
-  - [D8. Resumo: qual montagem usar](#d8-resumo-qual-montagem-usar)
+  - [D3. A solução: fonte 5 V/3 A + IP5306 + bateria 18650](#d3-a-solução-fonte-5-v3-a--ip5306--bateria-18650)
+  - [D4. Lista de compras](#d4-lista-de-compras)
+  - [D5. Montagem passo a passo](#d5-montagem-passo-a-passo)
+  - [D6. Teste de falta de energia](#d6-teste-de-falta-de-energia)
+  - [D7. Autonomia da bateria](#d7-autonomia-da-bateria)
+  - [D8. Falta de energia e de internet](#d8-falta-de-energia-e-de-internet)
+  - [D9. Sugestão: módulo de relógio DS3231](#d9-sugestão-módulo-de-relógio-ds3231)
+  - [D10. Atualizar o programa depois de montado](#d10-atualizar-o-programa-depois-de-montado)
 
 ---
 
@@ -1286,11 +1288,12 @@ Sugestões de exercícios, do mais simples ao mais desafiador:
 
 # Parte D — Uso autônomo, sem o laptop (condicional)
 
-> ⚠️ **Esta parte é condicional.** Ela descreve como deixar o dispenser funcionando
-> sozinho, ligado na tomada ou em bateria. **Só deve ser aplicada depois que os testes
-> forem concluídos e a versão final for gravada** (ver D1). Até lá, continua valendo a
-> **montagem de bancada** da seção [A2](#a2-materiais-e-ligações): ESP32 no USB do
-> laptop e servos na fonte de 5 V separada.
+> ⚠️ **Esta parte é condicional.** Ela descreve a montagem para o dispenser funcionar
+> sozinho, na tomada e com bateria para faltas de energia. **Só deve ser aplicada depois
+> que os testes forem concluídos e a versão final for gravada** (ver D1). Até lá,
+> continua valendo a **montagem de bancada** da seção
+> [A2](#a2-materiais-e-ligações): ESP32 no USB do laptop e servos na fonte de 5 V
+> separada.
 
 ## D1. Condição para aplicar
 
@@ -1321,102 +1324,160 @@ recebe energia. Durante os testes, o laptop faz só duas coisas:
 
 Para funcionar sem o laptop, basta trocar a **fonte de energia**. O código não muda.
 
-## D3. Opção A — carregador USB
+## D3. A solução: fonte 5 V/3 A + IP5306 + bateria 18650
 
-A troca mais simples: no lugar do laptop, um **carregador de celular** no mesmo cabo
-USB do ESP32.
+Esta é a **única montagem recomendada** para o uso autônomo do Zelo+:
 
-- Carregador de **5 V e pelo menos 1 A**.
-- Cabo USB de boa qualidade (cabos muito finos derrubam a tensão).
-- Os servos **continuam** na fonte de 5 V separada, com o **GND ligado ao GND do
-  ESP32**, como na bancada.
+```text
+ Tomada ─► Fonte 5 V / 3 A ─(cabo USB-C)─► IP5306 (IN) ◄──► Bateria 18650
+                                              │
+                                      OUT: 5 V estáveis
+                                              │
+                ┌─────────────────────────────┼──────────────────────┐
+           VIN do ESP32                  3 servos          capacitor 1000 µF
+                └──────────────── GND comum em tudo ──────────────────┘
+```
 
-Serve bem para a fase de transição e para demonstrações.
-
-## D4. Opção B — fonte única (montagem definitiva)
-
-Uma única fonte de **5 V, de 2 A a 3 A**, alimenta o ESP32 (pelo pino **VIN**) e os
-três servos. Um **capacitor** perto dos servos absorve o pico de corrente quando eles
-começam a girar.
-
-![Montagem autônoma: fonte única e relógio DS3231](docs/ligacoes-autonomo.png)
+![Montagem autônoma: fonte 5 V/3 A, IP5306 e bateria 18650](docs/ligacoes-autonomo.png)
 
 *(versão vetorial: [`docs/ligacoes-autonomo.svg`](docs/ligacoes-autonomo.svg))*
 
-**Ligações que mudam em relação à bancada:**
+**Como funciona:** o **IP5306** é um módulo de *power bank* que faz três coisas numa
+placa só.
 
-| Ligação | Bancada (testes) | Autônoma (uso) |
-|---|---|---|
-| Energia do ESP32 | USB do laptop | **+5 V da fonte → pino VIN** |
-| Energia dos servos | Fonte 5 V separada | **A mesma fonte** de 5 V |
-| GND | Fonte ↔ ESP32 | Fonte ↔ ESP32 ↔ servos (**comum**) |
-| Capacitor | — | **470–1000 µF, 10 V ou mais**, entre +5 V e GND, perto dos servos |
-| USB | Sempre ligado | **Só para gravar/atualizar** |
-
-**Cuidados:**
-
-- Use fonte de **5 V exatos**. O VIN aceita um pouco mais, mas o regulador da placa
-  esquenta à toa.
-- O capacitor eletrolítico tem polaridade: a perna marcada com a **faixa "−" vai no
-  GND**. Invertido, ele pode estufar.
-- **Nunca ligue o USB e a fonte no VIN ao mesmo tempo.** Para atualizar o programa,
-  desligue a fonte, ligue o USB no laptop, grave e depois volte para a fonte.
-
-**Consumo aproximado** (para escolher a fonte):
-
-| Parte | Corrente típica |
+| Situação | O que o IP5306 faz |
 |---|---|
-| ESP32 com Wi-Fi ligado | 0,10 a 0,25 A |
-| LCD (com luz de fundo) + LED | cerca de 0,05 A |
-| Servo parado | poucos mA cada |
-| Servo em movimento (um de cada vez) | 0,15 a 0,25 A |
-| **Pico total** | **cerca de 0,6 A** |
+| **Com energia da rua** | Passa os 5 V da fonte para o dispenser e, ao mesmo tempo, **carrega a bateria** |
+| **Falta energia** | Passa a usar a bateria e **eleva de 3,7 V para 5 V** — o dispenser continua ligado |
+| **Energia volta** | Volta a usar a fonte e recarrega a bateria |
 
-Uma fonte de **2 A** tem folga de sobra; 3 A deixa margem para acessórios futuros.
+- A bateria 18650 fica entre 3,0 V (vazia) e 4,2 V (cheia). **Quem entrega os 5 V** ao
+  ESP32 e aos servos é o próprio IP5306 — por isso a tensão da saída não varia com a
+  carga da bateria.
+- Use **uma bateria só**, ligada direto em **B+ / B−** do módulo. O IP5306 é feito para
+  **uma célula**: nunca ligue baterias em série (a tensão somaria 6–8,4 V e queimaria o
+  módulo).
+- A fonte de **3 A** tem folga: o IP5306 carrega a bateria com até ~2 A e o dispenser
+  consome no pico ~0,6 A.
 
-## D5. Opção C — bateria, power bank e "nobreak"
+**O cabo USB-C "com fios" (atenção):** fontes USB-C só liberam os 5 V quando o aparelho
+ligado a elas se identifica, por meio de um **resistor de 5,1 kΩ no pino CC**. Por isso,
+o cabo que tem **ponta USB-C de um lado e fios soldados no IP5306 do outro** precisa ser
+um cabo **com esse resistor embutido** (vendido como "cabo USB-C macho com resistor
+5.1k" ou "pigtail USB-C 5V"). Um cabo sem o resistor deixa a fonte **sem entregar
+energia nenhuma** — o dispenser simplesmente não liga.
 
-- **Power bank no USB:** funciona para uso portátil ou demonstração. Alguns modelos
-  **desligam sozinhos** quando o consumo é baixo; teste o seu antes.
-- **Autonomia estimada:** o dispenser gasta em média ~0,15–0,2 A em 5 V (≈ 1 W). Um
-  power bank de **10.000 mAh** dura algo em torno de **30 horas**. É uma estimativa:
-  para ter o número real, meça com um medidor USB de corrente.
-- **"Nobreak" simples:** um power bank com **carga e saída ao mesmo tempo**
-  (*pass-through*) fica ligado na tomada e alimenta o dispenser; se a luz cair, ele
-  segura o funcionamento sem interrupção. Confirme essa função na descrição do produto.
-- **Bateria de lítio (18650) + módulo elevador para 5 V:** opção para uma versão
-  futura, com carregador e proteção próprios.
+## D4. Lista de compras
 
-## D6. Falta de energia e de internet
+| # | Item | Qtd | Especificação / observação |
+|---|---|---|---|
+| 1 | **Fonte de tomada 5 V / 3 A** | 1 | Saída **USB-C**, 5 V, 3 A (15 W). Preferir marca conhecida, com certificação Inmetro. |
+| 2 | **Módulo IP5306** | 1 | "Módulo carregador power bank IP5306 5V 2.1A 18650", com **pads de solda** de entrada (5V/GND), de bateria (B+/B−) e de saída (OUT). |
+| 3 | **Bateria 18650** | 1 | Li-ion 3,7 V, **2.500–3.000 mAh reais** (Samsung, LG, Sony/Murata, Panasonic). Desconfiar de "9.800 mAh". *Você já tem.* |
+| 4 | **Suporte (case) para 1× 18650** | 1 | Com fios vermelho/preto. Evita soldar direto na bateria. |
+| 5 | **Cabo USB-C macho com fios (pigtail)** | 1 | Ponta **USB-C** de um lado, **2 fios** (vermelho/preto) do outro, **com resistor 5,1 kΩ no CC**. Os fios são **soldados** nos pads de entrada do IP5306. |
+| 6 | **Capacitor eletrolítico 1000 µF / 16 V** | 1 | Entre +5 V e GND, perto dos servos. Tem polaridade (faixa "−" no GND). |
+| 7 | **Fio 22 AWG** vermelho e preto | ~1 m cada | Saída do IP5306 → VIN do ESP32 e servos. |
+| 8 | **Placa perfurada** ou barramento de bornes | 1 | Para fazer os "trilhos" de +5 V e GND com solda (mais firme que protoboard para uso contínuo). |
+| 9 | **Termo-retrátil** sortido | 1 kit | Isolar as emendas soldadas. |
+| 10 | **Multímetro** | 1 | Conferir polaridade e os 5 V da saída **antes** de ligar o ESP32. |
+| 11 | Ferro de solda + estanho | — | Para os pads do IP5306 e as emendas. |
+| 12 | *Módulo relógio DS3231 + bateria LIR2032* (sugerido) | 1 | Ver [D9](#d9-sugestão-módulo-de-relógio-ds3231): mantém a hora certa sem internet. |
+
+> 💡 Módulos IP5306 costumam vir também com uma **saída USB-A**. Ela entrega os mesmos
+> 5 V, mas para o dispenser use os **pads de saída soldados**: a ligação fica firme e não
+> depende de um conector que pode se soltar.
+
+## D5. Montagem passo a passo
+
+> ⚡ Monte **sem a bateria e sem a fonte ligadas**. Só energize nas etapas indicadas.
+
+1. **Cabo de entrada:** solde os fios do cabo USB-C nos pads de **entrada** do IP5306:
+   **vermelho → 5V (IN+)** e **preto → GND (IN−)**. Isole com termo-retrátil.
+2. **Bateria:** solde os fios do suporte da 18650 nos pads **B+** (vermelho) e **B−**
+   (preto). Confira a polaridade com o multímetro antes de encaixar a bateria.
+3. **Saída:** solde um fio vermelho em **OUT+ (5V)** e um preto em **OUT− (GND)** e leve
+   até a placa perfurada, formando os **trilhos de +5 V e GND**.
+4. **Teste sem o ESP32:** encaixe a bateria e ligue a fonte na tomada. Com o multímetro,
+   meça os trilhos: devem marcar **entre 4,9 V e 5,2 V**. Desligue tudo.
+5. **Capacitor:** solde o capacitor de 1000 µF entre os trilhos, **perto dos servos**
+   (faixa "−" no GND).
+6. **Servos:** fio **vermelho** de cada servo no trilho de +5 V, **marrom** no GND. Os
+   fios de sinal continuam nos GPIO 13, 14 e 27.
+7. **ESP32:** trilho de +5 V → pino **VIN**; trilho de GND → pino **GND** do ESP32.
+   **Não ligue o cabo USB do ESP32** — a energia entra só pelo VIN.
+8. **Resto da montagem** (LCD, botão, LED, buzzer): igual à bancada.
+9. **Ligar:** fonte na tomada. O LCD deve mostrar "Iniciando...", depois o IP, depois o
+   relógio.
+
+## D6. Teste de falta de energia
+
+Com o dispenser funcionando (relógio no LCD):
+
+1. **Tire a fonte da tomada.** O dispenser deve **continuar ligado**, agora pela bateria.
+2. Observe o LCD:
+   - Se o relógio **continua normal**, a troca foi perfeita. ✅
+   - Se aparecer **"Iniciando..."**, o ESP32 reiniciou no instante da troca. Nada se
+     perde (cadastro, horários e histórico ficam salvos) e ele volta sozinho em poucos
+     segundos. Para evitar, confira se o capacitor está perto dos servos e firme.
+3. **Recoloque a fonte.** O dispenser segue ligado e a bateria volta a carregar (os LEDs
+   do módulo indicam a carga).
+4. Faça um **alarme de teste** com o dispenser na bateria (servo abrindo e fechando),
+   para confirmar que a bateria aguenta o pico dos servos.
+
+**Outros cuidados com o IP5306:**
+
+- No modo bateria, ele **se desliga sozinho se o consumo ficar abaixo de ~50 mA**. O
+  dispenser com Wi-Fi consome mais que isso, então não deve acontecer — mas se a bateria
+  **zerar**, algumas placas só religam a saída ao **apertar o botãozinho** do módulo ou
+  quando a energia da rua volta.
+- Carregando e alimentando ao mesmo tempo, o módulo **esquenta um pouco**: deixe-o com
+  ventilação e sem encostar na bateria.
+
+## D7. Autonomia da bateria
+
+Conta para **uma 18650 real de 2.500–3.000 mAh**:
+
+| Etapa | Valor |
+|---|---|
+| Energia da bateria | 2.500 mAh × 3,7 V ≈ **9,3 Wh** |
+| Perda na elevação para 5 V (~85%) | sobram ≈ **7,9 Wh** |
+| Consumo médio do dispenser (ESP32 com Wi-Fi, LCD, servos parados) | ≈ **0,75 a 1 W** |
+| **Autonomia sem energia da rua** | **≈ 8 a 10 horas** |
+
+Os servos se mexem só alguns segundos por dia e quase não pesam na conta. Para saber
+o número real da sua bateria: carregue até o fim, tire da tomada e anote quanto tempo o
+dispenser fica ligado.
+
+## D8. Falta de energia e de internet
 
 | Situação | O que acontece |
 |---|---|
-| **Energia cai** | Cadastro, horários, contatos e histórico **ficam salvos**. Horários que passarem com o dispenser desligado **não tocam** depois. |
-| **Energia volta, com internet** | Conecta no Wi-Fi, acerta a hora pela internet e volta ao normal. |
-| **Energia volta, sem internet** | ⚠️ **Sem hora certa, os alarmes não tocam** até a internet voltar. É a principal limitação da versão atual. |
+| **Falta energia (até ~8–10 h)** | O dispenser **continua funcionando pela bateria**. Os alarmes tocam; o Telegram depende de a internet (roteador) também estar ligada. |
+| **Falta energia por mais tempo** (bateria acaba) | O dispenser desliga. Cadastro, horários e histórico **ficam salvos**; horários que passarem desligado **não tocam** depois. |
+| **Energia volta, com internet** | Liga sozinho, conecta no Wi-Fi, acerta a hora e volta ao normal; a bateria recarrega. |
+| **Energia volta, sem internet** | ⚠️ **Sem hora certa, os alarmes não tocam** até a internet voltar (resolvido com o DS3231, abaixo). |
 | **Internet cai, energia ok** | O relógio interno continua contando: **os alarmes tocam normalmente**. Só as mensagens do Telegram não saem. |
 
-O caso "energia volta sem internet" é justamente o que o módulo de relógio resolve.
-
-## D7. Sugestão: módulo de relógio DS3231
+## D9. Sugestão: módulo de relógio DS3231
 
 > 💡 **Recomendação para a próxima versão:** incluir um **módulo de relógio de tempo
 > real (RTC) DS3231**, para que o dispenser **saiba a hora mesmo sem internet**, inclusive
-> logo depois de uma queda de energia.
+> depois de a bateria acabar e a energia voltar.
 
-**O que é:** uma plaquinha com um relógio de alta precisão e uma **bateria tipo moeda
-(CR2032)**. Ela continua contando o tempo por anos, mesmo com o dispenser desligado.
+**O que é:** uma plaquinha com um relógio de alta precisão e uma **bateria tipo moeda**.
+Ela continua contando o tempo por anos, mesmo com o dispenser desligado.
 
 | Característica | Valor |
 |---|---|
 | Precisão | ±2 ppm (cerca de 1 minuto por ano) |
 | Comunicação | I2C, endereço `0x68` (não conflita com o LCD, que usa `0x27`) |
 | Alimentação | 3,3 V (pino 3V3 do ESP32) |
-| Bateria | CR2032, dura anos |
+| Bateria | LIR2032 (recarregável) — ver aviso abaixo |
 | Preço aproximado | R$ 15 a R$ 30 |
 
-**Ligação:** no **mesmo barramento I2C do LCD**, em paralelo. Veja a caixa tracejada
-no diagrama da seção D4.
+**Ligação:** no **mesmo barramento I2C do LCD**, em paralelo (caixa tracejada no
+diagrama da seção D3).
 
 | DS3231 | ESP32 |
 |---|---|
@@ -1425,8 +1486,8 @@ no diagrama da seção D4.
 | SDA | GPIO 21 (junto com o SDA do LCD) |
 | SCL | GPIO 22 (junto com o SCL do LCD) |
 
-> ⚠️ Muitos módulos DS3231 vêm com um circuito que tenta **recarregar** a bateria.
-> Com uma **CR2032 comum (não recarregável)**, isso pode estragar a bateria. Use uma
+> ⚠️ Muitos módulos DS3231 vêm com um circuito que tenta **recarregar** a bateria. Com
+> uma **CR2032 comum (não recarregável)**, isso pode estragar a bateria. Use uma
 > **LIR2032** (recarregável) ou peça para alguém retirar o resistor/diodo de carga do
 > módulo.
 
@@ -1455,16 +1516,16 @@ if (rtc.begin() && !rtc.lostPower()) {
 rtc.adjust(DateTime((uint32_t)time(nullptr)));   // mantém o DS3231 corrigido
 ```
 
-Com o módulo, a linha "Energia volta, sem internet" da seção D6 passa a ser: **os
+Com o módulo, a linha "Energia volta, sem internet" da seção D8 passa a ser: **os
 alarmes tocam normalmente; só o Telegram espera a internet**.
 
-## D8. Resumo: qual montagem usar
+## D10. Atualizar o programa depois de montado
 
-| Momento | Montagem |
-|---|---|
-| **Testes e atualizações** | Bancada: ESP32 no USB do laptop + servos na fonte separada ([A2](#a2-materiais-e-ligações)) |
-| **Transição / demonstração** | Opção A: carregador USB no ESP32 + servos na fonte separada |
-| **Uso definitivo** (após D1) | Opção B: fonte única 5 V 2–3 A no VIN + servos + capacitor |
-| **Proteção contra falta de luz** | Opção C: power bank *pass-through* como "nobreak" |
-| **Próxima versão (recomendado)** | + módulo de relógio **DS3231**, para funcionar sem internet |
+A montagem autônoma não impede atualizações:
 
+1. **Desconecte a saída do IP5306 do VIN** do ESP32 (solte o fio do VIN ou use um borne
+   que se possa abrir). **Nunca ligue o USB e o VIN ao mesmo tempo.**
+2. Ligue o **USB do ESP32 no laptop** e grave a versão nova (Build → Upload), como na
+   bancada.
+3. Tire o USB, **religue o fio do VIN** e o dispenser volta a funcionar pela fonte e pela
+   bateria.

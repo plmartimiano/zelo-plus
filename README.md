@@ -11,8 +11,9 @@ paciente, cada um fixo no seu compartimento (detalhes em
 > funcionamento passo a passo, com o trecho de código de cada etapa.
 > Versão para impressão: [`docs/Zelo-Guia-Didatico.pdf`](docs/Zelo-Guia-Didatico.pdf).
 > 🔌 **Ligações (bancada/testes):** [`docs/ligacoes.png`](docs/ligacoes.png) ([SVG](docs/ligacoes.svg)).
-> 🔋 **Uso autônomo, após testes e atualização** (fonte única, bateria e sugestão de
-> relógio DS3231): Parte D do guia didático e
+> 🔋 **Uso autônomo, após testes e atualização** — fonte 5 V/3 A + módulo **IP5306** +
+> bateria **18650** (lista de compras, montagem e teste) e sugestão de relógio
+> **DS3231**: Parte D do guia didático e
 > [`docs/ligacoes-autonomo.png`](docs/ligacoes-autonomo.png) ([SVG](docs/ligacoes-autonomo.svg)).
 
 ```
@@ -21,7 +22,7 @@ zelo-plus/
 ├── README-DIDATICO.md      # guia didático passo a passo
 ├── docs/compartimentos.md  # especificação aprovada dos 3 compartimentos
 ├── docs/ligacoes.png/.svg  # diagrama de todas as ligações (bancada)
-├── docs/ligacoes-autonomo.*# montagem autônoma: fonte única + DS3231 (sugerido)
+├── docs/ligacoes-autonomo.*# montagem autônoma: fonte + IP5306 + 18650 (+ DS3231 sugerido)
 └── src/main.cpp            # firmware completo (máquina de estados + web + captive portal)
 ```
 
