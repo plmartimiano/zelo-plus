@@ -11,9 +11,9 @@ Versão atual: **3 compartimentos** — até 3 medicamentos diferentes para o me
 paciente, cada um fixo no seu compartimento (detalhes em
 [`docs/compartimentos.md`](docs/compartimentos.md)).
 
-> 🛒 **Lista completa de componentes, com ilustrações e preços estimados:** Parte E do
+> 🛒 **Lista completa de componentes, com ilustrações e preços estimados:** Parte F do
 > guia didático.
-> 📏 **Gabinete — 210 × 130 × 100 mm:** desenho técnico e imagens do produto na Parte F do
+> 📏 **Gabinete — 210 × 130 × 100 mm:** desenho técnico e imagens do produto na Parte B do
 > guia didático; vistas em escala em [`docs/gabinete.png`](docs/gabinete.png)
 > ([SVG](docs/gabinete.svg)).
 > 🏭 **Custo de produção em série (estimativa de viabilidade, set/2026):** Parte G do
@@ -25,7 +25,7 @@ paciente, cada um fixo no seu compartimento (detalhes em
 > 🔌 **Ligações (bancada/testes):** [`docs/ligacoes.png`](docs/ligacoes.png) ([SVG](docs/ligacoes.svg)).
 > 🔋 **Uso autônomo, após testes e atualização** — fonte 5 V/3 A + módulo **IP5306** +
 > bateria **18650** (lista de compras, montagem e teste) e relógio **DS3231**
-> (opcional): Parte D do guia didático e
+> (opcional): Parte E do guia didático e
 > [`docs/ligacoes-autonomo.png`](docs/ligacoes-autonomo.png) ([SVG](docs/ligacoes-autonomo.svg)).
 
 ```

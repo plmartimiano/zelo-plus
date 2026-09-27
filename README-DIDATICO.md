@@ -21,7 +21,12 @@
   - [A3. Ambiente de desenvolvimento](#a3-ambiente-de-desenvolvimento)
   - [A4. Cinco conceitos antes de começar](#a4-cinco-conceitos-antes-de-começar)
   - [A5. A página do Zelo+ (tela completa)](#a5-a-página-do-zelo-tela-completa)
-- [Parte B — O código, passo a passo](#parte-b--o-código-passo-a-passo)
+- [Parte B — Desenho técnico do gabinete](#parte-b--desenho-técnico-do-gabinete)
+  - [B1. Desenho técnico dimensional](#b1-desenho-técnico-dimensional)
+  - [B2. Imagens do produto](#b2-imagens-do-produto)
+  - [B3. Critérios de projeto](#b3-critérios-de-projeto)
+  - [B4. Onde fica cada componente](#b4-onde-fica-cada-componente)
+- [Parte C — O código, passo a passo](#parte-c--o-código-passo-a-passo)
   - [Passo 1 — Bibliotecas e pinos](#passo-1--bibliotecas-e-pinos)
   - [Passo 2 — Estruturas de dados](#passo-2--estruturas-de-dados)
   - [Passo 3 — `setup()`: ligando tudo](#passo-3--setup-ligando-tudo)
@@ -41,33 +46,28 @@
   - [Passo 17 — Escrevendo no LCD](#passo-17--escrevendo-no-lcd)
   - [Passo 18 — Modo de teste](#passo-18--modo-de-teste)
   - [Passo 19 — Relógio DS3231 (opcional)](#passo-19--relógio-ds3231-opcional)
-- [Parte C — Juntando tudo](#parte-c--juntando-tudo)
-  - [C1. Linha do tempo de uma dose](#c1-linha-do-tempo-de-uma-dose)
-  - [C2. Referência rápida](#c2-referência-rápida)
-  - [C3. Para praticar](#c3-para-praticar)
-- [Parte D — Uso autônomo, sem o laptop (condicional)](#parte-d--uso-autônomo-sem-o-laptop-condicional)
-  - [D1. Condição para aplicar](#d1-condição-para-aplicar)
-  - [D2. Por que o laptop não é necessário](#d2-por-que-o-laptop-não-é-necessário)
-  - [D3. A solução: fonte 5 V/3 A + IP5306 + bateria 18650](#d3-a-solução-fonte-5-v3-a--ip5306--bateria-18650)
-  - [D4. Lista de compras](#d4-lista-de-compras)
-  - [D5. Montagem passo a passo](#d5-montagem-passo-a-passo)
-  - [D6. Teste de falta de energia](#d6-teste-de-falta-de-energia)
-  - [D7. Autonomia da bateria](#d7-autonomia-da-bateria)
-  - [D8. Falta de energia e de internet](#d8-falta-de-energia-e-de-internet)
-  - [D9. Módulo de relógio DS3231](#d9-módulo-de-relógio-ds3231)
-  - [D10. Atualizar o programa depois de montado](#d10-atualizar-o-programa-depois-de-montado)
-- [Parte E — Lista completa de componentes, com preços](#parte-e--lista-completa-de-componentes-com-preços)
-  - [E1. Eletrônica do dispenser](#e1-eletrônica-do-dispenser)
-  - [E2. Energia autônoma](#e2-energia-autônoma)
-  - [E3. Montagem e ligações](#e3-montagem-e-ligações)
-  - [E4. Relógio sem internet (opcional)](#e4-relógio-sem-internet-opcional)
-  - [E5. Ferramentas necessárias (fora do custo)](#e5-ferramentas-necessárias-fora-do-custo)
-  - [E6. Resumo do investimento](#e6-resumo-do-investimento)
-- [Parte F — Desenho técnico do gabinete](#parte-f--desenho-técnico-do-gabinete)
-  - [F1. Desenho técnico dimensional](#f1-desenho-técnico-dimensional)
-  - [F2. Imagens do produto](#f2-imagens-do-produto)
-  - [F3. Critérios de projeto](#f3-critérios-de-projeto)
-  - [F4. Onde fica cada componente](#f4-onde-fica-cada-componente)
+- [Parte D — Juntando tudo](#parte-d--juntando-tudo)
+  - [D1. Linha do tempo de uma dose](#d1-linha-do-tempo-de-uma-dose)
+  - [D2. Referência rápida](#d2-referência-rápida)
+  - [D3. Para praticar](#d3-para-praticar)
+- [Parte E — Uso autônomo, sem o laptop (condicional)](#parte-e--uso-autônomo-sem-o-laptop-condicional)
+  - [E1. Condição para aplicar](#e1-condição-para-aplicar)
+  - [E2. Por que o laptop não é necessário](#e2-por-que-o-laptop-não-é-necessário)
+  - [E3. A solução: fonte 5 V/3 A + IP5306 + bateria 18650](#e3-a-solução-fonte-5-v3-a--ip5306--bateria-18650)
+  - [E4. Lista de compras](#e4-lista-de-compras)
+  - [E5. Montagem passo a passo](#e5-montagem-passo-a-passo)
+  - [E6. Teste de falta de energia](#e6-teste-de-falta-de-energia)
+  - [E7. Autonomia da bateria](#e7-autonomia-da-bateria)
+  - [E8. Falta de energia e de internet](#e8-falta-de-energia-e-de-internet)
+  - [E9. Módulo de relógio DS3231](#e9-módulo-de-relógio-ds3231)
+  - [E10. Atualizar o programa depois de montado](#e10-atualizar-o-programa-depois-de-montado)
+- [Parte F — Lista completa de componentes, com preços](#parte-f--lista-completa-de-componentes-com-preços)
+  - [F1. Eletrônica do dispenser](#f1-eletrônica-do-dispenser)
+  - [F2. Energia autônoma](#f2-energia-autônoma)
+  - [F3. Montagem e ligações](#f3-montagem-e-ligações)
+  - [F4. Relógio sem internet (opcional)](#f4-relógio-sem-internet-opcional)
+  - [F5. Ferramentas necessárias (fora do custo)](#f5-ferramentas-necessárias-fora-do-custo)
+  - [F6. Resumo do investimento](#f6-resumo-do-investimento)
 - [Parte G — Custo de produção (estimativa para viabilidade)](#parte-g--custo-de-produção-estimativa-para-viabilidade)
   - [G1. Premissas e método](#g1-premissas-e-método)
   - [G2. Volume de plástico do gabinete](#g2-volume-de-plástico-do-gabinete)
@@ -142,7 +142,7 @@ guardado na **memória interna** da placa e sobrevive a quedas de energia.
 | Servo compartimento 2 (sinal) | GPIO 14 | +5 V e GND na **fonte externa** |
 | Servo compartimento 3 (sinal) | GPIO 27 | +5 V e GND na **fonte externa** |
 | LCD — SDA / SCL | GPIO 21 / GPIO 22 | VCC → 3V3, GND → GND |
-| Relógio DS3231 — SDA / SCL *(opcional)* | GPIO 21 / GPIO 22 | em paralelo com o LCD; VCC → 3V3, GND → GND (desenho na [D3](#d3-a-solução-fonte-5-v3-a--ip5306--bateria-18650)) |
+| Relógio DS3231 — SDA / SCL *(opcional)* | GPIO 21 / GPIO 22 | em paralelo com o LCD; VCC → 3V3, GND → GND (desenho na [E3](#e3-a-solução-fonte-5-v3-a--ip5306--bateria-18650)) |
 | Botão | GPIO 5 | outra perna → GND (sem resistor) |
 | LED | GPIO 4 | via resistor; perna curta → GND |
 | Buzzer (+) | GPIO 15 | (−) → GND |
@@ -175,10 +175,10 @@ upload_port = COM3
 monitor_speed = 115200
 board_build.partitions = huge_app.csv
 lib_deps = 
-    marcoschwartz/LiquidCrystal_I2C@^1.1.4
-    madhephaestus/ESP32Servo@^3.0.5
-    bblanchon/ArduinoJson@^7.0.4
-    adafruit/RTClib@^2.1.4
+    marcoschwartz/LiquidCrystal_I2C^1.1.4
+    madhephaestus/ESP32Servo^3.0.5
+    bblanchon/ArduinoJson^7.0.4
+    adafruit/RTClib^2.1.4
 ```
 
 - `upload_port`: porta USB onde a placa aparece no Windows (varia de PC para PC).
@@ -268,7 +268,83 @@ familiaridade com tecnologia:
 
 ---
 
-# Parte B — O código, passo a passo
+# Parte B — Desenho técnico do gabinete
+
+O gabinete do Zelo+ mede **210 × 130 × 100 mm** (comprimento × profundidade × altura).
+Ele tem três compartimentos iguais na frente, uma área técnica na parte de trás (servos)
+e uma faixa de eletrônica na base, onde ficam o LCD, o botão e a luz de alerta.
+Os componentes citados nesta parte são explicados em detalhe nas Partes
+[C](#parte-c--o-código-passo-a-passo) (programa) e [E](#parte-e--uso-autônomo-sem-o-laptop-condicional)
+(energia autônoma e relógio).
+
+## B1. Desenho técnico dimensional
+
+<figure markdown="1">
+![Desenho técnico dimensional do gabinete](docs/desenho-tecnico.jpg)
+<figcaption><b>Desenho técnico dimensional do gabinete</b> — vista frontal, corte lateral, vista superior e resumo das medidas (em mm; vistas sem escala).</figcaption>
+</figure>
+
+As vistas também estão em escala no arquivo vetorial
+[`docs/gabinete.svg`](docs/gabinete.svg) ([PNG](docs/gabinete.png)).
+
+**Dimensões principais: 210 (C) × 130 (P) × 100 (A) mm.**
+
+| Direção | Composição (mm) | Soma |
+|---|---|---|
+| Largura (vista superior) | 3 + **65,7** + 3,45 + **65,7** + 3,45 + **65,7** + 3 | **210** ✓ |
+| Profundidade | 3 + **75,7** (compartimento) + 2 + **46,3** (área técnica) + 3 | **130** ✓ |
+| Altura | 2,5 (fundo) + 42,5 (eletrônica) + 2,5 (piso) + **50,5** (compartimento) + 2 (tampa) | **100** ✓ |
+| Frente | 27 + **18** (botão) + 27 + **66** (janela do LCD) + 16 + **40** (acrílico) + 16 | **210** ✓ |
+
+| Elemento | Medida (mm) |
+|---|---|
+| Faixa preta (eletrônica) / faixa azul (compartimentos) | 45 / 55 |
+| Abertura de cada compartimento | 65,7 × 75,7 |
+| Tampa móvel (3, iguais) | 65 × 75 × 2 (folga de 0,35 por lado) |
+| Divisórias entre compartimentos | 2 no corpo, **3,45 no topo** (apoio das tampas) |
+| Profundidade útil do compartimento | 50,5 (≈ 251 cm³ cada) |
+| Tampa da área técnica (**removível**, 4 parafusos M3) | 203,3 × 45,6 × 2 |
+| Botão / janela do LCD / acrílico | 18 × 18 / 66 × 18 / 40 × 18, centros a **22,5** da base |
+| Centros horizontais (botão / LCD / acrílico) | 36 / **105** / 174 |
+| Placa do LCD (atrás do painel) | 80 × 36 × ~25 (com módulo I2C) |
+| Recorte do USB-C (parede traseira) | 14,2 × 5,4, centro a ~15 da base |
+
+## B2. Imagens do produto
+
+<figure markdown="1">
+![Imagens do produto Zelo+](docs/produto-imagens.jpg)
+<figcaption><b>Imagens do produto</b> — perspectiva, vistas e detalhes do compartimento aberto, da dobradiça e do encaixe (medidas em mm; vistas sem escala).</figcaption>
+</figure>
+
+## B3. Critérios de projeto
+
+- **Altura de 100 mm:**
+  - A proporção fica **210 : 130 : 100** (≈ 2,1 : 1,3 : 1), com a altura em ~48 % da largura: perfil de caixa de mesa, estável e sem cara de "bloco".
+  - A faixa preta de 45 mm acomoda a placa do LCD (36 mm) com ~3 mm de margem acima e abaixo.
+  - Cada compartimento fica com **50,5 mm de profundidade útil** (~251 cm³), cerca de 8 vezes o volume de um mês de comprimidos (60 unidades ≈ 30 cm³). É raso o bastante para os dedos alcançarem o fundo.
+  - Opcional: um fundo em rampa de 10–15° para a frente deixa os comprimidos mais perto da mão.
+- **Frente simétrica:**
+  - A janela do LCD fica no **eixo central (105 mm)**, alinhada com o logotipo.
+  - O botão (centro em 36 mm) e o acrílico (centro em 174 mm) ficam cada um no meio do seu lado, **à mesma distância do centro (69 mm)**. Assim os três elementos ficam equilibrados, mesmo com larguras diferentes.
+- **Folga das tampas:** para a tampa de 65 × 75 mm ter 0,35 mm de folga de cada lado, a abertura precisa medir 65,7 × 75,7 mm. Por isso as divisórias têm 3,45 mm no topo, onde as tampas se apoiam.
+- **Manutenção:** a tampa da área técnica é **removível** (4 parafusos M3), com acesso aos servos, à bateria e ao USB do ESP32 para atualizar o programa (E10).
+- **Energia:** o conector USB-C de painel fica na **parede traseira**, dentro da faixa de eletrônica.
+
+## B4. Onde fica cada componente
+
+| Componente | Local no gabinete |
+|---|---|
+| LCD 16x2 + módulo I2C | Faixa preta, atrás da janela central (placa 80 × 36, ~25 de profundidade) |
+| Botão e LED (atrás do acrílico) | Faixa preta, nas laterais do LCD |
+| ESP32, IP5306 e relógio DS3231 | Faixa de eletrônica, sob os compartimentos |
+| Bateria 18650 + suporte (77 × 21 × 20) | Faixa de eletrônica, deitada sob os compartimentos |
+| 3 servos SG90 | Área técnica (46,3 mm de fundo), no alto, junto às dobradiças das tampas |
+| Conector USB-C de painel | Parede traseira, ~15 mm acima da base |
+| Capacitor 1000 µF | Junto aos servos, na área técnica |
+
+---
+
+# Parte C — O código, passo a passo
 
 ## Passo 1 — Bibliotecas e pinos
 
@@ -1119,7 +1195,7 @@ retirar as sobras:
 internet. (O WhatsApp gratuito via CallMeBot ficou sem vagas; o WhatsApp oficial é
 pago e exige aprovação da Meta.)
 
-**Configuração (uma vez):** o cuidador cria um bot no **@BotFather**, cola o **token**
+**Configuração (uma vez):** o cuidador cria um bot no **BotFather**, cola o **token**
 na página; cada pessoa abre o bot e toca em **Iniciar**; o botão "Buscar IDs" mostra
 o `chatId` de cada uma.
 
@@ -1379,8 +1455,8 @@ com o roteador ainda desligado, os alarmes não tocariam. O DS3231 tem **bateria
 própria** (LIR2032) e continua contando o tempo com o dispenser desligado.
 
 **Ligação:** no mesmo barramento I2C do LCD, em paralelo — SDA → GPIO 21, SCL → GPIO 22,
-VCC → 3V3, GND → GND (diagrama na [D3](#d3-a-solução-fonte-5-v3-a--ip5306--bateria-18650);
-detalhes do módulo na [D9](#d9-módulo-de-relógio-ds3231)). O LCD usa o endereço `0x27` e
+VCC → 3V3, GND → GND (diagrama na [E3](#e3-a-solução-fonte-5-v3-a--ip5306--bateria-18650);
+detalhes do módulo na [E9](#e9-módulo-de-relógio-ds3231)). O LCD usa o endereço `0x27` e
 o relógio `0x68`, por isso os dois dividem os mesmos fios sem conflito.
 
 **1. As variáveis do relógio**
@@ -1510,20 +1586,20 @@ No rodapé, abaixo de "Trocar rede Wi-Fi", aparece o estado do módulo:
 | **Módulo com hora, sem internet** | Modo normal **sem internet**: LCD `Sem internet` / `Hora do relogio`; **alarmes funcionam**; Wi-Fi tentado a cada 30 s. |
 | **Nenhuma rede cadastrada** | Modo de configuração (Passo 4), como antes. |
 
-As mensagens do Serial Monitor de cada situação estão na [D9](#d9-módulo-de-relógio-ds3231).
+As mensagens do Serial Monitor de cada situação estão na [E9](#e9-módulo-de-relógio-ds3231).
 
 > ⚡ **Instalar o módulo depois:** desligue o dispenser da energia, ligue os 4 fios e
 > religue. Não é preciso gravar o programa de novo. O módulo só é procurado **ao
 > ligar**; por isso o religamento é necessário.
 
 > 📚 A biblioteca `RTClib` está no `platformio.ini`
-> (`adafruit/RTClib@^2.1.4`). O PlatformIO baixa sozinho no próximo **Build**.
+> (`adafruit/RTClib^2.1.4`). O PlatformIO baixa sozinho no próximo **Build**.
 
 ---
 
-# Parte C — Juntando tudo
+# Parte D — Juntando tudo
 
-## C1. Linha do tempo de uma dose
+## D1. Linha do tempo de uma dose
 
 Exemplo: **Losartana (compartimento 1)** e **Metformina (compartimento 2)** às
 **15:26**, modo real.
@@ -1543,7 +1619,7 @@ Exemplo: **Losartana (compartimento 1)** e **Metformina (compartimento 2)** às
 Se o paciente **não** aparecer até 15:38 (12 min): alerta para todos, registros "sem
 acesso", LCD `Dose pendente!`, e o botão ainda abre os dois compartimentos depois.
 
-## C2. Referência rápida
+## D2. Referência rápida
 
 **Tempos**
 
@@ -1580,7 +1656,7 @@ acesso", LCD `Dose pendente!`, e o botão ainda abre os dois compartimentos depo
 | Familiares | 5 |
 | Doses no histórico | 60 |
 
-## C3. Para praticar
+## D3. Para praticar
 
 Sugestões de exercícios, do mais simples ao mais desafiador:
 
@@ -1597,16 +1673,16 @@ Sugestões de exercícios, do mais simples ao mais desafiador:
 
 ---
 
-# Parte D — Uso autônomo, sem o laptop (condicional)
+# Parte E — Uso autônomo, sem o laptop (condicional)
 
 > ⚠️ **Esta parte é condicional.** Ela descreve a montagem para o dispenser funcionar
 > sozinho, na tomada e com bateria para faltas de energia. **Só deve ser aplicada depois
-> que os testes forem concluídos e a versão final for gravada** (ver D1). Até lá,
+> que os testes forem concluídos e a versão final for gravada** (ver E1). Até lá,
 > continua valendo a **montagem de bancada** da seção
 > [A2](#a2-materiais-e-ligações): ESP32 no USB do laptop e servos na fonte de 5 V
 > separada.
 
-## D1. Condição para aplicar
+## E1. Condição para aplicar
 
 Marque tudo antes de passar para a montagem autônoma:
 
@@ -1624,7 +1700,7 @@ Marque tudo antes de passar para a montagem autônoma:
 - [ ] **Etiquetas coloridas** nas portas: 1 azul, 2 verde, 3 roxo (as mesmas cores da
   página).
 
-## D2. Por que o laptop não é necessário
+## E2. Por que o laptop não é necessário
 
 O programa fica **gravado na memória flash** do ESP32 e roda sozinho sempre que a placa
 recebe energia. Durante os testes, o laptop faz só duas coisas:
@@ -1635,7 +1711,7 @@ recebe energia. Durante os testes, o laptop faz só duas coisas:
 
 Para funcionar sem o laptop, basta trocar a **fonte de energia**. O código não muda.
 
-## D3. A solução: fonte 5 V/3 A + IP5306 + bateria 18650
+## E3. A solução: fonte 5 V/3 A + IP5306 + bateria 18650
 
 Esta é a **única montagem recomendada** para o uso autônomo do Zelo+:
 
@@ -1689,10 +1765,10 @@ ligado a elas se identifica, por meio de um **resistor de 5,1 kΩ no pino CC**. 
   solde **um resistor de 5,1 kΩ do CC1 ao GND** e **outro do CC2 ao GND**. Os pinos D+ e
   D− ficam sem ligação.
 
-## D4. Lista de compras
+## E4. Lista de compras
 
 > 🛒 Esta é a lista **só da parte de energia**. A lista **completa do dispenser**, com
-> ilustrações e preços estimados, está na [Parte E](#parte-e--lista-completa-de-componentes-com-preços).
+> ilustrações e preços estimados, está na [Parte F](#parte-f--lista-completa-de-componentes-com-preços).
 
 | # | Item | Qtd | Especificação / observação |
 |---|---|---|---|
@@ -1707,19 +1783,19 @@ ligado a elas se identifica, por meio de um **resistor de 5,1 kΩ no pino CC**. 
 | 9 | **Termo-retrátil** sortido | 1 kit | Isolar as emendas soldadas. |
 | 10 | **Multímetro** | 1 | Conferir polaridade e os 5 V da saída **antes** de ligar o ESP32. |
 | 11 | Ferro de solda + estanho | — | Para os pads do IP5306 e as emendas. |
-| 12 | *Módulo relógio DS3231 + bateria LIR2032* (opcional) | 1 | Ver [D9](#d9-módulo-de-relógio-ds3231): mantém a hora certa sem internet. |
+| 12 | *Módulo relógio DS3231 + bateria LIR2032* (opcional) | 1 | Ver [E9](#e9-módulo-de-relógio-ds3231): mantém a hora certa sem internet. |
 
 > 💡 Módulos IP5306 costumam vir também com uma **saída USB-A**. Ela entrega os mesmos
 > 5 V, mas para o dispenser use os **pads de saída soldados**: a ligação fica firme e não
 > depende de um conector que pode se soltar.
 
-## D5. Montagem passo a passo
+## E5. Montagem passo a passo
 
 > ⚡ Monte **sem a bateria e sem a fonte ligadas**. Só energize nas etapas indicadas.
 
 1. **Conector de entrada:** fixe o conector USB-C fêmea na caixa e solde os 2 fios nos
    pads de **entrada** do IP5306: **vermelho → 5V (IN+)** e **preto → GND (IN−)**. Isole
-   com termo-retrátil. Antes, faça o teste dos 5 V no conector (ver D3).
+   com termo-retrátil. Antes, faça o teste dos 5 V no conector (ver E3).
 2. **Bateria:** solde os fios do suporte da 18650 nos pads **B+** (vermelho) e **B−**
    (preto). Confira a polaridade com o multímetro antes de encaixar a bateria.
 3. **Saída:** solde um fio vermelho em **OUT+ (5V)** e um preto em **OUT− (GND)** e leve
@@ -1736,7 +1812,7 @@ ligado a elas se identifica, por meio de um **resistor de 5,1 kΩ no pino CC**. 
 9. **Ligar:** fonte na tomada. O LCD deve mostrar "Iniciando...", depois o IP, depois o
    relógio.
 
-## D6. Teste de falta de energia
+## E6. Teste de falta de energia
 
 Com o dispenser funcionando (relógio no LCD):
 
@@ -1760,7 +1836,7 @@ Com o dispenser funcionando (relógio no LCD):
 - Carregando e alimentando ao mesmo tempo, o módulo **esquenta um pouco**: deixe-o com
   ventilação e sem encostar na bateria.
 
-## D7. Autonomia da bateria
+## E7. Autonomia da bateria
 
 Conta para **uma 18650 real de 2.500–3.000 mAh**:
 
@@ -1775,7 +1851,7 @@ Os servos se mexem só alguns segundos por dia e quase não pesam na conta. Para
 o número real da sua bateria: carregue até o fim, tire da tomada e anote quanto tempo o
 dispenser fica ligado.
 
-## D8. Falta de energia e de internet
+## E8. Falta de energia e de internet
 
 | Situação | O que acontece |
 |---|---|
@@ -1786,7 +1862,7 @@ dispenser fica ligado.
 | **Energia volta, sem internet — com o DS3231** | ✅ Liga com a hora do relógio (`Sem internet` / `Hora do relogio` no LCD): **os alarmes tocam normalmente**. O Wi-Fi é tentado a cada 30 s; o Telegram volta junto com a internet. |
 | **Internet cai, energia ok** | O relógio interno continua contando: **os alarmes tocam normalmente**. Só as mensagens do Telegram não saem. |
 
-## D9. Módulo de relógio DS3231
+## E9. Módulo de relógio DS3231
 
 > ✅ **Já suportado pelo programa** ([Passo 19](#passo-19--relógio-ds3231-opcional)). O
 > módulo é **opcional**: sem ele, tudo funciona pela internet. Com ele, o dispenser
@@ -1802,10 +1878,10 @@ Ela continua contando o tempo por anos, mesmo com o dispenser desligado.
 | Comunicação | I2C, endereço `0x68` (não conflita com o LCD, que usa `0x27`) |
 | Alimentação | 3,3 V (pino 3V3 do ESP32) |
 | Bateria | LIR2032 (recarregável) — ver aviso abaixo |
-| Preço aproximado | R$ 26 a R$ 31 (ver [E4](#e4-relógio-sem-internet-opcional)) |
+| Preço aproximado | R$ 26 a R$ 31 (ver [F4](#f4-relógio-sem-internet-opcional)) |
 
 **Ligação:** no **mesmo barramento I2C do LCD**, em paralelo: os fios SDA e SCL do
-DS3231 se juntam aos do LCD (ponto ● no diagrama da seção D3), e o VCC sai do mesmo fio
+DS3231 se juntam aos do LCD (ponto ● no diagrama da seção E3), e o VCC sai do mesmo fio
 de 3V3.
 
 | DS3231 | ESP32 |
@@ -1861,7 +1937,7 @@ de 3V3.
 - [ ] **Sem o módulo** (fios soltos, dispenser desligado antes): o rodapé mostra "não
   instalado" e tudo funciona pela internet.
 
-## D10. Atualizar o programa depois de montado
+## E10. Atualizar o programa depois de montado
 
 A montagem autônoma não impede atualizações:
 
@@ -1874,10 +1950,10 @@ A montagem autônoma não impede atualizações:
 
 ---
 
-# Parte E — Lista completa de componentes, com preços
+# Parte F — Lista completa de componentes, com preços
 
 Tudo o que é preciso comprar para montar o Zelo+ na **versão autônoma** (tomada +
-bateria, Parte D). As ilustrações são desenhos simplificados para ajudar a reconhecer
+bateria, Parte E). As ilustrações são desenhos simplificados para ajudar a reconhecer
 cada peça na loja. A última coluna fica **em branco** para você anotar o preço que
 encontrar na hora da compra.
 
@@ -1886,9 +1962,9 @@ encontrar na hora da compra.
 > levantados pelo responsável do projeto no Mercado Livre. Itens marcados com **\*** não tiveram
 > o preço exibido em loja nacional na pesquisa: o valor é uma **estimativa** a partir de
 > preços internacionais convertidos. Preços mudam com frequência e **não incluem frete**.
-> Ferramentas **não** entram na conta (ver [E5](#e5-ferramentas-necessárias-fora-do-custo)).
+> Ferramentas **não** entram na conta (ver [F5](#f5-ferramentas-necessárias-fora-do-custo)).
 
-## E1. Eletrônica do dispenser
+## F1. Eletrônica do dispenser
 
 | Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
 |---|:---:|---|---|---|
@@ -1900,7 +1976,7 @@ encontrar na hora da compra.
 | **Resistor 220 Ω, ¼ W** · pacote com 10<br>faixas: vermelho-vermelho-marrom-dourado | <img src="docs/componentes/resistor220.svg" width="110" alt="resistor220"> | Limita a corrente do LED para ele não queimar (usa 1; sobram reservas). | R$ 0,90 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
 | **Chave táctil (push button) 12×12 mm com capa** · kit com 10 | <img src="docs/componentes/botao.svg" width="110" alt="botao"> | O botão que o paciente aperta para abrir e fechar os compartimentos (usa 1). | R$ 10,20 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
 
-## E2. Energia autônoma
+## F2. Energia autônoma
 
 | Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
 |---|:---:|---|---|---|
@@ -1912,7 +1988,7 @@ encontrar na hora da compra.
 | **Resistor 5,1 kΩ, ¼ W** · pacote com 10 *(plano B: só se usar o módulo USB-C de 6 pinos)*<br>faixas: verde-marrom-vermelho-dourado | <img src="docs/componentes/resistor5k1.svg" width="110" alt="resistor5k1"> | Um em cada pino CC (CC1 e CC2) até o GND: faz a fonte USB-C liberar os 5 V. | R$ 0,60 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
 | **Capacitor eletrolítico 1000 µF / 16 V** · 1 un.<br>105 °C · tem polaridade (faixa "−") | <img src="docs/componentes/capacitor.svg" width="110" alt="capacitor"> | Absorve o pico de corrente dos servos e evita que o ESP32 reinicie. | R$ 0,73–3 | R$ \_\_\_\_\_\_\_\_\_ |
 
-## E3. Montagem e ligações
+## F3. Montagem e ligações
 
 | Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
 |---|:---:|---|---|---|
@@ -1922,14 +1998,14 @@ encontrar na hora da compra.
 | **Tubo termo-retrátil** · 1 kit sortido | <img src="docs/componentes/termo.svg" width="110" alt="termo"> | Isola as emendas soldadas (evita curto-circuito). | R$ 16,88–43 | R$ \_\_\_\_\_\_\_\_\_ |
 | **Cabo USB-A → micro-USB (dados)** · 1 un. | <img src="docs/componentes/cabo_microusb.svg" width="110" alt="cabo_microusb"> | Gravar e atualizar o programa pelo laptop. | a partir de R$ 11,69 | R$ \_\_\_\_\_\_\_\_\_ |
 
-## E4. Relógio sem internet (opcional)
+## F4. Relógio sem internet (opcional)
 
 | Componente e códigos | Ilustração | Função | Preço pesquisado | Preço encontrado (anotar) |
 |---|:---:|---|---|---|
-| **Módulo RTC DS3231** · 1 un.<br>DS3231 + EEPROM AT24C32 · I2C 0x68 · 3,3–5 V | <img src="docs/componentes/ds3231.svg" width="110" alt="ds3231"> | Guarda a hora certa mesmo sem internet e sem energia (ver D9). | R$ 26–30,91 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Módulo RTC DS3231** · 1 un.<br>DS3231 + EEPROM AT24C32 · I2C 0x68 · 3,3–5 V | <img src="docs/componentes/ds3231.svg" width="110" alt="ds3231"> | Guarda a hora certa mesmo sem internet e sem energia (ver E9). | R$ 26–30,91 | R$ \_\_\_\_\_\_\_\_\_ |
 | **Bateria LIR2032 (recarregável)** · 1 un.<br>3,6 V · tipo moeda | <img src="docs/componentes/lir2032.svg" width="110" alt="lir2032"> | Alimenta o relógio do DS3231 quando o dispenser está desligado. | R$ 11,90–28,50 | R$ \_\_\_\_\_\_\_\_\_ |
 
-## E5. Ferramentas necessárias (fora do custo)
+## F5. Ferramentas necessárias (fora do custo)
 
 As ferramentas **não entram na soma** do projeto: são de uso geral e costumam ser
 emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, são
@@ -1943,21 +2019,21 @@ emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, s�
 | **Acessórios de bancada** | — | Preparar fios e corrigir erros. | Suporte com esponja para o ferro (costuma vir com a estação) · **alicate de corte rente** pequeno · **decapador** para fio 22 AWG · **malha dessoldadora** ou sugador · pinça · "terceira mão" com lupa (opcional) · isqueiro ou soprador para o termo-retrátil. |
 | **Segurança** | — | — | **Óculos de proteção**, ambiente **ventilado** (fumaça do fluxo) e **lavar as mãos** depois de usar estanho com chumbo. Nunca soldar com a bateria encaixada no suporte. |
 
-## E6. Resumo do investimento
+## F6. Resumo do investimento
 
 | Grupo | Faixa pesquisada | Total anotado |
 |---|---|---|
-| E1. Eletrônica do dispenser | R$ 134 – 147 | R$ \_\_\_\_\_\_\_\_\_ |
-| E2. Energia autônoma *(com a bateria)* | R$ 90 – 135 | R$ \_\_\_\_\_\_\_\_\_ |
-| E3. Montagem e ligações | R$ 46 – 96 | R$ \_\_\_\_\_\_\_\_\_ |
+| F1. Eletrônica do dispenser | R$ 134 – 147 | R$ \_\_\_\_\_\_\_\_\_ |
+| F2. Energia autônoma *(com a bateria)* | R$ 90 – 135 | R$ \_\_\_\_\_\_\_\_\_ |
+| F3. Montagem e ligações | R$ 46 – 96 | R$ \_\_\_\_\_\_\_\_\_ |
 | **Total para montar o dispenser** | **≈ R$ 270 – 378** | **R$ \_\_\_\_\_\_\_\_\_** |
 | *Total sem a bateria (que você já tem)* | *≈ R$ 253 – 361* | R$ \_\_\_\_\_\_\_\_\_ |
-| E4. Relógio sem internet (opcional, à parte) | + R$ 38 – 60 | R$ \_\_\_\_\_\_\_\_\_ |
+| F4. Relógio sem internet (opcional, à parte) | + R$ 38 – 60 | R$ \_\_\_\_\_\_\_\_\_ |
 
-**Não inclui:** ferramentas (E5), frete e a estrutura física do dispenser (caixa, portas e
+**Não inclui:** ferramentas (F5), frete e a estrutura física do dispenser (caixa, portas e
 divisórias dos compartimentos), que depende do material escolhido (MDF, acrílico ou
 impressão 3D). O custo da caixa em impressão 3D e em plástico injetado, e o custo por
-unidade em produção, estão nas Partes [F](#parte-f--desenho-técnico-do-gabinete) (desenho técnico) e [G](#parte-g--custo-de-produção-estimativa-para-viabilidade) (custos).
+unidade em produção, estão nas Partes [B](#parte-b--desenho-técnico-do-gabinete) (desenho técnico) e [G](#parte-g--custo-de-produção-estimativa-para-viabilidade) (custos).
 
 **Dicas de compra:**
 
@@ -2006,86 +2082,13 @@ Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo
 
 ---
 
-# Parte F — Desenho técnico do gabinete
-
-O gabinete do Zelo+ mede **210 × 130 × 100 mm** (comprimento × profundidade × altura).
-Ele tem três compartimentos iguais na frente, uma área técnica na parte de trás (servos)
-e uma faixa de eletrônica na base, onde ficam o LCD, o botão e a luz de alerta.
-
-## F1. Desenho técnico dimensional
-
-<figure markdown="1">
-![Desenho técnico dimensional do gabinete](docs/desenho-tecnico.jpg)
-<figcaption><b>Desenho técnico dimensional do gabinete</b> — vista frontal, corte lateral, vista superior e resumo das medidas (em mm; vistas sem escala).</figcaption>
-</figure>
-
-As vistas também estão em escala no arquivo vetorial
-[`docs/gabinete.svg`](docs/gabinete.svg) ([PNG](docs/gabinete.png)).
-
-**Dimensões principais: 210 (C) × 130 (P) × 100 (A) mm.**
-
-| Direção | Composição (mm) | Soma |
-|---|---|---|
-| Largura (vista superior) | 3 + **65,7** + 3,45 + **65,7** + 3,45 + **65,7** + 3 | **210** ✓ |
-| Profundidade | 3 + **75,7** (compartimento) + 2 + **46,3** (área técnica) + 3 | **130** ✓ |
-| Altura | 2,5 (fundo) + 42,5 (eletrônica) + 2,5 (piso) + **50,5** (compartimento) + 2 (tampa) | **100** ✓ |
-| Frente | 27 + **18** (botão) + 27 + **66** (janela do LCD) + 16 + **40** (acrílico) + 16 | **210** ✓ |
-
-| Elemento | Medida (mm) |
-|---|---|
-| Faixa preta (eletrônica) / faixa azul (compartimentos) | 45 / 55 |
-| Abertura de cada compartimento | 65,7 × 75,7 |
-| Tampa móvel (3, iguais) | 65 × 75 × 2 (folga de 0,35 por lado) |
-| Divisórias entre compartimentos | 2 no corpo, **3,45 no topo** (apoio das tampas) |
-| Profundidade útil do compartimento | 50,5 (≈ 251 cm³ cada) |
-| Tampa da área técnica (**removível**, 4 parafusos M3) | 203,3 × 45,6 × 2 |
-| Botão / janela do LCD / acrílico | 18 × 18 / 66 × 18 / 40 × 18, centros a **22,5** da base |
-| Centros horizontais (botão / LCD / acrílico) | 36 / **105** / 174 |
-| Placa do LCD (atrás do painel) | 80 × 36 × ~25 (com módulo I2C) |
-| Recorte do USB-C (parede traseira) | 14,2 × 5,4, centro a ~15 da base |
-
-## F2. Imagens do produto
-
-<figure markdown="1">
-![Imagens do produto Zelo+](docs/produto-imagens.jpg)
-<figcaption><b>Imagens do produto</b> — perspectiva, vistas e detalhes do compartimento aberto, da dobradiça e do encaixe (medidas em mm; vistas sem escala).</figcaption>
-</figure>
-
-## F3. Critérios de projeto
-
-- **Altura de 100 mm:**
-  - A proporção fica **210 : 130 : 100** (≈ 2,1 : 1,3 : 1), com a altura em ~48 % da largura: perfil de caixa de mesa, estável e sem cara de "bloco".
-  - A faixa preta de 45 mm acomoda a placa do LCD (36 mm) com ~3 mm de margem acima e abaixo.
-  - Cada compartimento fica com **50,5 mm de profundidade útil** (~251 cm³), cerca de 8 vezes o volume de um mês de comprimidos (60 unidades ≈ 30 cm³). É raso o bastante para os dedos alcançarem o fundo.
-  - Opcional: um fundo em rampa de 10–15° para a frente deixa os comprimidos mais perto da mão.
-- **Frente simétrica:**
-  - A janela do LCD fica no **eixo central (105 mm)**, alinhada com o logotipo.
-  - O botão (centro em 36 mm) e o acrílico (centro em 174 mm) ficam cada um no meio do seu lado, **à mesma distância do centro (69 mm)**. Assim os três elementos ficam equilibrados, mesmo com larguras diferentes.
-- **Folga das tampas:** para a tampa de 65 × 75 mm ter 0,35 mm de folga de cada lado, a abertura precisa medir 65,7 × 75,7 mm. Por isso as divisórias têm 3,45 mm no topo, onde as tampas se apoiam.
-- **Manutenção:** a tampa da área técnica é **removível** (4 parafusos M3), com acesso aos servos, à bateria e ao USB do ESP32 para atualizar o programa (D10).
-- **Energia:** o conector USB-C de painel fica na **parede traseira**, dentro da faixa de eletrônica.
-
-## F4. Onde fica cada componente
-
-| Componente | Local no gabinete |
-|---|---|
-| LCD 16x2 + módulo I2C | Faixa preta, atrás da janela central (placa 80 × 36, ~25 de profundidade) |
-| Botão e LED (atrás do acrílico) | Faixa preta, nas laterais do LCD |
-| ESP32, IP5306 e relógio DS3231 | Faixa de eletrônica, sob os compartimentos |
-| Bateria 18650 + suporte (77 × 21 × 20) | Faixa de eletrônica, deitada sob os compartimentos |
-| 3 servos SG90 | Área técnica (46,3 mm de fundo), no alto, junto às dobradiças das tampas |
-| Conector USB-C de painel | Parede traseira, ~15 mm acima da base |
-| Capacitor 1000 µF | Junto aos servos, na área técnica |
-
----
-
 # Parte G — Custo de produção (estimativa para viabilidade)
 
 > 📐 **Natureza desta parte:** estimativa acadêmica para avaliar a **viabilidade** de
 > produzir o Zelo+ em série. **Data-base: setembro de 2026.** Não é orçamento: os
 > valores são faixas (mínimo–máximo) calculadas a partir de premissas declaradas, e
 > cada número pode ser refeito trocando a premissa correspondente. As medidas do
-> gabinete são as do desenho técnico (Parte F).
+> gabinete são as do desenho técnico (Parte B).
 
 <figure markdown="1">
 ![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
@@ -2110,7 +2113,7 @@ As vistas também estão em escala no arquivo vetorial
 
 ## G2. Volume de plástico do gabinete
 
-Com as medidas do desenho técnico (Parte F), o volume de plástico é a soma de área × espessura de
+Com as medidas do desenho técnico (Parte B), o volume de plástico é a soma de área × espessura de
 cada parte:
 
 | Parte | Conta (mm) | Volume |
@@ -2250,7 +2253,7 @@ As peças custam praticamente o mesmo nos dois cenários. O ganho da placa próp
 **montagem** (de ~55 para ~20 min por unidade), na **confiabilidade** (sem fios soltos) e
 no **tamanho**.
 
-Protótipo (Parte E, varejo) × produção (atacado): **R$ 278–378 → R$ 111–173**, cerca de
+Protótipo (Parte F, varejo) × produção (atacado): **R$ 278–378 → R$ 111–173**, cerca de
 **55–60 % menos**.
 
 ## G6. Custo por unidade em três escalas
@@ -2310,7 +2313,7 @@ pouco investimento.
 
 ## G9. Limitações da estimativa
 
-- **Dimensões:** as medidas são as do desenho técnico (Parte F). Mudanças no desenho (espessuras,
+- **Dimensões:** as medidas são as do desenho técnico (Parte B). Mudanças no desenho (espessuras,
   nervuras, rampa no fundo) alteram o volume de plástico e os custos do gabinete.
 - **Preços:** são faixas de mercado, não cotações. Os moldes, em especial, exigem
   orçamento com o desenho 3D final.
