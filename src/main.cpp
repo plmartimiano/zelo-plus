@@ -26,6 +26,11 @@ const int PINOS_SERVO[NUM_COMPARTIMENTOS] = {13, 14, 27};
 const int ANGULO_FECHADO[NUM_COMPARTIMENTOS] = {0, 0, 0};
 const int ANGULO_ABERTO[NUM_COMPARTIMENTOS] = {90, 90, 90};
 
+// Cor de cada compartimento na pagina (use etiquetas das mesmas cores na caixa).
+const char* COR_COMPARTIMENTO[NUM_COMPARTIMENTOS] = {"#2563eb", "#16a34a", "#9333ea"};
+const char* FUNDO_COMPARTIMENTO[NUM_COMPARTIMENTOS] = {"#eff6ff", "#f0fdf4", "#faf5ff"};
+const char* NOME_COR[NUM_COMPARTIMENTOS] = {"azul", "verde", "roxo"};
+
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 Servo servos[NUM_COMPARTIMENTOS];
 WebServer server(80);
@@ -637,10 +642,16 @@ int percentual(int parte, int total) {
   return (parte * 100 + total / 2) / total;
 }
 
+// Bolinha colorida com o numero do compartimento.
+String marcaCompartimento(int c, int tamanho = 26) {
+  return "<span class='num' style='background:" + String(COR_COMPARTIMENTO[c]) + ";width:" + String(tamanho) +
+         "px;height:" + String(tamanho) + "px;font-size:" + String(tamanho * 55 / 100) + "px'>" + String(c + 1) + "</span>";
+}
+
 String htmlHistorico() {
-  String html = "<hr style='margin:24px 0'><h3 style='margin-bottom:6px'>Historico de doses</h3>";
+  String html = "<section class='bloco'><h2>&#128202; Histórico de doses</h2>";
   if (totalHistorico == 0) {
-    html += "<p style='color:#6b7280'>Nenhuma dose registrada ainda.</p>";
+    html += "<p class='suave'>Nenhuma dose registrada ainda.</p></section>";
     return html;
   }
 
@@ -650,6 +661,7 @@ String htmlHistorico() {
   int noHorario = 0, atrasadas = 0, semAcesso = 0;
   const int MAX_GRUPOS = 8; // medicamentos diferentes no resumo
   String nomesGrupo[MAX_GRUPOS];
+  int compartimentoGrupo[MAX_GRUPOS];
   int tomadasGrupo[MAX_GRUPOS];
   int totalGrupo[MAX_GRUPOS];
   int grupos = 0;
@@ -668,6 +680,7 @@ String htmlHistorico() {
     if (g == grupos) {
       if (grupos == MAX_GRUPOS) continue;
       nomesGrupo[g] = nome;
+      compartimentoGrupo[g] = r.compartimento;
       tomadasGrupo[g] = 0;
       totalGrupo[g] = 0;
       grupos++;
@@ -676,41 +689,56 @@ String htmlHistorico() {
     if (tomada) tomadasGrupo[g]++;
   }
   int concluidas = noHorario + atrasadas + semAcesso;
-  html += "<p style='margin:4px 0 10px;font-size:15px'>Ultimos 7 dias: ";
   if (concluidas == 0) {
-    html += "sem doses concluidas.";
+    html += "<p class='suave'>Sem doses concluídas nos últimos 7 dias.</p>";
   } else {
-    html += "<b>" + String(percentual(noHorario + atrasadas, concluidas)) + "% de adesao</b><br>";
-    html += "<span style='color:#16a34a'>" + String(noHorario) + " no horario</span> &middot; ";
-    html += "<span style='color:#d97706'>" + String(atrasadas) + " com atraso</span> &middot; ";
-    html += "<span style='color:#dc2626'>" + String(semAcesso) + " sem acesso</span>";
+    html += "<div class='adesao'><b>" + String(percentual(noHorario + atrasadas, concluidas)) +
+            "%</b> das doses foram tomadas<br><small>nos últimos 7 dias</small></div>";
+    html += "<p class='contagem'><span style='color:#15803d'>&#9679; " + String(noHorario) + " no horário</span>";
+    html += "<span style='color:#b45309'>&#9679; " + String(atrasadas) + " com atraso</span>";
+    html += "<span style='color:#b91c1c'>&#9679; " + String(semAcesso) + " sem acesso</span></p>";
     if (grupos > 1) {
+      // ordena pelo numero do compartimento (1, 2, 3)
+      for (int a = 1; a < grupos; a++) {
+        for (int b = a; b > 0 && compartimentoGrupo[b] < compartimentoGrupo[b - 1]; b--) {
+          String n = nomesGrupo[b]; nomesGrupo[b] = nomesGrupo[b - 1]; nomesGrupo[b - 1] = n;
+          int t = compartimentoGrupo[b]; compartimentoGrupo[b] = compartimentoGrupo[b - 1]; compartimentoGrupo[b - 1] = t;
+          t = tomadasGrupo[b]; tomadasGrupo[b] = tomadasGrupo[b - 1]; tomadasGrupo[b - 1] = t;
+          t = totalGrupo[b]; totalGrupo[b] = totalGrupo[b - 1]; totalGrupo[b - 1] = t;
+        }
+      }
       for (int g = 0; g < grupos; g++) {
-        html += "<br>" + escaparHTML(nomesGrupo[g]) + ": " + String(percentual(tomadasGrupo[g], totalGrupo[g])) + "%";
+        int c = compartimentoGrupo[g] < NUM_COMPARTIMENTOS ? compartimentoGrupo[g] : 0;
+        String nome = nomesGrupo[g];
+        int parentese = nome.indexOf(" (C");
+        if (parentese > 0) nome = nome.substring(0, parentese);
+        html += "<div class='linha-remedio'>" + marcaCompartimento(c, 22) + " " + escaparHTML(nome) +
+                ": <b>" + String(percentual(tomadasGrupo[g], totalGrupo[g])) + "%</b></div>";
       }
     }
   }
-  html += "</p>";
 
-  html += "<table style='width:100%;border-collapse:collapse;font-size:14px'>";
-  html += "<tr style='text-align:left;border-bottom:1px solid #d1d5db'><th>Data</th><th>Hora</th><th>Remedio</th><th>Situacao</th></tr>";
   int mostrar = totalHistorico < 20 ? totalHistorico : 20;
+  html += "<details class='caixa'><summary>&#128203; Ver últimas doses (" + String(mostrar) + ")<span class='seta'></span></summary><div class='conteudo'>";
+  html += "<table><tr><th>Dia</th><th>Hora</th><th>Remédio</th><th>Situação</th></tr>";
   for (int k = 0; k < mostrar; k++) {
     int idx = indiceHistorico(k);
     const RegistroDose& r = historico[idx];
     bool emAndamento = registroEmAndamento(idx);
-    html += "<tr style='border-bottom:1px solid #f3f4f6'>";
-    html += "<td style='padding:4px 0'>" + formatarDataHora(r.inicio, "%d/%m") + "</td>";
+    int c = r.compartimento < NUM_COMPARTIMENTOS ? r.compartimento : 0;
+    String nome = String(r.remedio);
+    if (nome == "") nome = "Compart. " + String(c + 1);
+    html += "<tr><td>" + formatarDataHora(r.inicio, "%d/%m") + "</td>";
     html += "<td>" + formatarDataHora(r.inicio, "%H:%M") + "</td>";
-    html += "<td>" + escaparHTML(nomeRegistro(r)) + "</td>";
+    html += "<td>" + marcaCompartimento(c, 20) + " " + escaparHTML(nome) + "</td>";
     html += "<td style='color:" + String(corStatusDose(r.status, emAndamento)) + "'>" + textoStatusDose(r.status, emAndamento);
     if (r.status == DOSE_ATRASADA) html += " (" + formatarAtraso(r.atrasoSeg) + ")";
     html += "</td></tr>";
   }
   html += "</table>";
-
-  html += "<p style='font-size:14px'><a href='/historico.csv'>Baixar historico completo (planilha CSV)</a></p>";
-  html += "<button type='button' onclick='limparHistorico()' style='background:none;border:none;color:#dc2626;font-size:13px;padding:0;cursor:pointer'>Apagar historico</button>";
+  html += "<p><a href='/historico.csv'>&#11015;&#65039; Baixar histórico completo (planilha)</a></p>";
+  html += "<button type='button' class='link-perigo' onclick='limparHistorico()'>Apagar histórico</button>";
+  html += "</div></details></section>";
   return html;
 }
 
@@ -821,178 +849,283 @@ void iniciarModoConfig() {
 
 // ---------- MODO NORMAL (rotina do dispenser) ----------
 
-const char* ESTILO_CAMPO = "width:100%;padding:8px;margin:6px 0;box-sizing:border-box";
-const char* ESTILO_CAIXA = "border:1px solid #d1d5db;border-radius:6px;margin:12px 0;padding:8px 12px";
+// Visual pensado para pessoas com pouca familiaridade com tecnologia: letras e
+// botoes grandes, uma cor por compartimento e blocos recolhidos (so o nome
+// aparece; um toque abre os detalhes).
+const char* CSS_PAGINA =
+  "body{font-family:sans-serif;font-size:18px;line-height:1.4;max-width:480px;margin:0 auto;padding:10px 14px 40px;color:#1f2937;background:#f3f4f6}"
+  "h1{font-size:30px;margin:8px 0 0;color:#1e3a8a}"
+  "h2{font-size:21px;margin:0 0 10px}"
+  ".bloco{background:#fff;border-radius:14px;padding:14px;margin:14px 0;box-shadow:0 1px 3px rgba(0,0,0,.15)}"
+  "label{display:block;font-weight:bold;margin:12px 0 4px}"
+  "input[type=text],input[type=tel],input[type=password],input[type=time]{width:100%;box-sizing:border-box;font-size:18px;padding:12px;border:2px solid #9ca3af;border-radius:10px;background:#fff;margin-bottom:6px}"
+  "button{font-size:18px;min-height:52px;border-radius:12px;border:none;width:100%;margin-top:10px;cursor:pointer}"
+  ".principal{background:#2563eb;color:#fff;font-weight:bold}"
+  ".secundario{background:#e5e7eb;color:#111827}"
+  ".reposicao{background:#f59e0b;color:#fff;font-weight:bold}"
+  ".perigo{background:#dc2626;color:#fff;font-weight:bold}"
+  ".link-perigo{background:none;color:#b91c1c;min-height:0;width:auto;padding:8px 0;text-decoration:underline;font-size:16px}"
+  "details{border-radius:12px;margin:10px 0}"
+  "summary{list-style:none;cursor:pointer;padding:12px;border-radius:12px;display:flex;align-items:center;gap:12px}"
+  "summary::-webkit-details-marker{display:none}"
+  ".seta{margin-left:auto;font-size:14px;color:#4b5563;white-space:nowrap}"
+  ".seta::after{content:'abrir \\25BE'}"
+  "details[open]>summary .seta::after{content:'fechar \\25B4'}"
+  ".conteudo{padding:0 14px 14px}"
+  ".num{border-radius:50%;color:#fff;font-weight:bold;display:inline-flex;align-items:center;justify-content:center;flex:none;vertical-align:middle}"
+  ".comp{border:3px solid var(--cor);background:var(--fundo)}"
+  "summary small{display:block;color:#4b5563;font-size:15px}"
+  ".dica{background:#fff;border:2px dashed var(--cor);border-radius:10px;padding:10px;margin-top:12px}"
+  ".pessoa,.caixa{border:2px solid #d1d5db;background:#fff}"
+  ".aviso{background:#fef3c7;border:2px solid #f59e0b;border-radius:12px;padding:12px;margin:12px 0}"
+  ".aviso a{color:#92400e;font-weight:bold}"
+  ".suave{color:#6b7280;font-size:15px}"
+  ".adesao{font-size:20px;text-align:center;background:#f0fdf4;border-radius:12px;padding:10px}"
+  ".adesao b{font-size:34px;color:#15803d}"
+  ".contagem{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:16px}"
+  ".linha-remedio{margin:6px 0}"
+  "table{width:100%;border-collapse:collapse;font-size:15px}"
+  "th{text-align:left;border-bottom:2px solid #d1d5db;padding:4px 2px}"
+  "td{border-bottom:1px solid #e5e7eb;padding:6px 2px}"
+  ".opcao{display:flex;align-items:center;gap:10px;padding:12px;margin:8px 0;border:3px solid var(--cor);background:var(--fundo);border-radius:12px;font-size:19px}"
+  ".opcao input{width:24px;height:24px}"
+  ".rodape{text-align:center;margin:24px 0 8px}"
+  ".rodape a{color:#374151}"
+  ".ok{color:#15803d;font-weight:bold}"
+  ".falta{color:#b45309;font-weight:bold}";
 
-String campoTexto(const char* rotulo, const char* nome, const String& valor, const char* tipo,
-                  const char* placeholder, bool obrigatorio) {
-  String html = "<label>" + String(rotulo) + "</label><br>";
-  html += "<input type='" + String(tipo) + "' name='" + String(nome) + "' value='" + escaparHTML(valor) + "'";
-  html += " placeholder='" + String(placeholder) + "' style='" + String(ESTILO_CAMPO) + "'";
+String campoTexto(const char* rotulo, const String& nome, const String& valor, const char* tipo,
+                  const char* placeholder, bool obrigatorio, const String& extra = "") {
+  String html = "<label>" + String(rotulo) + "</label>";
+  html += "<input type='" + String(tipo) + "' name='" + nome + "' value='" + escaparHTML(valor) + "'";
+  html += " placeholder='" + String(placeholder) + "'" + extra;
   if (obrigatorio) html += " required";
-  html += "><br>";
-  return html;
-}
-
-String camposContato(const char* titulo, const char* prefixo, const Contato& contato, bool obrigatorio,
-                     bool familiar = false) {
-  String p = prefixo;
-  String html = "<fieldset";
-  if (familiar) html += " class='familiar'";
-  html += " style='" + String(ESTILO_CAIXA) + "'>";
-  html += "<legend>" + String(titulo) + "</legend>";
-  if (familiar) {
-    html += "<button type='button' onclick='removerFamiliar(this)' style='float:right;background:none;border:none;color:#dc2626;font-size:13px;cursor:pointer'>Remover</button>";
-  }
-  html += campoTexto("Nome:", (p + "_nome").c_str(), contato.nome, "text", "", obrigatorio);
-  html += campoTexto("Celular:", (p + "_tel").c_str(), contato.telefone, "tel", "(11) 98765-4321", obrigatorio);
-  html += campoTexto("ID do Telegram:", (p + "_chat").c_str(), contato.chatId, "text", "ex.: 123456789", false);
-  if (contato.nome != "" && contato.chatId == "") {
-    html += "<p style='color:#b45309;font-size:13px;margin:0 0 6px'>Sem o ID do Telegram esta pessoa nao recebe avisos.</p>";
-  }
-  html += "</fieldset>";
+  html += ">";
   return html;
 }
 
 String campoHorario(int c, const String& valor) {
-  return "<input type='time' name='m" + String(c) + "_h' value='" + valor +
-         "' style='width:100%;padding:8px;margin-bottom:6px;box-sizing:border-box'>";
+  return "<input type='time' name='m" + String(c) + "_h' value='" + valor + "'>";
 }
 
-// Cartao de um compartimento: medicamento, horarios e onde colocar o remedio.
-String cartaoCompartimento(int c) {
+String horariosTexto(const Medicamento& m) {
+  String texto;
+  for (int i = 0; i < m.totalHorarios; i++) {
+    if (i > 0) texto += " &middot; ";
+    texto += formatarHorario(m.hora[i], m.minuto[i]);
+  }
+  return texto;
+}
+
+// Cartao recolhido de um compartimento: na faixa colorida aparecem numero,
+// remedio e horarios; tocando, abre para editar.
+String cartaoCompartimento(int c, bool aberto) {
   const Medicamento& m = medicamentos[c];
   String n = String(c + 1);
-  String html = "<fieldset style='" + String(ESTILO_CAIXA) + "'>";
-  html += "<legend><b>Compartimento " + n + "</b>" + (medicamentoAtivo(c) ? "" : " (vazio)") + "</legend>";
-  html += "<label>Medicamento:</label><br>";
+  String html = "<details class='comp' style='--cor:" + String(COR_COMPARTIMENTO[c]) + ";--fundo:" +
+                String(FUNDO_COMPARTIMENTO[c]) + "'" + (aberto ? " open" : "") + "><summary>";
+  html += marcaCompartimento(c, 44);
+  if (medicamentoAtivo(c)) {
+    html += "<span><b>" + escaparHTML(m.nome) + "</b><small>Compartimento " + n + " (" + NOME_COR[c] + ") &middot; " +
+            horariosTexto(m) + "</small></span>";
+  } else {
+    html += "<span><b>Compartimento " + n + "</b><small>" + NOME_COR[c] + " &middot; vazio &middot; toque para cadastrar</small></span>";
+  }
+  html += "<span class='seta'></span></summary><div class='conteudo'>";
+
+  html += "<label>Nome do remédio:</label>";
   html += "<input type='text' name='m" + String(c) + "_nome' id='m" + String(c) + "_nome' value='" + escaparHTML(m.nome) +
-          "' data-original='" + escaparHTML(m.nome) + "' oninput='atualizarDica(" + String(c) + ")'" +
-          " maxlength='40' style='" + String(ESTILO_CAMPO) + "'><br>";
-  html += "<label>Horarios <span style='font-size:12px;color:#6b7280'>(apague um horario para remove-lo)</span>:</label><br>";
+          "' data-original='" + escaparHTML(m.nome) + "' oninput='atualizarDica(" + String(c) + ")' maxlength='40'>";
+  html += "<label>Horários:</label>";
   html += "<div id='horarios-" + String(c) + "'>";
   for (int i = 0; i < m.totalHorarios; i++) {
     html += campoHorario(c, formatarHorario(m.hora[i], m.minuto[i]));
   }
   if (m.totalHorarios == 0) html += campoHorario(c, "");
   html += "</div>";
-  html += "<button type='button' onclick='adicionarHorario(" + String(c) + ")' style='width:100%;padding:8px;background:#e5e7eb;border:none;border-radius:6px;font-size:14px;margin-bottom:6px'>+ Adicionar horario</button>";
-  html += "<p id='dica-" + String(c) + "' style='margin:4px 0;padding:8px;background:#ecfdf5;border-radius:6px;font-size:14px;";
-  html += m.nome == "" ? "display:none'>" : "'>";
-  html += "&#128230; Coloque <b>" + escaparHTML(m.nome) + "</b> no <b>compartimento " + n + "</b></p>";
+  html += "<p class='suave' style='margin:2px 0'>Para tirar um horário, apague-o.</p>";
+  html += "<button type='button' class='secundario' onclick='adicionarHorario(" + String(c) + ")'>+ Adicionar horário</button>";
+  html += "<div class='dica' id='dica-" + String(c) + "'" + (m.nome == "" ? " style='display:none'" : "") + ">";
+  html += "&#128230; Coloque <b>" + escaparHTML(m.nome) + "</b> no <b>compartimento " + n + " (" + NOME_COR[c] + ")</b></div>";
   if (medicamentoAtivo(c)) {
-    html += "<button type='button' onclick=\"esvaziarCompartimento(" + String(c) + ")\" style='background:none;border:none;color:#dc2626;font-size:13px;padding:4px 0;cursor:pointer'>Esvaziar compartimento " + n + "</button>";
+    html += "<button type='button' class='link-perigo' onclick='esvaziarCompartimento(" + String(c) + ")'>Esvaziar o compartimento " + n + "</button>";
   }
-  html += "</fieldset>";
+  html += "</div></details>";
+  return html;
+}
+
+// Pessoa recolhida: so o nome aparece; tocando, abre nome e celular.
+// O ID do Telegram fica no bloco do Telegram, no fim da pagina.
+String cartaoPessoa(const char* icone, const char* papel, const String& prefixo, const Contato& contato,
+                    bool obrigatorio, bool familiar, bool aberto) {
+  String html = "<details class='pessoa'";
+  if (familiar) html += " data-idx='" + prefixo + "'";
+  html += aberto ? " open>" : ">";
+  html += "<summary><span style='font-size:28px'>" + String(icone) + "</span><span><b>";
+  html += contato.nome != "" ? escaparHTML(contato.nome) : String(familiar ? "Novo familiar" : "Cuidador(a)");
+  html += "</b><small>" + String(papel) + "</small></span><span class='seta'></span></summary><div class='conteudo'>";
+  html += campoTexto("Nome:", prefixo + "_nome", contato.nome, "text", "", obrigatorio);
+  html += campoTexto("Celular:", prefixo + "_tel", contato.telefone, "tel", "(11) 98765-4321", obrigatorio);
+  if (familiar) {
+    html += "<button type='button' class='link-perigo' onclick='removerFamiliar(this)'>" +
+            String(contato.nome == "" ? "Cancelar" : "Remover este familiar") + "</button>";
+  }
+  html += "</div></details>";
+  return html;
+}
+
+// Telegram so precisa de atencao se faltar o token ou o ID de alguem cadastrado.
+bool telegramPendente(String* faltando) {
+  bool pendente = (tokenTelegram == "");
+  if (cuidador.nome != "" && cuidador.chatId == "") {
+    pendente = true;
+    if (faltando) *faltando += cuidador.nome;
+  }
+  for (int i = 0; i < MAX_FAMILIARES; i++) {
+    if (familiares[i].nome == "" || familiares[i].chatId != "") continue;
+    pendente = true;
+    if (faltando) {
+      if (*faltando != "") *faltando += ", ";
+      *faltando += familiares[i].nome;
+    }
+  }
+  return pendente;
+}
+
+String campoIdTelegram(const String& prefixo, const Contato& contato) {
+  String html = "<label>" + escaparHTML(contato.nome) + " ";
+  html += contato.chatId != "" ? "<span class='ok'>&#10003;</span>" : "<span class='falta'>(falta)</span>";
+  html += "</label><input type='text' inputmode='numeric' form='cadastro' name='" + prefixo + "_chat' id='chat-" + prefixo +
+          "' value='" + escaparHTML(contato.chatId) + "' placeholder='ID do Telegram, ex.: 123456789'>";
+  return html;
+}
+
+// Bloco do Telegram (fim da pagina). Aberto so enquanto falta configurar algo.
+String blocoTelegram(bool pendente) {
+  String html = "<details class='caixa' id='telegram'";
+  html += pendente ? " open style='border-color:#f59e0b'>" : ">";
+  html += "<summary><span style='font-size:26px'>&#128241;</span><span><b>Avisos pelo Telegram</b><small>";
+  html += pendente ? "<span class='falta'>falta configurar</span>" : "<span class='ok'>configurado &#10003;</span>";
+  html += "</small></span><span class='seta'></span></summary><div class='conteudo'>";
+
+  html += "<p class='suave'>O Zelo+ avisa o cuidador e os familiares pelo Telegram quando o paciente não pega o remédio.</p>";
+  html += "<label>Token do bot:</label>";
+  html += "<input type='password' form='cadastro' name='tg_token' id='tg_token' autocomplete='off' placeholder='";
+  html += tokenTelegram != "" ? "(salvo &mdash; deixe em branco para manter)" : "cole aqui o token do @BotFather";
+  html += "'>";
+  html += "<button type='button' class='secundario' onclick='buscarIdsTelegram()'>&#128269; Buscar IDs do Telegram</button>";
+  html += "<pre id='ids-telegram' style='white-space:pre-wrap;font-size:15px;background:#f3f4f6;padding:10px;border-radius:10px;display:none'></pre>";
+
+  bool alguem = false;
+  if (cuidador.nome != "") {
+    html += campoIdTelegram("cuid", cuidador);
+    alguem = true;
+  }
+  for (int i = 0; i < MAX_FAMILIARES; i++) {
+    if (familiares[i].nome == "") continue;
+    html += campoIdTelegram(prefixoFamiliar(i), familiares[i]);
+    alguem = true;
+  }
+  if (!alguem) html += "<p class='suave'>Cadastre o cuidador e salve; depois volte aqui para ligar os avisos.</p>";
+
+  html += "<button type='submit' form='cadastro' class='principal'>&#128190; Salvar</button>";
+  if (!pendente) {
+    html += "<button type='button' class='secundario' onclick='testarMensagens()'>&#9993;&#65039; Enviar mensagem de teste</button>";
+  }
+  html += "<details class='caixa'><summary>&#10067; Como configurar (passo a passo)<span class='seta'></span></summary><div class='conteudo'><ol>";
+  html += "<li><b>Uma vez só:</b> no Telegram, abra o <b>@BotFather</b>, envie <i>/newbot</i>, escolha um nome e um usuário terminado em <i>bot</i>. Copie o <b>token</b> e cole acima.</li>";
+  html += "<li><b>Cada pessoa</b> procura esse bot no Telegram e toca em <b>Iniciar</b>.</li>";
+  html += "<li>Toque em <b>Buscar IDs do Telegram</b> e copie o ID de cada pessoa para o campo dela.</li>";
+  html += "<li>Toque em <b>Salvar</b>.</li></ol></div></details>";
+  html += "</div></details>";
   return html;
 }
 
 void handleRoot() {
-  String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
-  html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
-  html += "<title>Zelo+ Dispenser</title></head><body style='font-family:sans-serif;max-width:400px;margin:20px auto;padding:0 16px'>";
-  html += "<h2>Zelo+ - Cadastro</h2>";
-  html += "<form action='/salvar' method='POST' onsubmit='return confirmarTrocas()'>";
-  html += campoTexto("Nome do paciente:", "paciente", nomePaciente, "text", "", true);
+  int ativos = totalMedicamentosAtivos();
+  String faltando;
+  bool pendente = telegramPendente(&faltando);
 
-  html += "<h3 style='margin:18px 0 0'>Medicamentos</h3>";
-  html += "<p style='font-size:13px;color:#6b7280;margin:4px 0'>Cada medicamento fica sempre no mesmo compartimento. Deixe em branco os compartimentos que nao forem usados.</p>";
-  for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
-    html += cartaoCompartimento(c);
+  String html = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'>";
+  html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
+  html += "<title>Zelo+</title><style>" + String(CSS_PAGINA) + "</style></head><body>";
+  html += "<h1>Zelo+</h1>";
+
+  if (pendente && cuidador.nome != "") {
+    html += "<div class='aviso'>&#9888;&#65039; Os avisos pelo Telegram ainda não estão prontos";
+    if (faltando != "") html += " (falta: " + escaparHTML(faltando) + ")";
+    html += ". <a href='#telegram'>Configurar agora</a></div>";
   }
 
-  html += "<h3 style='margin:18px 0 0'>Contatos</h3>";
-  html += camposContato("Cuidador (obrigatorio)", "cuid", cuidador, true);
+  html += "<form id='cadastro' action='/salvar' method='POST' onsubmit='return confirmarTrocas()'>";
 
-  // Familiares sao opcionais: mostra os ja cadastrados (ou uma caixa vazia) e
-  // o botao "+" cria novas caixas no navegador, ate MAX_FAMILIARES.
-  int familiaresMostrados = 0;
+  html += "<details class='pessoa' style='margin:14px 0'" + String(nomePaciente == "" ? " open" : "") + "><summary><span style='font-size:28px'>&#129491;</span><span><b>";
+  html += nomePaciente != "" ? escaparHTML(nomePaciente) : String("Paciente");
+  html += "</b><small>Paciente</small></span><span class='seta'></span></summary><div class='conteudo'>";
+  html += campoTexto("Nome do paciente:", "paciente", nomePaciente, "text", "", true);
+  html += "</div></details>";
+
+  html += "<section class='bloco'><h2>&#128138; Remédios</h2>";
+  html += "<p class='suave' style='margin-top:0'>Cada remédio fica sempre no mesmo compartimento, identificado pela cor. Toque em um compartimento para ver ou mudar.</p>";
+  for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
+    html += cartaoCompartimento(c, ativos == 0 && c == 0);
+  }
+  html += "</section>";
+
+  html += "<section class='bloco'><h2>&#128101; Contatos</h2>";
+  html += cartaoPessoa("&#128100;", cuidador.nome == "" ? "obrigatório &middot; toque para cadastrar" : "Cuidador(a)", "cuid", cuidador, true, false, cuidador.nome == "");
   html += "<div id='familiares-container'>";
+  int totalFamiliares = 0;
   for (int i = 0; i < MAX_FAMILIARES; i++) {
     if (familiares[i].nome == "" && familiares[i].telefone == "") continue;
-    String titulo = "Familiar " + String(familiaresMostrados + 1) + " (opcional)";
-    html += camposContato(titulo.c_str(), prefixoFamiliar(familiaresMostrados).c_str(), familiares[i], false, true);
-    familiaresMostrados++;
-  }
-  if (familiaresMostrados == 0) {
-    html += camposContato("Familiar 1 (opcional)", "fam0", Contato(), false, true);
+    html += cartaoPessoa("&#128106;", "Familiar", prefixoFamiliar(i), familiares[i], false, true, false);
+    totalFamiliares++;
   }
   html += "</div>";
-  html += "<template id='modelo-familiar'>" + camposContato("Familiar", "fam0", Contato(), false, true) + "</template>";
-  html += "<button type='button' id='btn-familiar' onclick='adicionarFamiliar()' style='width:100%;padding:10px;background:#e5e7eb;border:none;border-radius:6px;font-size:15px;margin-bottom:12px'>+ Adicionar familiar</button>";
+  html += "<template id='modelo-familiar'>" +
+          cartaoPessoa("&#128106;", "Familiar &middot; opcional", "famX", Contato(), false, true, true) + "</template>";
+  html += "<button type='button' class='secundario' id='btn-familiar' onclick='adicionarFamiliar()'" +
+          String(totalFamiliares >= MAX_FAMILIARES ? " style='display:none'" : "") + ">+ Cadastrar familiar</button>";
+  html += "</section>";
 
-  html += "<fieldset style='" + String(ESTILO_CAIXA) + "'>";
-  html += "<legend>Avisos pelo Telegram</legend>";
-  html += "<label>Token do bot:</label><br>";
-  html += "<input type='password' name='tg_token' id='tg_token' autocomplete='off' placeholder='";
-  html += tokenTelegram != "" ? "(salvo - deixe em branco para manter)" : "cole aqui o token do @BotFather";
-  html += "' style='" + String(ESTILO_CAMPO) + "'><br>";
-  html += "<button type='button' onclick='buscarIdsTelegram()' style='width:100%;padding:10px;background:#0ea5e9;color:white;border:none;border-radius:6px;font-size:15px;margin:6px 0'>Buscar IDs do Telegram</button>";
-  html += "<pre id='ids-telegram' style='white-space:pre-wrap;font-size:13px;background:#f3f4f6;padding:8px;border-radius:6px;display:none'></pre>";
-  html += "<details style='font-size:14px'><summary>Como configurar (passo a passo)</summary><ol>";
-  html += "<li><b>Uma vez so:</b> no Telegram, abra o <b>@BotFather</b>, envie <i>/newbot</i>, escolha um nome e um usuario terminado em <i>bot</i> (ex.: <i>zelo_maria_bot</i>). Copie o <b>token</b> que ele mandar e cole acima.</li>";
-  html += "<li><b>Cada pessoa</b> (cuidador e familiares) procura esse bot no Telegram e toca em <b>Iniciar</b>.</li>";
-  html += "<li>Toque em <b>Buscar IDs do Telegram</b>: aparece o nome e o ID de quem iniciou o bot. Copie cada ID para o campo da pessoa e salve.</li>";
-  html += "<li>Use <b>Enviar mensagem de teste</b> para conferir.</li></ol></details>";
-  html += "</fieldset>";
-
-  html += "<button type='submit' style='width:100%;padding:12px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:16px'>Salvar cadastro</button>";
+  html += "<button type='submit' class='principal' style='min-height:60px;font-size:20px'>&#128190; Salvar alterações</button>";
   html += "</form>";
 
-  if (totalMedicamentosAtivos() > 0) {
-    html += "<div style='margin-top:20px;padding:10px;background:#f0fdf4;border-radius:6px;font-size:14px'>";
-    html += "<b>" + escaparHTML(nomePaciente) + "</b><br>";
+  // Reposicao: escolhe o remedio, confirma e abre so o compartimento dele.
+  if (ativos > 0) {
+    html += "<section class='bloco'><h2>&#128260; Repor remédio</h2>";
+    html += "<div id='repor1'><button type='button' class='reposicao' onclick='mostrarRepor(2)'>Abrir compartimento para reposição</button></div>";
+    html += "<div id='repor2' style='display:none'><p style='margin:0'><b>Qual remédio você vai repor?</b></p>";
     for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
       if (!medicamentoAtivo(c)) continue;
-      html += "Compartimento " + String(c + 1) + ": " + escaparHTML(medicamentos[c].nome) + " - ";
-      for (int i = 0; i < medicamentos[c].totalHorarios; i++) {
-        if (i > 0) html += ", ";
-        html += formatarHorario(medicamentos[c].hora[i], medicamentos[c].minuto[i]);
-      }
-      html += "<br>";
+      html += "<label class='opcao' style='--cor:" + String(COR_COMPARTIMENTO[c]) + ";--fundo:" + String(FUNDO_COMPARTIMENTO[c]) + "'>";
+      html += "<input type='radio' name='repor' value='" + String(c) + "' data-nome='" + escaparHTML(medicamentos[c].nome) + "'>";
+      html += marcaCompartimento(c, 32) + " " + escaparHTML(medicamentos[c].nome) + "</label>";
     }
-    html += "</div>";
-    html += "<button type='button' onclick='testarMensagens()' style='width:100%;padding:10px;margin-top:10px;background:#16a34a;color:white;border:none;border-radius:6px;font-size:15px'>Enviar mensagem de teste no Telegram</button>";
+    html += "<button type='button' class='reposicao' onclick='continuarRepor()'>Continuar</button>";
+    html += "<button type='button' class='secundario' onclick='mostrarRepor(1)'>Cancelar</button></div>";
+    html += "<div id='repor3' style='display:none'><p id='repor-pergunta' style='margin:0;font-size:20px'></p>";
+    html += "<button type='button' class='perigo' onclick='confirmarRepor()'>Sim, abrir agora</button>";
+    html += "<button type='button' class='secundario' onclick='mostrarRepor(1)'>Cancelar</button></div>";
+    html += "</section>";
   }
 
   html += htmlHistorico();
 
-  // Reposicao: escolhe o medicamento, confirma e abre so o compartimento dele.
-  html += "<hr style='margin:24px 0'>";
-  if (totalMedicamentosAtivos() > 0) {
-    html += "<div id='repor1'>";
-    html += "<button type='button' onclick='mostrarRepor(2)' style='width:100%;padding:12px;background:#f59e0b;color:white;border:none;border-radius:6px;font-size:15px'>Abrir compartimento para reposicao</button>";
-    html += "</div>";
-    html += "<div id='repor2' style='display:none;padding:12px;background:#fef3c7;border-radius:6px'>";
-    html += "<p style='margin-top:0'><b>Qual medicamento voce vai repor?</b></p>";
-    for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
-      if (!medicamentoAtivo(c)) continue;
-      html += "<label style='display:block;padding:6px 0'><input type='radio' name='repor' value='" + String(c) + "'";
-      html += " data-nome='" + escaparHTML(medicamentos[c].nome) + "'> ";
-      html += escaparHTML(medicamentos[c].nome) + " &rarr; compartimento " + String(c + 1) + "</label>";
-    }
-    html += "<button type='button' onclick='continuarRepor()' style='width:100%;padding:12px;background:#f59e0b;color:white;border:none;border-radius:6px;font-size:15px;margin:8px 0'>Continuar</button>";
-    html += "<button type='button' onclick='mostrarRepor(1)' style='width:100%;padding:10px;background:#e5e7eb;border:none;border-radius:6px;font-size:14px'>Cancelar</button>";
-    html += "</div>";
-    html += "<div id='repor3' style='display:none;padding:12px;background:#fef3c7;border-radius:6px'>";
-    html += "<p id='repor-pergunta' style='margin-top:0'></p>";
-    html += "<button type='button' onclick='confirmarRepor()' style='width:100%;padding:12px;background:#dc2626;color:white;border:none;border-radius:6px;font-size:15px;margin-bottom:8px'>Sim, abrir compartimento</button>";
-    html += "<button type='button' onclick='mostrarRepor(1)' style='width:100%;padding:10px;background:#e5e7eb;border:none;border-radius:6px;font-size:14px'>Cancelar</button>";
-    html += "</div>";
-  }
-
-  html += "<p style='margin-top:30px'><a href='/trocar-wifi'>Trocar rede Wi-Fi</a></p>";
+  html += "<p class='rodape'><a href='/trocar-wifi' onclick=\"return confirm('O dispenser vai esquecer a rede Wi-Fi e reiniciar no modo de configuração. Continuar?')\">&#128246; Trocar rede Wi-Fi</a></p>";
+  html += blocoTelegram(pendente);
 
   html += "<script>";
   html += "var NUM_COMPARTIMENTOS = " + String(NUM_COMPARTIMENTOS) + ";";
   html += "var MAX_HORARIOS = " + String(MAX_HORARIOS) + ";";
+  html += "var MAX_FAMILIARES = " + String(MAX_FAMILIARES) + ";";
+  html += "var CORES = ['" + String(NOME_COR[0]) + "', '" + String(NOME_COR[1]) + "', '" + String(NOME_COR[2]) + "'];";
   html += "function adicionarHorario(c) {";
   html += "  var container = document.getElementById('horarios-' + c);";
-  html += "  if (container.querySelectorAll('input').length >= MAX_HORARIOS) { alert('Maximo de ' + MAX_HORARIOS + ' horarios por medicamento.'); return; }";
+  html += "  if (container.querySelectorAll('input').length >= MAX_HORARIOS) { alert('Máximo de ' + MAX_HORARIOS + ' horários por remédio.'); return; }";
   html += "  var input = document.createElement('input');";
   html += "  input.type = 'time'; input.name = 'm' + c + '_h';";
-  html += "  input.style.cssText = 'width:100%;padding:8px;margin-bottom:6px;box-sizing:border-box';";
-  html += "  container.appendChild(input);";
+  html += "  container.appendChild(input); input.focus();";
   html += "}";
   html += "function atualizarDica(c) {";
   html += "  var nome = document.getElementById('m' + c + '_nome').value.trim();";
@@ -1002,22 +1135,22 @@ void handleRoot() {
   html += "  dica.appendChild(document.createTextNode('\\uD83D\\uDCE6 Coloque '));";
   html += "  var b1 = document.createElement('b'); b1.textContent = nome; dica.appendChild(b1);";
   html += "  dica.appendChild(document.createTextNode(' no '));";
-  html += "  var b2 = document.createElement('b'); b2.textContent = 'compartimento ' + (c + 1); dica.appendChild(b2);";
+  html += "  var b2 = document.createElement('b'); b2.textContent = 'compartimento ' + (c + 1) + ' (' + CORES[c] + ')'; dica.appendChild(b2);";
   html += "}";
-  // Troca de medicamento num compartimento ja usado: pede para retirar os antigos.
+  // Troca de remedio num compartimento ja usado: pede para retirar os antigos.
   html += "function confirmarTrocas() {";
   html += "  for (var c = 0; c < NUM_COMPARTIMENTOS; c++) {";
   html += "    var campo = document.getElementById('m' + c + '_nome');";
   html += "    var antigo = campo.dataset.original.trim(); var novo = campo.value.trim();";
   html += "    if (antigo && novo && antigo.toLowerCase() != novo.toLowerCase()) {";
-  html += "      if (!confirm('O compartimento ' + (c + 1) + ' tinha ' + antigo + '. Retire todos os comprimidos antigos antes de colocar ' + novo + '. Confirmar troca?')) return false;";
+  html += "      if (!confirm('O compartimento ' + (c + 1) + ' (' + CORES[c] + ') tinha ' + antigo + '. Retire todos os comprimidos antigos antes de colocar ' + novo + '. Confirmar troca?')) return false;";
   html += "    }";
   html += "  }";
   html += "  return true;";
   html += "}";
   html += "function esvaziarCompartimento(c) {";
   html += "  var nome = document.getElementById('m' + c + '_nome').dataset.original;";
-  html += "  if (!confirm('Esvaziar o compartimento ' + (c + 1) + ' (' + nome + ')? O cadastro deste medicamento sera apagado.')) return;";
+  html += "  if (!confirm('Esvaziar o compartimento ' + (c + 1) + ' (' + CORES[c] + ', ' + nome + ')? O cadastro deste remédio será apagado.')) return;";
   html += "  var abrir = confirm('Abrir o compartimento ' + (c + 1) + ' agora para retirar os comprimidos que sobraram?');";
   html += "  var corpo = new URLSearchParams(); corpo.append('c', c); corpo.append('abrir', abrir ? '1' : '0');";
   html += "  fetch('/esvaziar', {method:'POST', body: corpo}).then(function(r){ return r.text(); })";
@@ -1029,11 +1162,11 @@ void handleRoot() {
   html += "var reporEscolhido = -1;";
   html += "function continuarRepor() {";
   html += "  var escolha = document.querySelector('input[name=repor]:checked');";
-  html += "  if (!escolha) { alert('Escolha o medicamento que sera reposto.'); return; }";
+  html += "  if (!escolha) { alert('Toque no remédio que será reposto.'); return; }";
   html += "  reporEscolhido = escolha.value;";
   html += "  var pergunta = document.getElementById('repor-pergunta'); pergunta.innerHTML = '';";
   html += "  pergunta.appendChild(document.createTextNode('Abrir o '));";
-  html += "  var b1 = document.createElement('b'); b1.textContent = 'compartimento ' + (Number(reporEscolhido) + 1); pergunta.appendChild(b1);";
+  html += "  var b1 = document.createElement('b'); b1.textContent = 'compartimento ' + (Number(reporEscolhido) + 1) + ' (' + CORES[reporEscolhido] + ')'; pergunta.appendChild(b1);";
   html += "  pergunta.appendChild(document.createTextNode(' para repor '));";
   html += "  var b2 = document.createElement('b'); b2.textContent = escolha.dataset.nome; pergunta.appendChild(b2);";
   html += "  pergunta.appendChild(document.createTextNode('?'));";
@@ -1042,32 +1175,39 @@ void handleRoot() {
   html += "function confirmarRepor() {";
   html += "  var corpo = new URLSearchParams(); corpo.append('c', reporEscolhido);";
   html += "  fetch('/abrir-manual', {method:'POST', body: corpo}).then(function(r){";
-  html += "    if (r.ok) { alert('Compartimento ' + (Number(reporEscolhido) + 1) + ' aberto! Reponha o medicamento.'); }";
-  html += "    else { alert('Nao foi possivel abrir agora. Tente novamente em instantes.'); }";
+  html += "    if (r.ok) { alert('Compartimento ' + (Number(reporEscolhido) + 1) + ' aberto! Reponha o remédio e aperte o botão do dispenser para fechar.'); }";
+  html += "    else { alert('Não foi possível abrir agora. Tente novamente em instantes.'); }";
   html += "    mostrarRepor(1);";
   html += "  });";
   html += "}";
-  html += "var MAX_FAMILIARES = " + String(MAX_FAMILIARES) + ";";
-  html += "function renumerarFamiliares() {";
-  html += "  var caixas = document.querySelectorAll('#familiares-container .familiar');";
-  html += "  for (var i = 0; i < caixas.length; i++) {";
-  html += "    caixas[i].querySelector('legend').textContent = 'Familiar ' + (i + 1) + ' (opcional)';";
-  html += "    var campos = caixas[i].querySelectorAll('input');";
-  html += "    for (var j = 0; j < campos.length; j++) { campos[j].name = campos[j].name.replace(/^fam[0-9]+/, 'fam' + i); }";
-  html += "  }";
-  html += "  document.getElementById('btn-familiar').style.display = caixas.length >= MAX_FAMILIARES ? 'none' : 'block';";
+  // Familiares: cada caixa usa um indice livre (fam0..fam4). Ao remover, o ID do
+  // Telegram daquela posicao e apagado para nao passar para um familiar novo.
+  html += "function atualizarBotaoFamiliar() {";
+  html += "  var total = document.querySelectorAll('#familiares-container .pessoa').length;";
+  html += "  document.getElementById('btn-familiar').style.display = total >= MAX_FAMILIARES ? 'none' : 'block';";
   html += "}";
+  html += "function limparIdTelegram(idx) { var campo = document.getElementById('chat-' + idx); if (campo) campo.value = ''; }";
   html += "function adicionarFamiliar() {";
-  html += "  var container = document.getElementById('familiares-container');";
-  html += "  if (container.querySelectorAll('.familiar').length >= MAX_FAMILIARES) return;";
-  html += "  container.appendChild(document.getElementById('modelo-familiar').content.cloneNode(true));";
-  html += "  renumerarFamiliares();";
+  html += "  var usados = [].map.call(document.querySelectorAll('#familiares-container .pessoa'), function(e){ return e.dataset.idx; });";
+  html += "  for (var i = 0; i < MAX_FAMILIARES; i++) {";
+  html += "    if (usados.indexOf('fam' + i) >= 0) continue;";
+  html += "    var modelo = document.getElementById('modelo-familiar').innerHTML.split('famX').join('fam' + i);";
+  html += "    document.getElementById('familiares-container').insertAdjacentHTML('beforeend', modelo);";
+  html += "    limparIdTelegram('fam' + i);";
+  html += "    var campos = document.querySelectorAll('#familiares-container .pessoa:last-child input');";
+  html += "    if (campos.length) campos[0].focus();";
+  html += "    break;";
+  html += "  }";
+  html += "  atualizarBotaoFamiliar();";
   html += "}";
   html += "function removerFamiliar(botao) {";
-  html += "  botao.closest('.familiar').remove();";
-  html += "  renumerarFamiliares();";
+  html += "  var caixa = botao.closest('.pessoa');";
+  html += "  var nome = caixa.querySelector('input').value.trim();";
+  html += "  if (nome && !confirm('Remover ' + nome + ' dos contatos? (a mudança vale depois de salvar)')) return;";
+  html += "  limparIdTelegram(caixa.dataset.idx);";
+  html += "  caixa.remove();";
+  html += "  atualizarBotaoFamiliar();";
   html += "}";
-  html += "renumerarFamiliares();";
   html += "function buscarIdsTelegram() {";
   html += "  var saida = document.getElementById('ids-telegram');";
   html += "  saida.style.display = 'block'; saida.textContent = 'Buscando...';";
@@ -1076,7 +1216,7 @@ void handleRoot() {
   html += "    .then(function(t){ saida.textContent = t; });";
   html += "}";
   html += "function limparHistorico() {";
-  html += "  if (!confirm('Apagar todo o historico de doses?')) return;";
+  html += "  if (!confirm('Apagar todo o histórico de doses?')) return;";
   html += "  fetch('/limpar-historico', {method:'POST'}).then(function(){ location.reload(); });";
   html += "}";
   html += "function testarMensagens() {";

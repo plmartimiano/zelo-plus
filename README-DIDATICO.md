@@ -177,38 +177,43 @@ rodapé do VSCode.
 
 É a página que o cuidador abre no celular, digitando o IP que aparece no LCD (ex.:
 `192.168.15.152`). As imagens abaixo foram geradas **pelo próprio firmware** (a função
-`handleRoot()` do Passo 7) com um cadastro de exemplo completo. A página é uma só,
-com rolagem; aqui ela foi dividida em três partes para caber lado a lado.
+`handleRoot()` do Passo 7) com um cadastro de exemplo completo.
 
-| ① Paciente e compartimentos | ② Contatos e Telegram | ③ Resumo, histórico e reposição |
+O visual segue três ideias, pensando em cuidadores e familiares com pouca
+familiaridade com tecnologia:
+
+- **Letras e botões grandes**, com bom contraste.
+- **Uma cor por compartimento** — 1 **azul**, 2 **verde**, 3 **roxo** — no cartão do
+  remédio, na dica de abastecimento, na reposição e no histórico.
+- **Menos informação na tela:** remédios, paciente, cuidador e familiares aparecem
+  **recolhidos** (só a faixa com o nome); um toque abre os detalhes.
+
+| ① Falta configurar o Telegram | ② Tudo configurado | ③ Blocos abertos |
 |:---:|:---:|:---:|
-| ![Página do Zelo+, parte 1](docs/app-1.png) | ![Página do Zelo+, parte 2](docs/app-2.png) | ![Página do Zelo+, parte 3](docs/app-3.png) |
+| ![Página com aviso do Telegram](docs/app-1.png) | ![Página já configurada](docs/app-2.png) | ![Página com blocos abertos](docs/app-3.png) |
 
-**O que aparece em cada parte:**
+- **①** A familiar Ana ainda não tem ID do Telegram: aparece um **aviso amarelo no
+  topo** e o bloco do Telegram (no fim da página) vem **aberto**, marcando quem falta.
+- **②** Com tudo configurado, a página fica curta: o Telegram vira uma linha
+  "configurado ✓" no rodapé.
+- **③** O que aparece ao tocar: compartimento 1 em edição (nome, horários, dica
+  "coloque no compartimento 1 (azul)"), o familiar João aberto, o formulário de um
+  **familiar novo** e a **reposição**, com a escolha do remédio pelas cores.
 
-| Área da página | O que mostra / para que serve | Onde está no código |
-|---|---|---|
-| **Nome do paciente** | Campo obrigatório; aparece nas mensagens do Telegram | Passo 7 |
-| **Compartimento 1, 2 e 3** | Um cartão por compartimento: medicamento, horários (até 6), "+ Adicionar horário" | Passo 7 |
-| **📦 Coloque … no compartimento …** | Indica onde colocar cada remédio; muda enquanto se digita | Passo 7 |
-| **Esvaziar compartimento** | Apaga o remédio daquele compartimento e, se desejado, abre para retirar sobras | Passo 14 |
-| **Cuidador (obrigatório)** | Nome, celular e ID do Telegram de quem recebe o 1º aviso | Passos 8 e 15 |
-| **Familiar 1, 2… (opcional)** | Até 5; "Remover" e "+ Adicionar familiar". O aviso em laranja indica quem ainda não tem ID do Telegram | Passo 15 |
-| **Avisos pelo Telegram** | Token do bot (fica oculto depois de salvo), "Buscar IDs do Telegram" e passo a passo | Passo 15 |
-| **Salvar cadastro** | Envia tudo para a placa, que valida e grava na memória | Passo 8 |
-| **Resumo (caixa verde)** | Paciente e horários de cada compartimento já gravados | Passo 7 |
-| **Enviar mensagem de teste** | Manda uma mensagem para todos os contatos com ID | Passo 15 |
-| **Histórico de doses** | Adesão dos últimos 7 dias (geral e por remédio) e as 20 doses mais recentes, em cores | Passo 16 |
-| **Baixar histórico (CSV) / Apagar histórico** | Planilha para Excel/Google Planilhas; limpar os registros | Passo 16 |
-| **Abrir compartimento para reposição** | Pergunta qual remédio será reposto (imagem abaixo) e abre só o compartimento dele | Passo 14 |
-| **Trocar rede Wi-Fi** | Esquece o Wi-Fi salvo e volta ao modo de configuração | Passo 4 |
+**O que tem em cada bloco:**
 
-**Reposição** — ao tocar em "Abrir compartimento para reposição", a página lista só os
-remédios cadastrados, cada um com o seu compartimento. Depois de escolher e tocar em
-"Continuar", ela ainda confirma ("Abrir o compartimento 2 para repor Metformina?")
-antes de abrir:
-
-![Escolha do medicamento na reposição](docs/app-reposicao.png)
+| Bloco | Fechado mostra | Aberto mostra | Passo |
+|---|---|---|---|
+| **Aviso amarelo** (só se faltar algo) | Quem ainda não recebe avisos + "Configurar agora" | — | 7 |
+| **Paciente** | Nome do paciente | Campo para editar o nome | 7 |
+| **Remédios 1, 2 e 3** | Número, cor, remédio e horários | Nome, horários (até 6), dica de onde colocar, "Esvaziar" | 7, 14 |
+| **Cuidador(a)** | Nome | Nome e celular | 7, 8 |
+| **Familiares** | Nome de cada um | Nome, celular, "Remover"; "+ Cadastrar familiar" no fim | 7 |
+| **Salvar alterações** | Botão azul grande | — | 8 |
+| **Repor remédio** | Botão laranja | Escolha do remédio (por cor) e confirmação | 14 |
+| **Histórico de doses** | % de adesão, contagem e adesão por remédio | "Ver últimas doses": tabela, planilha, apagar | 16 |
+| **Trocar rede Wi-Fi** | Link (pede confirmação) | — | 4 |
+| **Avisos pelo Telegram** | "configurado ✓" ou "falta configurar" | Token, "Buscar IDs", ID de cada pessoa, teste | 15 |
 
 ---
 
@@ -537,26 +542,52 @@ void migrarCadastroAntigo() {
 ## Passo 7 — A página de cadastro
 
 **O que faz:** quando o navegador abre o IP da placa, a função `handleRoot()`
-**monta o HTML** (o texto da página) e envia. Cada compartimento vira um cartão.
+**monta o HTML** (o texto da página) e envia. O visual foi pensado para quem tem
+pouca familiaridade com tecnologia: **letras e botões grandes**, **uma cor por
+compartimento** e **blocos recolhidos** — só o essencial aparece; um toque abre os
+detalhes.
+
+**1) Uma cor por compartimento.** Três listas guardam a cor de cada um (use
+etiquetas das mesmas cores na caixa do dispenser):
 
 ```cpp
-  html += "<h3 style='margin:18px 0 0'>Medicamentos</h3>";
-  html += "<p style='font-size:13px;color:#6b7280;margin:4px 0'>Cada medicamento fica sempre no mesmo compartimento. Deixe em branco os compartimentos que nao forem usados.</p>";
-  for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
-    html += cartaoCompartimento(c);
+const char* COR_COMPARTIMENTO[NUM_COMPARTIMENTOS] = {"#2563eb", "#16a34a", "#9333ea"};
+const char* FUNDO_COMPARTIMENTO[NUM_COMPARTIMENTOS] = {"#eff6ff", "#f0fdf4", "#faf5ff"};
+const char* NOME_COR[NUM_COMPARTIMENTOS] = {"azul", "verde", "roxo"};
+```
+
+**2) Blocos recolhidos.** O HTML tem um elemento pronto para isso: `<details>`
+mostra só o `<summary>` (a "faixa") e esconde o resto até alguém tocar. Cada
+compartimento é um `<details>` com a sua cor; na faixa aparecem número, remédio e
+horários:
+
+```cpp
+  String html = "<details class='comp' style='--cor:" + String(COR_COMPARTIMENTO[c]) + ";--fundo:" +
+                String(FUNDO_COMPARTIMENTO[c]) + "'" + (aberto ? " open" : "") + "><summary>";
+  html += marcaCompartimento(c, 44);
+  if (medicamentoAtivo(c)) {
+    html += "<span><b>" + escaparHTML(m.nome) + "</b><small>Compartimento " + n + " (" + NOME_COR[c] + ") &middot; " +
+            horariosTexto(m) + "</small></span>";
+  } else {
+    html += "<span><b>Compartimento " + n + "</b><small>" + NOME_COR[c] + " &middot; vazio &middot; toque para cadastrar</small></span>";
   }
 ```
 
-Dentro do cartão, a parte mais importante é a **dica de onde colocar o remédio**:
+- `--cor` e `--fundo` são **variáveis de CSS**: o mesmo estilo (`.comp`) pinta a
+  borda e o fundo de cada cartão com a cor do seu compartimento.
+- `marcaCompartimento()` desenha a bolinha colorida com o número (ela também aparece
+  na reposição e no histórico).
+- O compartimento 1 só vem aberto no primeiro uso (nenhum remédio cadastrado).
+
+Dentro do cartão, a **dica de onde colocar o remédio** repete número e cor:
 
 ```cpp
-  html += "&#128230; Coloque <b>" + escaparHTML(m.nome) + "</b> no <b>compartimento " + n + "</b></p>";
+  html += "&#128230; Coloque <b>" + escaparHTML(m.nome) + "</b> no <b>compartimento " + n + " (" + NOME_COR[c] + ")</b></div>";
 ```
 
-Resultado na página: 📦 Coloque **Losartana** no **compartimento 1**.
-
-A dica muda **enquanto o cuidador digita**, com um pequeno código JavaScript que
-roda no navegador:
+Resultado: 📦 Coloque **Losartana** no **compartimento 1 (azul)**. A dica muda
+**enquanto o cuidador digita**, com um pequeno código JavaScript que roda no
+navegador:
 
 ```cpp
   html += "function atualizarDica(c) {";
@@ -565,12 +596,48 @@ roda no navegador:
   html += "  dica.style.display = nome ? 'block' : 'none';";
 ```
 
-**Troca de remédio num compartimento já usado** — antes de enviar, o navegador
+**3) Pessoas recolhidas.** Cuidador e familiares aparecem **só pelo nome**; tocando,
+abrem nome e celular. O familiar novo fica atrás do botão "+ Cadastrar familiar":
+
+```cpp
+  html += "<summary><span style='font-size:28px'>" + String(icone) + "</span><span><b>";
+  html += contato.nome != "" ? escaparHTML(contato.nome) : String(familiar ? "Novo familiar" : "Cuidador(a)");
+```
+
+Cada familiar ocupa uma "vaga" (`fam0` a `fam4`). Ao cadastrar, o navegador procura a
+primeira vaga livre; ao remover, apaga o ID do Telegram daquela vaga — assim um
+familiar novo nunca herda o ID de quem saiu:
+
+```cpp
+  html += "    if (usados.indexOf('fam' + i) >= 0) continue;";
+  html += "    var modelo = document.getElementById('modelo-familiar').innerHTML.split('famX').join('fam' + i);";
+```
+
+**4) Telegram só quando precisa.** O bloco do Telegram fica no **fim da página**,
+depois de "Trocar rede Wi-Fi". Ele só aparece **aberto** (e com um aviso no topo)
+enquanto faltar o token ou o ID de alguém — por exemplo, logo depois de cadastrar um
+familiar novo. Configurado, vira uma linha discreta "configurado ✓":
+
+```cpp
+bool telegramPendente(String* faltando) {
+  bool pendente = (tokenTelegram == "");
+  if (cuidador.nome != "" && cuidador.chatId == "") {
+    pendente = true;
+```
+
+Os campos desse bloco ficam **fora** do formulário principal, mas são enviados junto
+graças ao atributo `form='cadastro'`:
+
+```cpp
+  html += "</label><input type='text' inputmode='numeric' form='cadastro' name='" + prefixo + "_chat' id='chat-" + prefixo +
+```
+
+**5) Troca de remédio num compartimento já usado** — antes de enviar, o navegador
 compara o nome antigo (guardado em `data-original`) com o novo e pede confirmação:
 
 ```cpp
   html += "    if (antigo && novo && antigo.toLowerCase() != novo.toLowerCase()) {";
-  html += "      if (!confirm('O compartimento ' + (c + 1) + ' tinha ' + antigo + '. Retire todos os comprimidos antigos antes de colocar ' + novo + '. Confirmar troca?')) return false;";
+  html += "      if (!confirm('O compartimento ' + (c + 1) + ' (' + CORES[c] + ') tinha ' + antigo + '. Retire todos os comprimidos antigos antes de colocar ' + novo + '. Confirmar troca?')) return false;";
 ```
 
 > 🔒 **Segurança:** todo texto digitado passa por `escaparHTML()` antes de entrar na
