@@ -1498,8 +1498,9 @@ Ela continua contando o tempo por anos, mesmo com o dispenser desligado.
 | Bateria | LIR2032 (recarregável) — ver aviso abaixo |
 | Preço aproximado | R$ 15 a R$ 30 |
 
-**Ligação:** no **mesmo barramento I2C do LCD**, em paralelo (caixa tracejada no
-diagrama da seção D3).
+**Ligação:** no **mesmo barramento I2C do LCD**, em paralelo: os fios SDA e SCL do
+DS3231 se juntam aos do LCD (ponto ● no diagrama da seção D3), e o VCC sai do mesmo fio
+de 3V3.
 
 | DS3231 | ESP32 |
 |---|---|

@@ -24,7 +24,7 @@ zelo-plus/
 ├── README-DIDATICO.md      # guia didático passo a passo
 ├── docs/compartimentos.md  # especificação aprovada dos 3 compartimentos
 ├── docs/ligacoes.png/.svg  # diagrama de todas as ligações (bancada)
-├── docs/ligacoes-autonomo.*# montagem autônoma: fonte + IP5306 + 18650 (+ DS3231 sugerido)
+├── docs/ligacoes-autonomo.*# montagem autônoma: fonte + IP5306 + 18650 + DS3231
 └── src/main.cpp            # firmware completo (máquina de estados + web + captive portal)
 ```
 
