@@ -1550,7 +1550,8 @@ cada peça na loja. A última coluna fica **em branco** para você anotar o pre�
 encontrar na hora da compra.
 
 > 💰 **Sobre os preços:** valores pesquisados em lojas brasileiras de eletrônica em
-> **setembro de 2026** (fontes no fim desta parte). Itens marcados com **\*** não tiveram
+> **setembro de 2026** (fontes no fim desta parte); bateria e suporte com os preços
+> levantados pelo responsável do projeto no Mercado Livre. Itens marcados com **\*** não tiveram
 > o preço exibido em loja nacional na pesquisa: o valor é uma **estimativa** a partir de
 > preços internacionais convertidos. Preços mudam com frequência e **não incluem frete**.
 > Ferramentas **não** entram na conta (ver [E5](#e5-ferramentas-necessárias-fora-do-custo)).
@@ -1573,8 +1574,8 @@ encontrar na hora da compra.
 |---|:---:|---|---|---|
 | **Fonte de tomada 5 V / 3 A, saída USB-C** · 1 un.<br>bivolt · 15 W · com certificação Inmetro | <img src="docs/componentes/fonte.svg" width="110" alt="fonte"> | Energia da rua para o dispenser e para carregar a bateria. | R$ 35,98–50 | R$ \_\_\_\_\_\_\_\_\_ |
 | **Módulo IP5306 5 V 2,1 A (power bank)** · 1 un.<br>IP5306 · entrada USB-C · pads IN, B+/B−, OUT | <img src="docs/componentes/ip5306.svg" width="110" alt="ip5306"> | Carrega a bateria e entrega 5 V estáveis, com ou sem energia da rua. | R$ 15–25 \* | R$ \_\_\_\_\_\_\_\_\_ |
-| **Bateria Li-ion 18650** · 1 un.<br>3,7 V · 2.600 mAh · sem "9.800 mAh" falsos | <img src="docs/componentes/bateria18650.svg" width="110" alt="bateria18650"> | Mantém o dispenser ligado por ~8–10 h se faltar energia. *(Você já tem.)* | R$ 39,90 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Suporte para 1 bateria 18650, com fios** · 1 un.<br>SB186-1 · fios vermelho/preto 12–15 cm | <img src="docs/componentes/suporte18650.svg" width="110" alt="suporte18650"> | Segura a bateria e evita soldar direto nela. | R$ 5–8 \* | R$ \_\_\_\_\_\_\_\_\_ |
+| **Bateria Li-ion 18650** · 1 un.<br>Onistek ON-18650 · 3,7 V · rótulo 3.800 mAh (real provável 1.500–2.500 mAh) | <img src="docs/componentes/bateria18650.svg" width="110" alt="bateria18650"> | Mantém o dispenser ligado se faltar energia (~4–10 h, conforme a capacidade real). *(Você já tem.)* | R$ 17,15 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Suporte para 1 bateria 18650** · 1 un.<br>com fios vermelho/preto (preferível) ou com pinos "True Hole" | <img src="docs/componentes/suporte18650.svg" width="110" alt="suporte18650"> | Segura a bateria e evita soldar direto nela. | R$ 12,94 | R$ \_\_\_\_\_\_\_\_\_ |
 | **Cabo USB-C macho com fios (pigtail)** · 1 un.<br>2 fios **com resistor 5,1 kΩ** interno, ou 6 fios (CC1/CC2 expostos) · 20–22 AWG | <img src="docs/componentes/cabo_usbc.svg" width="110" alt="cabo_usbc"> | Leva a energia da fonte até o IP5306; a ponta de fios é **soldada** na entrada do módulo. | R$ 20–30 \* | R$ \_\_\_\_\_\_\_\_\_ |
 | **Resistor 5,1 kΩ, ¼ W** · pacote com 10 *(só se o cabo for de 6 fios)*<br>faixas: verde-marrom-vermelho-dourado | <img src="docs/componentes/resistor5k1.svg" width="110" alt="resistor5k1"> | Um em cada pino CC (CC1 e CC2) até o GND: faz a fonte USB-C liberar os 5 V. | R$ 0,60 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
 | **Capacitor eletrolítico 1000 µF / 16 V** · 1 un.<br>105 °C · tem polaridade (faixa "−") | <img src="docs/componentes/capacitor.svg" width="110" alt="capacitor"> | Absorve o pico de corrente dos servos e evita que o ESP32 reinicie. | R$ 0,73–3 | R$ \_\_\_\_\_\_\_\_\_ |
@@ -1615,10 +1616,10 @@ emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, s�
 | Grupo | Faixa pesquisada | Total anotado |
 |---|---|---|
 | E1. Eletrônica do dispenser | R$ 134 – 147 | R$ \_\_\_\_\_\_\_\_\_ |
-| E2. Energia autônoma *(com a bateria)* | R$ 117 – 157 | R$ \_\_\_\_\_\_\_\_\_ |
+| E2. Energia autônoma *(com a bateria)* | R$ 102 – 139 | R$ \_\_\_\_\_\_\_\_\_ |
 | E3. Montagem e ligações | R$ 46 – 96 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Total para montar o dispenser** | **≈ R$ 297 – 400** | **R$ \_\_\_\_\_\_\_\_\_** |
-| *Total sem a bateria (que você já tem)* | *≈ R$ 257 – 360* | R$ \_\_\_\_\_\_\_\_\_ |
+| **Total para montar o dispenser** | **≈ R$ 282 – 382** | **R$ \_\_\_\_\_\_\_\_\_** |
+| *Total sem a bateria (que você já tem)* | *≈ R$ 265 – 365* | R$ \_\_\_\_\_\_\_\_\_ |
 | E4. Relógio sem internet (sugerido, à parte) | + R$ 38 – 60 | R$ \_\_\_\_\_\_\_\_\_ |
 
 **Não inclui:** ferramentas (E5), frete e a estrutura física do dispenser (caixa, portas e
@@ -1650,9 +1651,7 @@ impressão 3D).
 [MakerHero — fonte 5 V 3 A USB-C](https://www.makerhero.com/produto/fonte-dc-chaveada-5v-3a-usb-tipo-c/) ·
 [Mercado Livre — IP5306](https://www.mercadolivre.com.br/modulo-carga-y-descarga-bateria-18650-ip5306-2a-5v-usb-c/p/MLB2064132227) ·
 [eBay — IP5306 (referência internacional)](https://www.ebay.de/itm/134628665112) ·
-[AutoCore Robótica — bateria 18650 2600 mAh](https://www.autocorerobotica.com.br/bateria-li-ion-37v-18650-2600mah) ·
-[RS Robótica — bateria 18650 2600 mAh](https://www.rsrobotica.com.br/produto/bateria-cr18650-37v-2600mah-li-ion.html) ·
-[Usinainfo — suporte 18650](https://www.usinainfo.com.br/eletroeletronica/suporte-para-1-bateria-18650-litio-4978.html) ·
+Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo responsável do projeto) ·
 [Amazon.com.br — cabo USB-C pigtail](https://www.amazon.com.br/ELNONE-alimenta%C3%A7%C3%A3o-Pigtail-r%C3%A1pida-pigtail/dp/B0CGVNG7Y4) ·
 [eBay — cabo USB-C pigtail (referência internacional)](https://www.ebay.de/itm/226762117675) ·
 [Nova Trida — capacitor 1000 µF](https://www.novatridaeletronica.com.br/capacitor-eletrolitico-1000uf-x-16v) ·
