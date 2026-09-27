@@ -64,15 +64,13 @@
   - [E5. Ferramentas necessárias (fora do custo)](#e5-ferramentas-necessárias-fora-do-custo)
   - [E6. Resumo do investimento](#e6-resumo-do-investimento)
 - [Parte F — Desenho técnico do gabinete](#parte-f--desenho-técnico-do-gabinete)
-  - [F1. Desenho técnico V5 (original)](#f1-desenho-técnico-v5-original)
-  - [F2. Conferência das medidas do V5](#f2-conferência-das-medidas-do-v5)
-  - [F3. Medidas revisadas (V5.1)](#f3-medidas-revisadas-v51)
-  - [F4. Imagens do produto (V5.1)](#f4-imagens-do-produto-v51)
-  - [F5. Por que essas escolhas](#f5-por-que-essas-escolhas)
-  - [F6. Onde fica cada componente](#f6-onde-fica-cada-componente)
+  - [F1. Desenho técnico dimensional](#f1-desenho-técnico-dimensional)
+  - [F2. Imagens do produto](#f2-imagens-do-produto)
+  - [F3. Critérios de projeto](#f3-critérios-de-projeto)
+  - [F4. Onde fica cada componente](#f4-onde-fica-cada-componente)
 - [Parte G — Custo de produção (estimativa para viabilidade)](#parte-g--custo-de-produção-estimativa-para-viabilidade)
   - [G1. Premissas e método](#g1-premissas-e-método)
-  - [G2. Volume de plástico do gabinete V5.1](#g2-volume-de-plástico-do-gabinete-v51)
+  - [G2. Volume de plástico do gabinete](#g2-volume-de-plástico-do-gabinete)
   - [G3. Gabinete em impressão 3D](#g3-gabinete-em-impressão-3d)
   - [G4. Gabinete em plástico injetado](#g4-gabinete-em-plástico-injetado)
   - [G5. Componentes eletrônicos no atacado](#g5-componentes-eletrônicos-no-atacado)
@@ -94,7 +92,7 @@ porta movida por um servo motor.
 
 <figure markdown="1">
 ![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
-<figcaption><b>Imagem de referência</b> — conceito visual do produto final (ilustrativo), com o botão à esquerda, o LCD no centro e a luz de alerta à direita. Não é o protótipo atual; o relógio do firmware usa 24 horas.</figcaption>
+<figcaption><b>Imagem de referência</b> — conceito visual do produto final (ilustrativo), com o botão à esquerda, o LCD no centro e a luz de alerta à direita.</figcaption>
 </figure>
 
 **Rotina do dia a dia:**
@@ -1952,58 +1950,19 @@ Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo
 
 # Parte F — Desenho técnico do gabinete
 
-> 📏 O desenho técnico **V5** foi enviado pelo responsável do projeto e **conferido cota
-> por cota** (F2). As correções deram origem à versão **V5.1** (F3). **Onde houver
-> diferença entre os dois, valem as medidas da V5.1.**
+O gabinete do Zelo+ mede **210 × 130 × 100 mm** (comprimento × profundidade × altura).
+Ele tem três compartimentos iguais na frente, uma área técnica na parte de trás (servos)
+e uma faixa de eletrônica na base, onde ficam o LCD, o botão e a luz de alerta.
 
-## F1. Desenho técnico V5 (original)
-
-<figure markdown="1">
-![Desenho técnico dimensional V5](docs/desenho-tecnico-v5.jpg)
-<figcaption><b>Desenho técnico V5 (original, ilustrativo).</b> Várias cotas foram corrigidas na V5.1 (seção F3); onde houver diferença, valem as medidas da V5.1.</figcaption>
-</figure>
-
-## F2. Conferência das medidas do V5
-
-| Item conferido | No V5 | Conferência | Situação |
-|---|---|---|---|
-| Proporção da vista superior | 210 × 130 | 415 × 250 px → 126,5 mm de profundidade | ✅ coerente |
-| Proporção da vista lateral | 130 × 45 | 408 × 138 px → 44 mm de altura | ✅ coerente |
-| Janela do LCD | 66 × 18 | área visível do LCD 16x2 ≈ 64,5 × 16; a moldura metálica (71 × 24) fica escondida | ✅ correta |
-| Placa do LCD | 80 × 36, 4 furos | padrão do módulo (furos M3 a 75 × 31) | ✅ correta |
-| Acrílico da luz | 40 × 18 | 40 mm medidos na imagem | ✅ coerente |
-| Tampas móveis | 65 × 75 × 2 | iguais no detalhe, na tabela e na vista superior | ✅ coerentes |
-| Espessuras | paredes 3, divisórias 2, fundo 2,5 | adequadas para impressão 3D e injeção | ✅ adequadas |
-| Soma da vista frontal | 15 + 18 + 12 + 80 + 12 + 40 + 15 | = **192**, não 210 (faltam 18 mm); a tabela diz 15 mm entre elementos e o desenho, 12 | ❌ não fecha |
-| Soma da largura interna | 3 × 65 + 2 × 2 + 2 × 3 | = **205**, não 210; e tampa de 65 numa abertura de 65 não tem a folga de 0,35 | ❌ não fecha |
-| Soma da profundidade | 3 + 75 + 2 + 45 + 3 | = **128**, não 130 | ❌ não fecha |
-| Escala da vista frontal | altura 45 | 600 × 167 px → **~58 mm** aparentes | ❌ fora de escala |
-| Altura total | 45 | a placa do LCD (36 de altura, **~25 de profundidade** com o módulo I2C) ocupa o mesmo espaço dos compartimentos da frente | ❌ não comporta |
-| Espessura do LCD | 12 | 12 mm é só o LCD; com o módulo I2C soldado atrás, **~25 mm** | ❌ subestimada |
-| Entrada de energia e manutenção | — | não há recorte para o USB-C nem acesso à bateria e ao ESP32 | ⚠️ faltando |
-
-## F3. Medidas revisadas (V5.1)
+## F1. Desenho técnico dimensional
 
 <figure markdown="1">
-![Desenho técnico dimensional V5.1](docs/desenho-tecnico-v51.jpg)
-<figcaption><b>Desenho técnico dimensional V5.1 (revisado).</b> As cotas conferem com as tabelas abaixo; ver as notas de conferência logo a seguir.</figcaption>
+![Desenho técnico dimensional do gabinete](docs/desenho-tecnico.jpg)
+<figcaption><b>Desenho técnico dimensional do gabinete</b> — vista frontal, corte lateral, vista superior e resumo das medidas (em mm).</figcaption>
 </figure>
 
-> 🔎 **Notas de conferência do desenho V5.1**
->
-> - ✅ **Todas as cotas e somas conferem:** frente 27 + 18 + 27 + 66 + 16 + 40 + 16 = 210;
->   largura 3 + 65,7 + 3,45 + 65,7 + 3,45 + 65,7 + 3 = 210; profundidade
->   3 + 75,7 + 2 + 46,3 + 3 = 130; alturas 100 / 45 / 22,5; tabela de resumo idêntica à
->   V5.1.
-> - ✏️ **Vista frontal:** a cota "50,5 útil" está na faixa azul **externa**, que mede
->   **55 mm**. Os 50,5 mm são a profundidade **interna** do compartimento (corretos no
->   corte lateral).
-> - ✏️ **Corte lateral:** onde se lê "IPS306", leia-se **IP5306** (o módulo de carga).
-> - ✏️ **Subtítulo:** "tampas 2" aparece repetido.
-> - 📐 **Escala:** as vistas não estão em escala. A altura de 100 mm aparece como ~80 mm
->   na vista frontal e ~87 mm no corte, e os 130 mm da vista superior aparecem como
->   ~119 mm. **Valem as cotas escritas.** O desenho **em escala** está em
->   [`docs/gabinete-v51.svg`](docs/gabinete-v51.svg) ([PNG](docs/gabinete-v51.png)).
+As vistas também estão em escala no arquivo vetorial
+[`docs/gabinete.svg`](docs/gabinete.svg) ([PNG](docs/gabinete.png)).
 
 **Dimensões principais: 210 (C) × 130 (P) × 100 (A) mm.**
 
@@ -2027,32 +1986,14 @@ Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo
 | Placa do LCD (atrás do painel) | 80 × 36 × ~25 (com módulo I2C) |
 | Recorte do USB-C (parede traseira) | 14,2 × 5,4, centro a ~15 da base |
 
-## F4. Imagens do produto (V5.1)
+## F2. Imagens do produto
 
 <figure markdown="1">
-![Imagens do produto V5.1](docs/produto-v51-imagens.jpg)
-<figcaption><b>Imagens do produto V5.1 (ilustrativas)</b> — perspectiva, vistas e detalhe do compartimento aberto, da dobradiça e do encaixe. Ver as notas de conferência abaixo.</figcaption>
+![Imagens do produto Zelo+](docs/produto-imagens.jpg)
+<figcaption><b>Imagens do produto</b> — perspectiva, vistas e detalhes do compartimento aberto, da dobradiça e do encaixe (medidas em mm; imagens ilustrativas).</figcaption>
 </figure>
 
-> 🔎 **Notas de conferência das imagens**
->
-> - ✅ **Conferem:** conjunto 210 × 130 × 100; tampas 65 × 75 × 2; divisória de 3,45 mm
->   no topo; espessura da tampa de 2 mm; dobradiças na borda traseira das tampas, junto à
->   área técnica.
-> - ❌ **Detalhe do compartimento:** "22,5 (altura útil)" está **errado**. A altura útil
->   é **50,5 mm**; 22,5 mm é a altura do **centro dos elementos frontais**. As medidas
->   internas úteis são **65,7 × 75,7 × 50,5 mm**; 65 × 75 é o tamanho da **tampa**.
-> - ✏️ **Vista superior:** a legenda "Tampa fixa" deve ser **tampa removível** (4
->   parafusos M3), para dar acesso à bateria e ao ESP32.
-> - ✏️ **Vista lateral:** a divisão inclinada entre azul e preto vem do V5. Na V5.1, a
->   faixa preta é **reta, com 45 mm**.
-> - 📐 **Escala:** as vistas menores não estão em escala. A altura de 100 mm aparece como
->   ~67 mm na vista frontal e ~59 mm na lateral.
-> - 💬 **Texto do LCD:** "10:30 / Medicação em dia" é ilustrativo. O programa mostra a
->   hora com segundos e o número de remédios, sem acentos, por exemplo `15:26:03` /
->   `3 remedios` (Passo 17).
-
-## F5. Por que essas escolhas
+## F3. Critérios de projeto
 
 - **Altura de 100 mm:**
   - A proporção fica **210 : 130 : 100** (≈ 2,1 : 1,3 : 1), com a altura em ~48 % da largura: perfil de caixa de mesa, estável e sem cara de "bloco".
@@ -2066,7 +2007,7 @@ Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo
 - **Manutenção:** a tampa da área técnica é **removível** (4 parafusos M3), com acesso aos servos, à bateria e ao USB do ESP32 para atualizar o programa (D10).
 - **Energia:** o conector USB-C de painel fica na **parede traseira**, dentro da faixa de eletrônica.
 
-## F6. Onde fica cada componente
+## F4. Onde fica cada componente
 
 | Componente | Local no gabinete |
 |---|---|
@@ -2086,7 +2027,7 @@ Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo
 > produzir o Zelo+ em série. **Data-base: setembro de 2026.** Não é orçamento: os
 > valores são faixas (mínimo–máximo) calculadas a partir de premissas declaradas, e
 > cada número pode ser refeito trocando a premissa correspondente. As medidas do
-> gabinete são as da **V5.1** (Parte F).
+> gabinete são as do desenho técnico (Parte F).
 
 <figure markdown="1">
 ![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
@@ -2109,9 +2050,9 @@ Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo
 | Volumes analisados | **100**, **1.000** e **10.000** unidades | lote piloto, pequena série, série |
 | Arredondamento | valores finais arredondados ao real | — |
 
-## G2. Volume de plástico do gabinete V5.1
+## G2. Volume de plástico do gabinete
 
-Com as medidas da V5.1 (Parte F), o volume de plástico é a soma de área × espessura de
+Com as medidas do desenho técnico (Parte F), o volume de plástico é a soma de área × espessura de
 cada parte:
 
 | Parte | Conta (mm) | Volume |
@@ -2130,9 +2071,6 @@ cada parte:
 |---|---|---|
 | PLA (impressão 3D) | 1,24 g/cm³ | 443 × 1,24 = **≈ 549 g** (+ 8 % de perdas = **593 g** de filamento) |
 | ABS (injeção) | 1,05 g/cm³ | 443 × 1,05 = **≈ 465 g** |
-
-*Uma primeira estimativa, feita só pela foto de referência (≈ 270 × 170 × 100 mm, 569 cm³),
-foi substituída por estes valores quando o desenho técnico ficou disponível.*
 
 ## G3. Gabinete em impressão 3D
 
@@ -2314,7 +2252,7 @@ pouco investimento.
 
 ## G9. Limitações da estimativa
 
-- **Dimensões:** as medidas são as da V5.1 (Parte F). Mudanças no desenho (espessuras,
+- **Dimensões:** as medidas são as do desenho técnico (Parte F). Mudanças no desenho (espessuras,
   nervuras, rampa no fundo) alteram o volume de plástico e os custos do gabinete.
 - **Preços:** são faixas de mercado, não cotações. Os moldes, em especial, exigem
   orçamento com o desenho 3D final.
