@@ -1336,7 +1336,7 @@ Para funcionar sem o laptop, basta trocar a **fonte de energia**. O código não
 Esta é a **única montagem recomendada** para o uso autônomo do Zelo+:
 
 ```text
- Tomada ─► Fonte 5 V / 3 A ─(cabo USB-C)─► IP5306 (IN) ◄──► Bateria 18650
+ Tomada ─► Fonte 5 V / 3 A ─► conector USB-C fêmea ─(2 fios)─► IP5306 (IN) ◄──► Bateria 18650
                                               │
                                       OUT: 5 V estáveis
                                               │
@@ -1367,12 +1367,23 @@ placa só.
 - A fonte de **3 A** tem folga: o IP5306 carrega a bateria com até ~2 A e o dispenser
   consome no pico ~0,6 A.
 
-**O cabo USB-C "com fios" (atenção):** fontes USB-C só liberam os 5 V quando o aparelho
-ligado a elas se identifica, por meio de um **resistor de 5,1 kΩ no pino CC**. Por isso,
-o cabo que tem **ponta USB-C de um lado e fios soldados no IP5306 do outro** precisa ser
-um cabo **com esse resistor embutido** (vendido como "cabo USB-C macho com resistor
-5.1k" ou "pigtail USB-C 5V"). Um cabo sem o resistor deixa a fonte **sem entregar
-energia nenhuma** — o dispenser simplesmente não liga.
+**A entrada de energia: conector USB-C fêmea de painel.** O carregador (fonte) é
+encaixado num **conector USB-C fêmea** preso na parede da caixa do dispenser. Desse
+conector saem **2 fios** (vermelho e preto) que são **soldados nos pads de entrada (IN)
+do IP5306**. O ESP32 não usa esse conector: ele recebe os 5 V pela **saída do IP5306 →
+pino VIN**.
+
+**Atenção aos resistores de 5,1 kΩ:** fontes USB-C só liberam os 5 V quando o aparelho
+ligado a elas se identifica, por meio de um **resistor de 5,1 kΩ no pino CC**. Por isso:
+
+- Prefira o conector cujo anúncio diga **"com resistor 5,1 kΩ / 5K1"** ou **"compatível
+  com carregador tipo C (C–C)"**.
+- **Teste ao receber:** ligue a fonte no conector e meça os 2 fios com o multímetro. Deve
+  marcar **cerca de 5 V**. Se marcar **0 V**, o conector não tem os resistores e a fonte
+  não entrega energia: o dispenser não liga.
+- **Plano B:** use um **módulo USB-C fêmea de 6 pinos** (VBUS, GND, CC1, CC2, D+, D−) e
+  solde **um resistor de 5,1 kΩ do CC1 ao GND** e **outro do CC2 ao GND**. Os pinos D+ e
+  D− ficam sem ligação.
 
 ## D4. Lista de compras
 
@@ -1385,7 +1396,7 @@ energia nenhuma** — o dispenser simplesmente não liga.
 | 2 | **Módulo IP5306** | 1 | "Módulo carregador power bank IP5306 5V 2.1A 18650", com **pads de solda** de entrada (5V/GND), de bateria (B+/B−) e de saída (OUT). |
 | 3 | **Bateria 18650** | 1 | Li-ion 3,7 V, **2.500–3.000 mAh reais** (Samsung, LG, Sony/Murata, Panasonic). Desconfiar de "9.800 mAh". *Você já tem.* |
 | 4 | **Suporte (case) para 1× 18650** | 1 | Com fios vermelho/preto. Evita soldar direto na bateria. |
-| 5 | **Cabo USB-C macho com fios (pigtail)** | 1 | Ponta **USB-C** de um lado, **2 fios** (vermelho/preto) do outro, **com resistor 5,1 kΩ no CC**. Os fios são **soldados** nos pads de entrada do IP5306. |
+| 5 | **Conector USB-C fêmea de painel com 2 fios** | 1 | Preso na caixa; a fonte encaixa nele. Os **2 fios** (vermelho/preto) são **soldados** nos pads de entrada do IP5306. De preferência **com resistores 5,1 kΩ no CC** (ver acima). |
 | 6 | **Capacitor eletrolítico 1000 µF / 16 V** | 1 | Entre +5 V e GND, perto dos servos. Tem polaridade (faixa "−" no GND). |
 | 7 | **Fio 22 AWG** vermelho e preto | ~1 m cada | Saída do IP5306 → VIN do ESP32 e servos. |
 | 8 | **Placa perfurada** ou barramento de bornes | 1 | Para fazer os "trilhos" de +5 V e GND com solda (mais firme que protoboard para uso contínuo). |
@@ -1402,8 +1413,9 @@ energia nenhuma** — o dispenser simplesmente não liga.
 
 > ⚡ Monte **sem a bateria e sem a fonte ligadas**. Só energize nas etapas indicadas.
 
-1. **Cabo de entrada:** solde os fios do cabo USB-C nos pads de **entrada** do IP5306:
-   **vermelho → 5V (IN+)** e **preto → GND (IN−)**. Isole com termo-retrátil.
+1. **Conector de entrada:** fixe o conector USB-C fêmea na caixa e solde os 2 fios nos
+   pads de **entrada** do IP5306: **vermelho → 5V (IN+)** e **preto → GND (IN−)**. Isole
+   com termo-retrátil. Antes, faça o teste dos 5 V no conector (ver D3).
 2. **Bateria:** solde os fios do suporte da 18650 nos pads **B+** (vermelho) e **B−**
    (preto). Confira a polaridade com o multímetro antes de encaixar a bateria.
 3. **Saída:** solde um fio vermelho em **OUT+ (5V)** e um preto em **OUT− (GND)** e leve
@@ -1576,8 +1588,8 @@ encontrar na hora da compra.
 | **Módulo IP5306 5 V 2,1 A (power bank)** · 1 un.<br>IP5306 · entrada USB-C · pads IN, B+/B−, OUT | <img src="docs/componentes/ip5306.svg" width="110" alt="ip5306"> | Carrega a bateria e entrega 5 V estáveis, com ou sem energia da rua. | R$ 15–25 \* | R$ \_\_\_\_\_\_\_\_\_ |
 | **Bateria Li-ion 18650** · 1 un.<br>Onistek ON-18650 · 3,7 V · rótulo 3.800 mAh (real provável 1.500–2.500 mAh) | <img src="docs/componentes/bateria18650.svg" width="110" alt="bateria18650"> | Mantém o dispenser ligado se faltar energia (~4–10 h, conforme a capacidade real). *(Você já tem.)* | R$ 17,15 | R$ \_\_\_\_\_\_\_\_\_ |
 | **Suporte para 1 bateria 18650** · 1 un.<br>com fios vermelho/preto | <img src="docs/componentes/suporte18650.svg" width="110" alt="suporte18650"> | Segura a bateria e evita soldar direto nela. | R$ 9,17 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Cabo USB-C macho com fios (pigtail)** · 1 un.<br>2 fios **com resistor 5,1 kΩ** interno, ou 6 fios (CC1/CC2 expostos) · 20–22 AWG | <img src="docs/componentes/cabo_usbc.svg" width="110" alt="cabo_usbc"> | Leva a energia da fonte até o IP5306; a ponta de fios é **soldada** na entrada do módulo. | R$ 20–30 \* | R$ \_\_\_\_\_\_\_\_\_ |
-| **Resistor 5,1 kΩ, ¼ W** · pacote com 10 *(só se o cabo for de 6 fios)*<br>faixas: verde-marrom-vermelho-dourado | <img src="docs/componentes/resistor5k1.svg" width="110" alt="resistor5k1"> | Um em cada pino CC (CC1 e CC2) até o GND: faz a fonte USB-C liberar os 5 V. | R$ 0,60 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
+| **Conector USB-C fêmea de painel, com 2 fios** · 1 un.<br>"jack USB tipo C fêmea com rabicho 2 fios" · 5 V · ≥ 2,5 A · de preferência com resistores 5,1 kΩ | <img src="docs/componentes/conector_usbc.svg" width="110" alt="conector_usbc"> | Entrada de energia na caixa: a fonte encaixa nele e os 2 fios são **soldados** na entrada (IN) do IP5306. | R$ 12–30 | R$ \_\_\_\_\_\_\_\_\_ |
+| **Resistor 5,1 kΩ, ¼ W** · pacote com 10 *(plano B: só se usar o módulo USB-C de 6 pinos)*<br>faixas: verde-marrom-vermelho-dourado | <img src="docs/componentes/resistor5k1.svg" width="110" alt="resistor5k1"> | Um em cada pino CC (CC1 e CC2) até o GND: faz a fonte USB-C liberar os 5 V. | R$ 0,60 (10 un.) | R$ \_\_\_\_\_\_\_\_\_ |
 | **Capacitor eletrolítico 1000 µF / 16 V** · 1 un.<br>105 °C · tem polaridade (faixa "−") | <img src="docs/componentes/capacitor.svg" width="110" alt="capacitor"> | Absorve o pico de corrente dos servos e evita que o ESP32 reinicie. | R$ 0,73–3 | R$ \_\_\_\_\_\_\_\_\_ |
 
 ## E3. Montagem e ligações
@@ -1605,7 +1617,7 @@ emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, s�
 
 | Ferramenta | Ilustração | Para quê | Modelo recomendado e ajustes |
 |---|:---:|---|---|
-| **Ferro de solda com ajuste de temperatura** | <img src="docs/componentes/ferro.svg" width="110" alt="ferro"> | Soldar os fios nos pads do IP5306, no cabo USB-C e na placa perfurada. | **Estação ou ferro com controle de temperatura**, 50–60 W, faixa ~200–480 °C (ex.: **Hikari HK-936B** ou **Yaxun 936**).<br>• **Temperatura:** **320–350 °C** para os pads pequenos (IP5306, pinos, resistores); até **370 °C** para os fios 22 AWG e os trilhos da placa.<br>• **Ponta:** cônica fina (0,5–1 mm) ou chanfrada pequena (~1,6 mm).<br>• Evite ferros simples **sem ajuste** (ex.: linhas "60 W" comuns, que passam de 500 °C): o excesso de calor pode **soltar os pads** do IP5306 e danificar a bateria se encostar nela. |
+| **Ferro de solda com ajuste de temperatura** | <img src="docs/componentes/ferro.svg" width="110" alt="ferro"> | Soldar os fios nos pads do IP5306, no conector USB-C e na placa perfurada. | **Estação ou ferro com controle de temperatura**, 50–60 W, faixa ~200–480 °C (ex.: **Hikari HK-936B** ou **Yaxun 936**).<br>• **Temperatura:** **320–350 °C** para os pads pequenos (IP5306, pinos, resistores); até **370 °C** para os fios 22 AWG e os trilhos da placa.<br>• **Ponta:** cônica fina (0,5–1 mm) ou chanfrada pequena (~1,6 mm).<br>• Evite ferros simples **sem ajuste** (ex.: linhas "60 W" comuns, que passam de 500 °C): o excesso de calor pode **soltar os pads** do IP5306 e danificar a bateria se encostar nela. |
 | **Estanho (solda) 60/40 com fluxo, 0,5 mm** | <img src="docs/componentes/estanho.svg" width="110" alt="estanho"> | Material da solda. | Fio **0,5 mm** (fino, próprio para peças pequenas), liga **60/40** com **fluxo resinoso** (ex.: **Cobix 0,5 mm RA T2**, carretel pequeno de 250 g ou tubinho). |
 | **Multímetro digital** | <img src="docs/componentes/multimetro.svg" width="110" alt="multimetro"> | Conferir os 5 V da saída e a polaridade **antes** de ligar o ESP32. | Modelo básico com **tensão DC** e **teste de continuidade** (bip) (ex.: **Hikari HM-1001** ou **Minipa ET-1002**). |
 | **Acessórios de bancada** | — | Preparar fios e corrigir erros. | Suporte com esponja para o ferro (costuma vir com a estação) · **alicate de corte rente** pequeno · **decapador** para fio 22 AWG · **malha dessoldadora** ou sugador · pinça · "terceira mão" com lupa (opcional) · isqueiro ou soprador para o termo-retrátil. |
@@ -1616,10 +1628,10 @@ emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, s�
 | Grupo | Faixa pesquisada | Total anotado |
 |---|---|---|
 | E1. Eletrônica do dispenser | R$ 134 – 147 | R$ \_\_\_\_\_\_\_\_\_ |
-| E2. Energia autônoma *(com a bateria)* | R$ 98 – 135 | R$ \_\_\_\_\_\_\_\_\_ |
+| E2. Energia autônoma *(com a bateria)* | R$ 90 – 135 | R$ \_\_\_\_\_\_\_\_\_ |
 | E3. Montagem e ligações | R$ 46 – 96 | R$ \_\_\_\_\_\_\_\_\_ |
-| **Total para montar o dispenser** | **≈ R$ 278 – 378** | **R$ \_\_\_\_\_\_\_\_\_** |
-| *Total sem a bateria (que você já tem)* | *≈ R$ 261 – 361* | R$ \_\_\_\_\_\_\_\_\_ |
+| **Total para montar o dispenser** | **≈ R$ 270 – 378** | **R$ \_\_\_\_\_\_\_\_\_** |
+| *Total sem a bateria (que você já tem)* | *≈ R$ 253 – 361* | R$ \_\_\_\_\_\_\_\_\_ |
 | E4. Relógio sem internet (sugerido, à parte) | + R$ 38 – 60 | R$ \_\_\_\_\_\_\_\_\_ |
 
 **Não inclui:** ferramentas (E5), frete e a estrutura física do dispenser (caixa, portas e
@@ -1652,8 +1664,10 @@ impressão 3D).
 [Mercado Livre — IP5306](https://www.mercadolivre.com.br/modulo-carga-y-descarga-bateria-18650-ip5306-2a-5v-usb-c/p/MLB2064132227) ·
 [eBay — IP5306 (referência internacional)](https://www.ebay.de/itm/134628665112) ·
 Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo responsável do projeto) ·
-[Amazon.com.br — cabo USB-C pigtail](https://www.amazon.com.br/ELNONE-alimenta%C3%A7%C3%A3o-Pigtail-r%C3%A1pida-pigtail/dp/B0CGVNG7Y4) ·
-[eBay — cabo USB-C pigtail (referência internacional)](https://www.ebay.de/itm/226762117675) ·
+[Mercado Shops — conector USB-C fêmea com rabicho 2 fios (1 un. e kit com 5)](https://ralphcouch.mercadoshops.com.br/MLB-3667070205-kit-com-5-conector-jack-tipo-c-com-rabicho-2-fios-fmea-_JM) ·
+[Usinainfo — conector USB-C fêmea com rabicho para painel](https://www.usinainfo.com.br/conector-usb/conector-usb-c-femea-com-rabicho-de-alimentacao-2-fios-para-painel-diy-9169.html) ·
+[Mamute Eletrônica — conector USB tipo C fêmea com rabicho](https://www.mamuteeletronica.com.br/conector-jack-usb-tipo-c-femea-com-rabicho-2-fios-22739) ·
+[Amazon.com.br — módulo USB-C fêmea 6 pinos (plano B)](https://www.amazon.com.br/naughtystarts-pe%C3%A7as-breakout-conector-direito/dp/B0B19TP2MX) ·
 [Nova Trida — capacitor 1000 µF](https://www.novatridaeletronica.com.br/capacitor-eletrolitico-1000uf-x-16v) ·
 [Fermarc — placa perfurada 7x9](https://www.fermarc.com/placa-de-circuito-perfurada-face-simples-7x9) ·
 [SmartProjects — placa perfurada 7x9](https://www.smartprojectsbrasil.com.br/placa-fenolite-perfurada-ilhada-fibra-de-vidro-7x9-cm) ·
