@@ -13,7 +13,10 @@ paciente, cada um fixo no seu compartimento (detalhes em
 
 > 🛒 **Lista completa de componentes, com ilustrações e preços estimados:** Parte E do
 > guia didático.
-> 🏭 **Custo de produção em série (estimativa de viabilidade, set/2026):** Parte F do
+> 📏 **Gabinete V5.1 — 210 × 130 × 100 mm, desenho técnico com cotas revisadas:**
+> [`docs/gabinete-v51.png`](docs/gabinete-v51.png) ([SVG](docs/gabinete-v51.svg)); conferência
+> do desenho V5 na Parte F do guia didático.
+> 🏭 **Custo de produção em série (estimativa de viabilidade, set/2026):** Parte G do
 > guia didático — impressão 3D × plástico injetado, componentes no atacado e custo por
 > unidade em 100, 1.000 e 10.000 unidades.
 > 📘 **Material pedagógico:** [`README-DIDATICO.md`](README-DIDATICO.md) explica o

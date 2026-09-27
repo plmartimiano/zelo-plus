@@ -63,17 +63,23 @@
   - [E4. Relógio sem internet (opcional)](#e4-relógio-sem-internet-opcional)
   - [E5. Ferramentas necessárias (fora do custo)](#e5-ferramentas-necessárias-fora-do-custo)
   - [E6. Resumo do investimento](#e6-resumo-do-investimento)
-- [Parte F — Custo de produção (estimativa para viabilidade)](#parte-f--custo-de-produção-estimativa-para-viabilidade)
-  - [F1. Premissas e método](#f1-premissas-e-método)
-  - [F2. Dimensões estimadas a partir da referência](#f2-dimensões-estimadas-a-partir-da-referência)
-  - [F3. Gabinete em impressão 3D](#f3-gabinete-em-impressão-3d)
-  - [F4. Gabinete em plástico injetado](#f4-gabinete-em-plástico-injetado)
-  - [F5. Componentes eletrônicos no atacado](#f5-componentes-eletrônicos-no-atacado)
-  - [F6. Custo por unidade em três escalas](#f6-custo-por-unidade-em-três-escalas)
-  - [F7. Investimentos iniciais (uma vez só)](#f7-investimentos-iniciais-uma-vez-só)
-  - [F8. Preço de venda e viabilidade](#f8-preço-de-venda-e-viabilidade)
-  - [F9. Limitações da estimativa](#f9-limitações-da-estimativa)
-  - [F10. Fontes (setembro de 2026)](#f10-fontes-setembro-de-2026)
+- [Parte F — Desenho técnico do gabinete](#parte-f--desenho-técnico-do-gabinete)
+  - [F1. Desenho técnico V5 (original)](#f1-desenho-técnico-v5-original)
+  - [F2. Conferência das medidas do V5](#f2-conferência-das-medidas-do-v5)
+  - [F3. Medidas revisadas (V5.1)](#f3-medidas-revisadas-v51)
+  - [F4. Por que essas escolhas](#f4-por-que-essas-escolhas)
+  - [F5. Onde fica cada componente](#f5-onde-fica-cada-componente)
+- [Parte G — Custo de produção (estimativa para viabilidade)](#parte-g--custo-de-produção-estimativa-para-viabilidade)
+  - [G1. Premissas e método](#g1-premissas-e-método)
+  - [G2. Volume de plástico do gabinete V5.1](#g2-volume-de-plástico-do-gabinete-v51)
+  - [G3. Gabinete em impressão 3D](#g3-gabinete-em-impressão-3d)
+  - [G4. Gabinete em plástico injetado](#g4-gabinete-em-plástico-injetado)
+  - [G5. Componentes eletrônicos no atacado](#g5-componentes-eletrônicos-no-atacado)
+  - [G6. Custo por unidade em três escalas](#g6-custo-por-unidade-em-três-escalas)
+  - [G7. Investimentos iniciais (uma vez só)](#g7-investimentos-iniciais-uma-vez-só)
+  - [G8. Preço de venda e viabilidade](#g8-preço-de-venda-e-viabilidade)
+  - [G9. Limitações da estimativa](#g9-limitações-da-estimativa)
+  - [G10. Fontes (setembro de 2026)](#g10-fontes-setembro-de-2026)
 
 ---
 
@@ -1894,7 +1900,7 @@ emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, s�
 **Não inclui:** ferramentas (E5), frete e a estrutura física do dispenser (caixa, portas e
 divisórias dos compartimentos), que depende do material escolhido (MDF, acrílico ou
 impressão 3D). O custo da caixa em impressão 3D e em plástico injetado, e o custo por
-unidade em produção, estão na [Parte F](#parte-f--custo-de-produção-estimativa-para-viabilidade).
+unidade em produção, estão nas Partes [F](#parte-f--desenho-técnico-do-gabinete) (desenho técnico) e [G](#parte-g--custo-de-produção-estimativa-para-viabilidade) (custos).
 
 **Dicas de compra:**
 
@@ -1943,19 +1949,124 @@ Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo
 
 ---
 
-# Parte F — Custo de produção (estimativa para viabilidade)
+# Parte F — Desenho técnico do gabinete
+
+> 📏 O desenho técnico **V5** foi enviado pelo responsável do projeto e **conferido cota
+> por cota** (F2). As correções deram origem à versão **V5.1** (F3). **Onde houver
+> diferença entre os dois, valem as medidas da V5.1.**
+
+## F1. Desenho técnico V5 (original)
+
+<figure markdown="1">
+![Desenho técnico dimensional V5](docs/desenho-tecnico-v5.jpg)
+<figcaption><b>Desenho técnico V5 (original, ilustrativo).</b> Várias cotas foram corrigidas na V5.1 (seção F3); onde houver diferença, valem as medidas da V5.1.</figcaption>
+</figure>
+
+## F2. Conferência das medidas do V5
+
+| Item conferido | No V5 | Conferência | Situação |
+|---|---|---|---|
+| Proporção da vista superior | 210 × 130 | 415 × 250 px → 126,5 mm de profundidade | ✅ coerente |
+| Proporção da vista lateral | 130 × 45 | 408 × 138 px → 44 mm de altura | ✅ coerente |
+| Janela do LCD | 66 × 18 | área visível do LCD 16x2 ≈ 64,5 × 16; a moldura metálica (71 × 24) fica escondida | ✅ correta |
+| Placa do LCD | 80 × 36, 4 furos | padrão do módulo (furos M3 a 75 × 31) | ✅ correta |
+| Acrílico da luz | 40 × 18 | 40 mm medidos na imagem | ✅ coerente |
+| Tampas móveis | 65 × 75 × 2 | iguais no detalhe, na tabela e na vista superior | ✅ coerentes |
+| Espessuras | paredes 3, divisórias 2, fundo 2,5 | adequadas para impressão 3D e injeção | ✅ adequadas |
+| Soma da vista frontal | 15 + 18 + 12 + 80 + 12 + 40 + 15 | = **192**, não 210 (faltam 18 mm); a tabela diz 15 mm entre elementos e o desenho, 12 | ❌ não fecha |
+| Soma da largura interna | 3 × 65 + 2 × 2 + 2 × 3 | = **205**, não 210; e tampa de 65 numa abertura de 65 não tem a folga de 0,35 | ❌ não fecha |
+| Soma da profundidade | 3 + 75 + 2 + 45 + 3 | = **128**, não 130 | ❌ não fecha |
+| Escala da vista frontal | altura 45 | 600 × 167 px → **~58 mm** aparentes | ❌ fora de escala |
+| Altura total | 45 | a placa do LCD (36 de altura, **~25 de profundidade** com o módulo I2C) ocupa o mesmo espaço dos compartimentos da frente | ❌ não comporta |
+| Espessura do LCD | 12 | 12 mm é só o LCD; com o módulo I2C soldado atrás, **~25 mm** | ❌ subestimada |
+| Entrada de energia e manutenção | — | não há recorte para o USB-C nem acesso à bateria e ao ESP32 | ⚠️ faltando |
+
+## F3. Medidas revisadas (V5.1)
+
+O desenho revisado completo, numa folha só, está em
+[`docs/gabinete-v51.png`](docs/gabinete-v51.png) (versão vetorial:
+[`docs/gabinete-v51.svg`](docs/gabinete-v51.svg)). Abaixo, cada vista em tamanho de
+leitura. Todas as somas fecham.
+
+<figure markdown="1">
+![Gabinete V5.1 — vista frontal](docs/gabinete-v51-frontal.png)
+<figcaption><b>V5.1 — vista frontal.</b> LCD no eixo central (105 mm); botão e acrílico à mesma distância do centro (69 mm).</figcaption>
+</figure>
+
+<figure markdown="1">
+![Gabinete V5.1 — corte lateral](docs/gabinete-v51-corte.png)
+<figcaption><b>V5.1 — corte lateral.</b> Faixa de eletrônica de 45 mm sob os compartimentos; compartimento com 50,5 mm úteis; área técnica com os servos.</figcaption>
+</figure>
+
+<figure markdown="1">
+![Gabinete V5.1 — vista superior](docs/gabinete-v51-superior.png)
+<figcaption><b>V5.1 — vista superior.</b> Aberturas de 65,7 × 75,7 mm para tampas de 65 × 75 mm (folga de 0,35 por lado); tampa técnica removível.</figcaption>
+</figure>
+
+**Dimensões principais: 210 (C) × 130 (P) × 100 (A) mm.**
+
+| Direção | Composição (mm) | Soma |
+|---|---|---|
+| Largura (vista superior) | 3 + **65,7** + 3,45 + **65,7** + 3,45 + **65,7** + 3 | **210** ✓ |
+| Profundidade | 3 + **75,7** (compartimento) + 2 + **46,3** (área técnica) + 3 | **130** ✓ |
+| Altura | 2,5 (fundo) + 42,5 (eletrônica) + 2,5 (piso) + **50,5** (compartimento) + 2 (tampa) | **100** ✓ |
+| Frente | 27 + **18** (botão) + 27 + **66** (janela do LCD) + 16 + **40** (acrílico) + 16 | **210** ✓ |
+
+| Elemento | Medida (mm) |
+|---|---|
+| Faixa preta (eletrônica) / faixa azul (compartimentos) | 45 / 55 |
+| Abertura de cada compartimento | 65,7 × 75,7 |
+| Tampa móvel (3, iguais) | 65 × 75 × 2 (folga de 0,35 por lado) |
+| Divisórias entre compartimentos | 2 no corpo, **3,45 no topo** (apoio das tampas) |
+| Profundidade útil do compartimento | 50,5 (≈ 251 cm³ cada) |
+| Tampa da área técnica (**removível**, 4 parafusos M3) | 203,3 × 45,6 × 2 |
+| Botão / janela do LCD / acrílico | 18 × 18 / 66 × 18 / 40 × 18, centros a **22,5** da base |
+| Centros horizontais (botão / LCD / acrílico) | 36 / **105** / 174 |
+| Placa do LCD (atrás do painel) | 80 × 36 × ~25 (com módulo I2C) |
+| Recorte do USB-C (parede traseira) | 14,2 × 5,4, centro a ~15 da base |
+
+## F4. Por que essas escolhas
+
+- **Altura de 100 mm:**
+  - A proporção fica **210 : 130 : 100** (≈ 2,1 : 1,3 : 1), com a altura em ~48 % da largura: perfil de caixa de mesa, estável e sem cara de "bloco".
+  - A faixa preta de 45 mm acomoda a placa do LCD (36 mm) com ~3 mm de margem acima e abaixo.
+  - Cada compartimento fica com **50,5 mm de profundidade útil** (~251 cm³), cerca de 8 vezes o volume de um mês de comprimidos (60 unidades ≈ 30 cm³). É raso o bastante para os dedos alcançarem o fundo.
+  - Opcional: um fundo em rampa de 10–15° para a frente deixa os comprimidos mais perto da mão.
+- **Frente simétrica:**
+  - A janela do LCD fica no **eixo central (105 mm)**, alinhada com o logotipo.
+  - O botão (centro em 36 mm) e o acrílico (centro em 174 mm) ficam cada um no meio do seu lado, **à mesma distância do centro (69 mm)**. Assim os três elementos ficam equilibrados, mesmo com larguras diferentes.
+- **Folga das tampas:** para a tampa de 65 × 75 mm ter 0,35 mm de folga de cada lado, a abertura precisa medir 65,7 × 75,7 mm. Por isso as divisórias têm 3,45 mm no topo, onde as tampas se apoiam.
+- **Manutenção:** a tampa da área técnica é **removível** (4 parafusos M3), com acesso aos servos, à bateria e ao USB do ESP32 para atualizar o programa (D10).
+- **Energia:** o conector USB-C de painel fica na **parede traseira**, dentro da faixa de eletrônica.
+
+## F5. Onde fica cada componente
+
+| Componente | Local no gabinete |
+|---|---|
+| LCD 16x2 + módulo I2C | Faixa preta, atrás da janela central (placa 80 × 36, ~25 de profundidade) |
+| Botão e LED (atrás do acrílico) | Faixa preta, nas laterais do LCD |
+| ESP32, IP5306 e relógio DS3231 | Faixa de eletrônica, sob os compartimentos |
+| Bateria 18650 + suporte (77 × 21 × 20) | Faixa de eletrônica, deitada sob os compartimentos |
+| 3 servos SG90 | Área técnica (46,3 mm de fundo), no alto, junto às dobradiças das tampas |
+| Conector USB-C de painel | Parede traseira, ~15 mm acima da base |
+| Capacitor 1000 µF | Junto aos servos, na área técnica |
+
+---
+
+# Parte G — Custo de produção (estimativa para viabilidade)
 
 > 📐 **Natureza desta parte:** estimativa acadêmica para avaliar a **viabilidade** de
 > produzir o Zelo+ em série. **Data-base: setembro de 2026.** Não é orçamento: os
 > valores são faixas (mínimo–máximo) calculadas a partir de premissas declaradas, e
-> cada número pode ser refeito trocando a premissa correspondente.
+> cada número pode ser refeito trocando a premissa correspondente. As medidas do
+> gabinete são as da **V5.1** (Parte F).
 
 <figure markdown="1">
 ![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
 <figcaption><b>Imagem de referência</b> — conceito visual do produto final (ilustrativo). Não é o protótipo atual.</figcaption>
 </figure>
 
-## F1. Premissas e método
+## G1. Premissas e método
 
 **Custo por unidade** = componentes + gabinete + ferragens + montagem + embalagem +
 **investimentos amortizados** (investimento ÷ quantidade produzida).
@@ -1971,88 +2082,70 @@ Mercado Livre — bateria Onistek 18650 e suporte 18650 (preços levantados pelo
 | Volumes analisados | **100**, **1.000** e **10.000** unidades | lote piloto, pequena série, série |
 | Arredondamento | valores finais arredondados ao real | — |
 
-## F2. Dimensões estimadas a partir da referência
+## G2. Volume de plástico do gabinete V5.1
 
-A imagem de referência não traz medidas. Elas foram **estimadas por proporção**, usando
-como "régua" uma peça de tamanho conhecido que aparece na foto: o **LCD 16x2**, cuja
-placa mede **80 mm** de largura.
-
-| Medida na foto | Pixels | Conta | Estimativa |
-|---|---|---|---|
-| Largura do LCD (moldura) | ~220 px | escala: 80 mm ÷ 220 px = 0,364 mm/px | — |
-| Largura da caixa | ~740 px | 740 × 0,364 | **≈ 270 mm** |
-| Faixa azul (compartimentos) | ~160 px | 160 × 0,364 | **≈ 60 mm** |
-| Base preta (eletrônica) | ~110 px | 110 × 0,364 | **≈ 40 mm** |
-| Profundidade | não visível de frente | 3 portas de ~84 × 105 mm + faixa traseira de ~55 mm (tampa e servos), conforme o modelo 3D abaixo | **≈ 170 mm** |
-
-<figure markdown="1">
-![Modelo 3D de referência](docs/referencia-cad.jpg)
-<figcaption><b>Modelo 3D de referência</b> (CAD) — usado para estimar as divisórias internas, as portas e os alojamentos dos servos.</figcaption>
-</figure>
-
-**Gabinete de referência:** **270 × 170 × 100 mm**, paredes externas de **2,0 mm**,
-divisórias de **1,6 mm**, 3 portas e 1 tampa traseira. Incerteza das medidas: **±15 %**,
-o que dá cerca de **±25 %** no volume de plástico.
-
-**Volume de plástico** (área × espessura de cada parte):
+Com as medidas da V5.1 (Parte F), o volume de plástico é a soma de área × espessura de
+cada parte:
 
 | Parte | Conta (mm) | Volume |
 |---|---|---|
-| Base — fundo | 270 × 170 × 2,0 | 91,8 cm³ |
-| Base — paredes | perímetro 880 × altura 38 × 2,0 | 66,9 cm³ |
-| Corpo — paredes | 880 × 60 × 2,0 | 105,6 cm³ |
-| Corpo — piso dos compartimentos | 266 × 166 × 2,0 | 88,3 cm³ |
-| Corpo — divisórias e alojamento dos servos | comprimento total 786 × 58 × 1,6 | 72,9 cm³ |
-| 3 portas | 3 × 84 × 105 × 2,0 | 52,9 cm³ |
-| Tampa traseira | 266 × 55 × 2,0 | 29,3 cm³ |
-| Detalhes (dobradiças, fixações, moldura do LCD, logotipo) | + 12 % | 60,9 cm³ |
-| **Total** | | **≈ 569 cm³** |
+| Paredes externas | perímetro 680 × altura 100 × 3,0 | 204,0 cm³ |
+| Fundo | 210 × 130 × 2,5 | 68,2 cm³ |
+| Piso dos compartimentos | 204 × 75,7 × 2,5 | 38,6 cm³ |
+| Divisórias entre compartimentos | 2 × 75,7 × 50,5 × 2,0 + apoio das tampas (2 × 75,7 × 5 × 1,45) | 16,4 cm³ |
+| Divisória da área técnica | 204 × 50,5 × 2,0 | 20,6 cm³ |
+| 3 tampas móveis | 3 × 65 × 75 × 2,0 | 29,2 cm³ |
+| Tampa da área técnica | 203,3 × 45,6 × 2,0 | 18,5 cm³ |
+| Detalhes (dobradiças, fixações, moldura do LCD, logotipo) | + 12 % | 47,5 cm³ |
+| **Total** | | **≈ 443 cm³** |
 
 | Material | Densidade | Massa da peça pronta |
 |---|---|---|
-| PLA (impressão 3D) | 1,24 g/cm³ | 569 × 1,24 = **≈ 705 g** (+ 8 % de perdas = **762 g** de filamento) |
-| ABS (injeção) | 1,05 g/cm³ | 569 × 1,05 = **≈ 597 g** |
+| PLA (impressão 3D) | 1,24 g/cm³ | 443 × 1,24 = **≈ 549 g** (+ 8 % de perdas = **593 g** de filamento) |
+| ABS (injeção) | 1,05 g/cm³ | 443 × 1,05 = **≈ 465 g** |
 
-## F3. Gabinete em impressão 3D
+*Uma primeira estimativa, feita só pela foto de referência (≈ 270 × 170 × 100 mm, 569 cm³),
+foi substituída por estes valores quando o desenho técnico ficou disponível.*
+
+## G3. Gabinete em impressão 3D
 
 **Equipamento de referência:** impressora de mesa **300 × 300 mm** (ex.: Creality K1 Max,
-~R$ 6.776). A caixa tem 270 mm de comprimento e **não cabe** nas mesas comuns de
-256 mm sem ser dividida em partes.
+~R$ 6.776). O gabinete de 210 × 130 mm cabe inteiro na mesa.
 
 | Item | Conta (cenário médio) | Valor |
 |---|---|---|
-| Tempo de impressão | 705 g ÷ 30 g/h | 23,5 h |
-| Filamento PLA | 0,762 kg × R$ 110/kg | R$ 83,76 |
-| Energia | 23,5 h × 0,20 kW × R$ 0,849 | R$ 3,99 |
-| Depreciação da impressora | 23,5 h × (R$ 6.776 ÷ 5.000 h de vida útil) | R$ 31,85 |
-| Manutenção (bicos, mesa, correias) | 23,5 h × R$ 0,30 | R$ 7,05 |
-| Reserva para falhas de impressão | 10 % dos itens acima | R$ 12,67 |
+| Tempo de impressão | 549 g ÷ 30 g/h | 18,3 h |
+| Filamento PLA | 0,593 kg × R$ 110/kg | R$ 65,28 |
+| Energia | 18,3 h × 0,20 kW × R$ 0,849 | R$ 3,11 |
+| Depreciação da impressora | 18,3 h × (R$ 6.776 ÷ 5.000 h de vida útil) | R$ 24,82 |
+| Manutenção (bicos, mesa, correias) | 18,3 h × R$ 0,30 | R$ 5,49 |
+| Reserva para falhas de impressão | 10 % dos itens acima | R$ 9,87 |
 | Acabamento (retirar suportes, lixar) | 0,5 h × R$ 20 | R$ 10,00 |
-| **Total por gabinete** | | **R$ 149,32** |
+| **Total por gabinete** | | **R$ 118,57** |
 
-**Faixa:** de **R$ 126** (filamento a R$ 90/kg, impressão a 35 g/h, 20 h) até **R$ 198**
-(R$ 140/kg, 20 g/h, 35 h).
+**Faixa:** de **R$ 100** (filamento a R$ 90/kg, 35 g/h, 15,7 h) até **R$ 157** (R$ 140/kg,
+20 g/h, 27,5 h).
 
 - **Conferência:** sem o acabamento, o custo dá **R$ 0,20 por grama**, dentro da faixa de
   custo real de produção citada pelo mercado para 2026 (R$ 0,18–0,30/g).
-- **Capacidade:** a ~23,5 h por gabinete, uma impressora produz **~300 gabinetes/ano**
-  (80 % do tempo em uso). Para 1.000 unidades/ano são necessárias ~4 impressoras.
+- **Capacidade:** a ~18,3 h por gabinete, uma impressora produz **~380 gabinetes/ano**
+  (80 % do tempo em uso). Para 1.000 unidades/ano são necessárias ~3 impressoras.
 - **Quando usar:** lote piloto e pequena série. Não há investimento em molde, e o
   desenho pode mudar a qualquer momento.
 
-## F4. Gabinete em plástico injetado
+## G4. Gabinete em plástico injetado
 
 **Moldes necessários** (aço P20, que aguenta a produção em série; valores de mercado
 para o Brasil em 2026):
 
 | Molde | Peça | Investimento estimado |
 |---|---|---|
-| 1 | Corpo (compartimentos, divisórias, alojamento dos servos) | R$ 90–160 mil |
-| 2 | Base (recortes do LCD, botão, LED e USB-C) | R$ 60–110 mil |
-| 3 | Molde "família": 3 portas + tampa traseira | R$ 45–90 mil |
+| 1 | Corpo azul (compartimentos, divisórias, área técnica) | R$ 75–130 mil |
+| 2 | Base preta (recortes do LCD, botão, acrílico e USB-C) | R$ 50–90 mil |
+| 3 | Molde "família": 3 tampas móveis + tampa técnica | R$ 40–75 mil |
 | — | Projeto do molde (DFM) e ajustes de teste | R$ 15–30 mil |
-| | **Total em aço** | **R$ 210–390 mil** |
-| | Alternativa em **alumínio** (~5–10 mil injeções; ~50 % do custo do aço) | **R$ 115–210 mil** |
+| | **Total em aço** | **R$ 180–325 mil** |
+| | Alternativa em **alumínio** (~5–10 mil injeções; ~50 % do custo do aço, mais o DFM) | **R$ 98–178 mil** |
 
 *A referência de mercado é de R$ 25–70 mil para o molde de uma peça pequena e simples,
 de uma cavidade. O corpo e a base do Zelo+ são peças médias, com divisórias, recortes e
@@ -2062,41 +2155,41 @@ nervuras, por isso as faixas acima são maiores.*
 
 | Item | Conta | Mínimo | Máximo |
 |---|---|---|---|
-| Resina ABS | 0,597 kg × 1,05 (canal de injeção) × R$ 13–18/kg | R$ 8,15 | R$ 11,28 |
-| Pigmento (masterbatch azul e preto, 2 %) | 12,5 g × R$ 35/kg | R$ 0,44 | R$ 0,44 |
-| Hora-máquina (injetora + operador + energia) | ciclos de 60 + 50 + 40 s = 150 s × R$ 150–250/h × 1,05 (refugo) | R$ 6,56 | R$ 10,94 |
+| Resina ABS | 0,465 kg × 1,05 (canal de injeção) × R$ 13–18/kg | R$ 6,35 | R$ 8,79 |
+| Pigmento (masterbatch azul e preto, 2 %) | 9,8 g × R$ 35/kg | R$ 0,34 | R$ 0,34 |
+| Hora-máquina (injetora + operador + energia) | ciclos de 50 + 45 + 35 s = 130 s × R$ 150–250/h × 1,05 (refugo) | R$ 5,69 | R$ 9,48 |
 | Logotipo "Zelo+" (tampografia) | por peça | R$ 1,00 | R$ 2,00 |
 | Inspeção | por conjunto | R$ 0,50 | R$ 0,50 |
-| **Total por gabinete** | | **R$ 16,65** | **R$ 25,16** |
+| **Total por gabinete** | | **R$ 13,88** | **R$ 21,11** |
 
 **Com o molde amortizado** (investimento ÷ quantidade + custo de injeção):
 
 | Quantidade | Molde de alumínio | Molde de aço |
 |---|---|---|
-| 500 | R$ 247–445 | R$ 437–805 |
-| 1.000 | R$ 132–235 | R$ 227–415 |
-| 2.000 | R$ 74–130 | R$ 122–220 |
-| 5.000 | R$ 40–67 | R$ 59–103 |
-| 10.000 | R$ 28–46 | R$ 38–64 |
+| 500 | R$ 209–376 | R$ 374–671 |
+| 1.000 | R$ 111–199 | R$ 194–346 |
+| 2.000 | R$ 63–110 | R$ 104–184 |
+| 5.000 | R$ 33–57 | R$ 50–86 |
+| 10.000 | R$ 24–39 | R$ 32–54 |
 
 **Ponto de equilíbrio (impressão 3D × injeção):**
 
 ```text
  quantidade = investimento no molde ÷ (custo 3D − custo injetado)
 
- diferença por unidade: de R$ 126 − 25 = R$ 101  até  R$ 198 − 17 = R$ 181
+ diferença por unidade: de R$ 100 − 21 = R$ 79  até  R$ 157 − 14 = R$ 143
 
- molde de alumínio: R$ 115–210 mil ÷ R$ 101–181  ≈   630 a 2.100 unidades
- molde de aço:      R$ 210–390 mil ÷ R$ 101–181  ≈ 1.160 a 3.900 unidades
+ molde de alumínio: R$  98–178 mil ÷ R$ 79–143  ≈   680 a 2.240 unidades
+ molde de aço:      R$ 180–325 mil ÷ R$ 79–143  ≈ 1.260 a 4.100 unidades
 ```
 
 ➡️ **Abaixo de ~1.000 unidades, a impressão 3D é mais barata. Acima de ~4.000, o molde
 de aço compensa com folga.**
 
-## F5. Componentes eletrônicos no atacado
+## G5. Componentes eletrônicos no atacado
 
 Preços de fábrica em dólar para lotes de ~500–1.000 unidades, multiplicados por
-R$ 9,29 (F1). A fonte é comprada no Brasil, porque precisa da certificação do Inmetro.
+R$ 9,29 (G1). A fonte é comprada no Brasil, porque precisa da certificação do Inmetro.
 
 **Cenário 1 — os mesmos módulos do protótipo**
 
@@ -2137,44 +2230,44 @@ no **tamanho**.
 Protótipo (Parte E, varejo) × produção (atacado): **R$ 278–378 → R$ 111–173**, cerca de
 **55–60 % menos**.
 
-## F6. Custo por unidade em três escalas
+## G6. Custo por unidade em três escalas
 
 | Item | Lote piloto — 100 un. | Pequena série — 1.000 un. | Série — 10.000 un. |
 |---|---|---|---|
 | Arranjo | módulos + impressão 3D | placa própria + impressão 3D | placa própria + injeção (aço) |
 | Componentes | R$ 135–208 ¹ | R$ 111–173 | R$ 111–173 |
-| Gabinete | R$ 126–198 | R$ 126–198 | R$ 17–25 |
+| Gabinete | R$ 100–157 | R$ 100–157 | R$ 14–21 |
 | Ferragens (parafusos, pinos das portas, pés, visor do LCD) | R$ 5–9 | R$ 5–9 | R$ 5–9 |
 | Montagem e teste | 55 min → R$ 18 | 20 min → R$ 7 | 20 min → R$ 7 |
 | Embalagem e manual | R$ 8–14 | R$ 6–12 | R$ 6–12 |
 | Projeto da placa (R$ 5–20 mil) amortizado | — | R$ 5–20 | R$ 0,50–2 |
-| Moldes de aço (R$ 210–390 mil) amortizados | — | — | R$ 21–39 |
-| **Custo de fabricação** | **R$ 292–447** | **R$ 259–419** | **R$ 166–267** |
+| Moldes de aço (R$ 180–325 mil) amortizados | — | — | R$ 18–33 |
+| **Custo de fabricação** | **R$ 267–406** | **R$ 234–378** | **R$ 161–257** |
 | Homologação Anatel (R$ 10–30 mil) amortizada | R$ 100–300 | R$ 10–30 | R$ 1–3 |
-| **Custo total por unidade** | **R$ 392–747** | **R$ 269–449** | **R$ 167–270** |
+| **Custo total por unidade** | **R$ 367–706** | **R$ 244–408** | **R$ 162–260** |
 
 ¹ Componentes do cenário 1 com acréscimo de 20 % por comprar lotes pequenos.
 
 **Leitura dos resultados:**
 
-- Na série, o **gabinete** passa de maior custo (R$ 126–198) para um dos menores
-  (R$ 17–25), e a eletrônica vira o item principal.
+- Na série, o **gabinete** cai de R$ 100–157 (impressão 3D) para R$ 14–21 (injeção), e a
+  eletrônica passa a ser o principal custo.
 - No lote piloto, a **homologação** pesa mais que qualquer peça. Por isso ela só faz
   sentido quando já existe plano de produzir em quantidade.
 - Entre 1.000 e ~4.000 unidades, a escolha entre impressão 3D, molde de alumínio e molde
-  de aço depende da quantidade prevista (ponto de equilíbrio na F4).
+  de aço depende da quantidade prevista (ponto de equilíbrio na G4).
 
-## F7. Investimentos iniciais (uma vez só)
+## G7. Investimentos iniciais (uma vez só)
 
 | Investimento | Valor estimado | Necessário a partir de |
 |---|---|---|
 | Projeto e protótipos da placa de circuito | R$ 5–20 mil | pequena série |
 | Homologação Anatel (produto com Wi-Fi) | R$ 10–30 mil | qualquer venda |
-| Impressoras 3D para ~1.000 un./ano (~4 × R$ 6.776) | ≈ R$ 27 mil | pequena série (se produção própria) |
-| Moldes de injeção (aço) | R$ 210–390 mil | série |
+| Impressoras 3D para ~1.000 un./ano (~3 × R$ 6.776) | ≈ R$ 20 mil | pequena série (se produção própria) |
+| Moldes de injeção (aço) | R$ 180–325 mil | série |
 | Consulta de enquadramento na Anvisa | variável | antes da venda |
 
-## F8. Preço de venda e viabilidade
+## G8. Preço de venda e viabilidade
 
 Produtos de hardware costumam chegar ao consumidor por **2,5 a 4 vezes o custo de
 fabricação**. Essa margem cobre impostos sobre a venda, distribuição, garantia,
@@ -2182,19 +2275,20 @@ assistência técnica e lucro.
 
 | Escala | Custo total por unidade | Preço de venda estimado (× 2,5 a × 4) |
 |---|---|---|
-| Lote piloto (100) | R$ 392–747 | R$ 980–2.990 |
-| Pequena série (1.000) | R$ 269–449 | R$ 670–1.800 |
-| Série (10.000) | R$ 167–270 | **R$ 420–1.080** |
+| Lote piloto (100) | R$ 367–706 | R$ 920–2.820 |
+| Pequena série (1.000) | R$ 244–408 | R$ 610–1.630 |
+| Série (10.000) | R$ 162–260 | **R$ 400–1.040** |
 
-**Como leitura acadêmica:** em série, o Zelo+ ficaria na faixa de **R$ 420 a R$ 1.080**
+**Como leitura acadêmica:** em série, o Zelo+ ficaria na faixa de **R$ 400 a R$ 1.040**
 para o consumidor. O **custo de entrada** (moldes, placa própria e homologação) fica
-entre **R$ 225 mil e R$ 440 mil**, e só se paga com volumes a partir de alguns milhares
+entre **R$ 195 mil e R$ 375 mil**, e só se paga com volumes a partir de alguns milhares
 de unidades. Antes disso, o caminho viável é o **lote piloto em impressão 3D**, que exige
 pouco investimento.
 
-## F9. Limitações da estimativa
+## G9. Limitações da estimativa
 
-- **Dimensões:** vêm de uma imagem de referência, com incerteza de ±15 % nas medidas.
+- **Dimensões:** as medidas são as da V5.1 (Parte F). Mudanças no desenho (espessuras,
+  nervuras, rampa no fundo) alteram o volume de plástico e os custos do gabinete.
 - **Preços:** são faixas de mercado, não cotações. Os moldes, em especial, exigem
   orçamento com o desenho 3D final.
 - **Câmbio:** variou de R$ 4,88 a R$ 5,61 em 52 semanas (±9 %), o que afeta direto o
@@ -2208,7 +2302,7 @@ pouco investimento.
 - **Anvisa:** é preciso confirmar se um dispenser com alarme de medicação se enquadra
   como dispositivo médico. Se sim, custos e prazos aumentam.
 
-## F10. Fontes (setembro de 2026)
+## G10. Fontes (setembro de 2026)
 
 [Revista Fórum — cotação do dólar em 24/09/2026](https://revistaforum.com.br/economia/preco-dolar-24-09-2026/) ·
 [InfoMoney — dólar em setembro](https://www.infomoney.com.br/mercados/o-que-esperar-do-dolar-em-setembro-veja-ate-onde-a-moeda-pode-ir/) ·
