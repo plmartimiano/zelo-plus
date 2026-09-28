@@ -810,6 +810,31 @@ compara o nome antigo (guardado em `data-original`) com o novo e pede confirmaç
 
 **O que faz:** `handleSalvar()` recebe o formulário, **valida** tudo e só então grava.
 
+**Como a página envia o cadastro:** o botão **Salvar** não usa o envio clássico de
+formulário. A página envia os dados com `fetch`, como nos demais comandos (repor,
+esvaziar, Telegram). A página do dispenser é servida por `http://` na rede local, e o
+envio clássico por `http://` faz o navegador exibir o aviso "as informações que você
+está prestes a enviar não estão protegidas". Com `fetch`, esse aviso não aparece:
+
+```cpp
+  html += "function enviarCadastro(e) {";
+  html += "  e.preventDefault();";
+  html += "  if (!confirmarTrocas()) return false;";
+  html += "  var form = document.getElementById('cadastro');";
+  html += "  fetch('/salvar', {method:'POST', body: new URLSearchParams(new FormData(form))})";
+  html += "    .then(function(r){ if (r.ok) { location.href = '/'; return; } return r.text().then(function(t){ alert(t); }); })";
+  html += "    .catch(function(){ alert('Não foi possível salvar. Verifique a conexão com o dispenser.'); });";
+  html += "  return false;";
+  html += "}";
+```
+
+- `e.preventDefault()` cancela o envio clássico; `FormData` junta os mesmos campos
+  que o formulário enviaria (inclusive os que ficam fora dele, ligados por
+  `form='cadastro'`).
+- Se o dispenser aceitar (resposta de sucesso), a página é recarregada com os dados
+  novos; se recusar (por exemplo, cuidador sem celular), a mensagem aparece num alerta
+  e nada do que foi digitado se perde.
+
 1. **Cuidador é obrigatório:**
 
 ```cpp

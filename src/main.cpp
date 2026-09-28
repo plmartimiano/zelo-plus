@@ -1098,7 +1098,7 @@ void handleRoot() {
     html += ". <a href='#telegram'>Configurar agora</a></div>";
   }
 
-  html += "<form id='cadastro' action='/salvar' method='POST' onsubmit='return confirmarTrocas()'>";
+  html += "<form id='cadastro' action='/salvar' method='POST' onsubmit='return enviarCadastro(event)'>";
 
   html += "<details class='pessoa' style='margin:14px 0'" + String(nomePaciente == "" ? " open" : "") + "><summary><span style='font-size:28px'>&#129491;</span><span><b>";
   html += nomePaciente != "" ? escaparHTML(nomePaciente) : String("Paciente");
@@ -1191,6 +1191,17 @@ void handleRoot() {
   html += "    }";
   html += "  }";
   html += "  return true;";
+  html += "}";
+  // Envia o cadastro com fetch (como os outros comandos): o envio classico de
+  // formulario por http faz o navegador mostrar o aviso "informacoes nao protegidas".
+  html += "function enviarCadastro(e) {";
+  html += "  e.preventDefault();";
+  html += "  if (!confirmarTrocas()) return false;";
+  html += "  var form = document.getElementById('cadastro');";
+  html += "  fetch('/salvar', {method:'POST', body: new URLSearchParams(new FormData(form))})";
+  html += "    .then(function(r){ if (r.ok) { location.href = '/'; return; } return r.text().then(function(t){ alert(t); }); })";
+  html += "    .catch(function(){ alert('Não foi possível salvar. Verifique a conexão com o dispenser.'); });";
+  html += "  return false;";
   html += "}";
   html += "function esvaziarCompartimento(c) {";
   html += "  var nome = document.getElementById('m' + c + '_nome').dataset.original;";
