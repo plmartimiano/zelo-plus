@@ -52,7 +52,7 @@
 - [Parte E — Uso autônomo, sem o laptop](#parte-e--uso-autônomo-sem-o-laptop)
   - [E1. Pré-requisitos e validação](#e1-pré-requisitos-e-validação)
   - [E2. Por que o laptop não é necessário](#e2-por-que-o-laptop-não-é-necessário)
-  - [E3. A solução: fonte 5 V/3 A + IP5306 + bateria 18650](#e3-a-solução-fonte-5-v3-a--ip5306--bateria-18650)
+  - [E3. A solução: fonte 5 V/3 A + módulo UPS + bateria 18650](#e3-a-solução-fonte-5-v3-a--módulo-ups--bateria-18650)
   - [E4. Lista de compras](#e4-lista-de-compras)
   - [E5. Montagem passo a passo](#e5-montagem-passo-a-passo)
   - [E6. Teste de falta de energia](#e6-teste-de-falta-de-energia)
@@ -124,7 +124,7 @@ porta movida por um servo motor.
 | Servo compartimento 2 (sinal) | GPIO 14 | +5 V e GND na **fonte externa** |
 | Servo compartimento 3 (sinal) | GPIO 27 | +5 V e GND na **fonte externa** |
 | LCD — SDA / SCL | GPIO 21 / GPIO 22 | VCC → 3V3, GND → GND |
-| Relógio DS3231 — SDA / SCL *(opcional)* | GPIO 21 / GPIO 22 | em paralelo com o LCD; VCC → 3V3, GND → GND (desenho na [E3](#e3-a-solução-fonte-5-v3-a--ip5306--bateria-18650)) |
+| Relógio DS3231 — SDA / SCL *(opcional)* | GPIO 21 / GPIO 22 | em paralelo com o LCD; VCC → 3V3, GND → GND (desenho na [E3](#e3-a-solução-fonte-5-v3-a--módulo-ups--bateria-18650)) |
 | Botão | GPIO 5 | outra perna → GND (sem resistor) |
 | LED | GPIO 4 | via resistor; perna curta → GND |
 | Buzzer (+) | GPIO 15 | (−) → GND |
@@ -318,8 +318,8 @@ As vistas também estão em escala no arquivo vetorial
 |---|---|
 | LCD 16x2 + módulo I2C | Faixa preta, atrás da janela central (placa 80 × 36, ~25 de profundidade) |
 | Botão e LED (atrás do acrílico) | Faixa preta, nas laterais do LCD |
-| ESP32, IP5306 e relógio DS3231 | Faixa de eletrônica, sob os compartimentos |
-| Bateria 18650 + suporte (77 × 21 × 20) | Faixa de eletrônica, deitada sob os compartimentos |
+| ESP32 e relógio DS3231 | Faixa de eletrônica, sob a área técnica |
+| Módulo UPS LX-2BUPS com as baterias 18650 (90 × 42 × 33) | Faixa de eletrônica, deitado sob os compartimentos |
 | 3 servos SG90 | Área técnica (46,3 mm de fundo), no alto, junto às dobradiças das tampas |
 | Conector USB-C de painel | Parede traseira, ~15 mm acima da base |
 | Capacitor 1000 µF | Junto aos servos, na área técnica |
@@ -1488,7 +1488,7 @@ com o roteador ainda desligado, os alarmes não tocariam. O DS3231 tem **bateria
 própria** (LIR2032) e continua contando o tempo com o dispenser desligado.
 
 **Ligação:** no mesmo barramento I2C do LCD, em paralelo — SDA → GPIO 21, SCL → GPIO 22,
-VCC → 3V3, GND → GND (diagrama na [E3](#e3-a-solução-fonte-5-v3-a--ip5306--bateria-18650);
+VCC → 3V3, GND → GND (diagrama na [E3](#e3-a-solução-fonte-5-v3-a--módulo-ups--bateria-18650);
 detalhes do módulo na [E9](#e9-módulo-de-relógio-ds3231)). O LCD usa o endereço `0x27` e
 o relógio `0x68`, por isso os dois dividem os mesmos fios sem conflito.
 
@@ -1724,48 +1724,58 @@ recebe energia. Durante os testes, o laptop faz só duas coisas:
 
 Para funcionar sem o laptop, basta trocar a **fonte de energia**. O código não muda.
 
-## E3. A solução: fonte 5 V/3 A + IP5306 + bateria 18650
+## E3. A solução: fonte 5 V/3 A + módulo UPS + bateria 18650
 
 Esta é a **única montagem recomendada** para o uso autônomo do Zelo+:
 
 ```text
- Tomada ─► Fonte 5 V / 3 A ─► conector USB-C fêmea ─(2 fios)─► IP5306 (IN) ◄──► Bateria 18650
-                                              │
-                                      OUT: 5 V estáveis
-                                              │
-                ┌─────────────────────────────┼──────────────────────┐
-           VIN do ESP32                  3 servos          capacitor 1000 µF
-                └──────────────── GND comum em tudo ──────────────────┘
+ Tomada ─► Fonte 5 V/3 A ─► USB-C fêmea ─(2 fios)─► módulo UPS LX-2BUPS ◄─► 18650 (1 ou 2)
+                                                           │
+                                                   saída: 5 V estáveis
+                                                           │
+                ┌──────────────────────────────────────────┼──────────────┐
+           VIN do ESP32                                3 servos       capacitor 1000 µF
+                └─────────────────── GND comum em tudo ───────────────────┘
 ```
 
 <figure markdown="1">
-![Montagem autônoma: fonte 5 V/3 A, IP5306 e bateria 18650](docs/ligacoes-autonomo.png)
-<figcaption><b>Diagrama de ligações da montagem autônoma</b> (fonte 5 V/3 A, IP5306, bateria 18650 e relógio DS3231). Versão vetorial: <code>docs/ligacoes-autonomo.svg</code>.</figcaption>
+![Montagem autônoma: fonte 5 V/3 A, módulo UPS LX-2BUPS e bateria 18650](docs/ligacoes-autonomo.png)
+<figcaption><b>Diagrama de ligações da montagem autônoma</b> (fonte 5 V/3 A, módulo UPS LX-2BUPS, bateria 18650 e relógio DS3231). Versão vetorial: <code>docs/ligacoes-autonomo.svg</code>.</figcaption>
 </figure>
 
-**Como funciona:** o **IP5306** é um módulo de *power bank* que faz três coisas numa
-placa só.
+**Como funciona:** o **LX-2BUPS** é um módulo **UPS** (fonte de alimentação
+ininterrupta) para baterias 18650. Numa placa só, ele carrega a bateria, eleva a tensão
+para 5 V e troca de fonte sem desligar o dispenser.
 
-| Situação | O que o IP5306 faz |
+| Situação | O que o módulo UPS faz |
 |---|---|
-| **Com energia da rua** | Passa os 5 V da fonte para o dispenser e, ao mesmo tempo, **carrega a bateria** |
-| **Falta energia** | Passa a usar a bateria e **eleva de 3,7 V para 5 V** — o dispenser continua ligado |
+| **Com energia da rua** | Alimenta o dispenser com os 5 V da fonte e, ao mesmo tempo, **carrega a bateria** |
+| **Falta energia** | Passa para a bateria **sem interrupção** e **eleva de 3,7 V para 5 V**: o dispenser continua ligado |
 | **Energia volta** | Volta a usar a fonte e recarrega a bateria |
 
+| Característica | Valor |
+|---|---|
+| Entrada | 5 V, pela porta USB-C ou pelos terminais **5V+ / 5V−** |
+| Saída | **5 V / 3 A** (pico de 4 A, 20 W), eficiência de até 96 % |
+| Baterias | **1 ou 2 × 18650 de topo plano**, em suportes na própria placa (ligadas em paralelo) |
+| Corrente de carga | 1 A |
+| Proteções | sobrecarga, sobrecorrente, descarga profunda e temperatura |
+| Dimensões | 90 × 42 × 33 mm |
+
 - A bateria 18650 fica entre 3,0 V (vazia) e 4,2 V (cheia). **Quem entrega os 5 V** ao
-  ESP32 e aos servos é o próprio IP5306 — por isso a tensão da saída não varia com a
+  ESP32 e aos servos é o próprio módulo, por isso a tensão da saída não varia com a
   carga da bateria.
-- Use **uma bateria só**, ligada direto em **B+ / B−** do módulo. O IP5306 é feito para
-  **uma célula**: nunca ligue baterias em série (a tensão somaria 6–8,4 V e queimaria o
-  módulo).
-- A fonte de **3 A** tem folga: o IP5306 carrega a bateria com até ~2 A e o dispenser
-  consome no pico ~0,6 A.
+- Os dois suportes da placa ligam as baterias **em paralelo** (a tensão continua a de
+  uma célula; a capacidade soma). Com **duas baterias**, a autonomia **dobra**.
+- A saída de **3 A** tem folga: o dispenser consome no pico ~0,6 A (um servo em
+  movimento de cada vez), e a fonte de 3 A cobre a carga da bateria (1 A) e o
+  dispenser ao mesmo tempo.
 
 **A entrada de energia: conector USB-C fêmea de painel.** O carregador (fonte) é
 encaixado num **conector USB-C fêmea** preso na parede da caixa do dispenser. Desse
-conector saem **2 fios** (vermelho e preto) que são **soldados nos pads de entrada (IN)
-do IP5306**. O ESP32 não usa esse conector: ele recebe os 5 V pela **saída do IP5306 →
-pino VIN**.
+conector saem **2 fios** (vermelho e preto) que vão aos **terminais de entrada 5V+ / 5V−
+do módulo UPS**. O ESP32 não usa esse conector: ele recebe os 5 V pela **saída do módulo
+UPS → pino VIN**.
 
 **Atenção aos resistores de 5,1 kΩ:** fontes USB-C só liberam os 5 V quando o aparelho
 ligado a elas se identifica, por meio de um **resistor de 5,1 kΩ no pino CC**. Por isso:
@@ -1787,35 +1797,34 @@ ligado a elas se identifica, por meio de um **resistor de 5,1 kΩ no pino CC**. 
 | # | Item | Qtd | Especificação / observação |
 |---|---|---|---|
 | 1 | **Fonte de tomada 5 V / 3 A** | 1 | Saída **USB-C**, 5 V, 3 A (15 W). Preferir marca conhecida, com certificação Inmetro. |
-| 2 | **Módulo IP5306** | 1 | "Módulo carregador power bank IP5306 5V 2.1A 18650", com **pads de solda** de entrada (5V/GND), de bateria (B+/B−) e de saída (OUT). |
-| 3 | **Bateria 18650** | 1 | Li-ion 3,7 V, **2.500–3.000 mAh reais** (Samsung, LG, Sony/Murata, Panasonic). Desconfiar de "9.800 mAh". |
-| 4 | **Suporte (case) para 1× 18650** | 1 | Com fios vermelho/preto. Evita soldar direto na bateria. |
-| 5 | **Conector USB-C fêmea de painel com 2 fios** | 1 | Preso na caixa; a fonte encaixa nele. Os **2 fios** (vermelho/preto) são **soldados** nos pads de entrada do IP5306. De preferência **com resistores 5,1 kΩ no CC** (ver acima). |
-| 6 | **Capacitor eletrolítico 1000 µF / 16 V** | 1 | Entre +5 V e GND, perto dos servos. Tem polaridade (faixa "−" no GND). |
-| 7 | **Fio 22 AWG** vermelho e preto | ~1 m cada | Saída do IP5306 → VIN do ESP32 e servos. |
-| 8 | **Placa perfurada** ou barramento de bornes | 1 | Para fazer os "trilhos" de +5 V e GND com solda (mais firme que protoboard para uso contínuo). |
-| 9 | **Termo-retrátil** sortido | 1 kit | Isolar as emendas soldadas. |
-| 10 | **Multímetro** | 1 | Conferir polaridade e os 5 V da saída **antes** de ligar o ESP32. |
-| 11 | Ferro de solda + estanho | — | Para os pads do IP5306 e as emendas. |
-| 12 | *Módulo relógio DS3231 + bateria LIR2032* (opcional) | 1 | Ver [E9](#e9-módulo-de-relógio-ds3231): mantém a hora certa sem internet. |
+| 2 | **Módulo UPS LX-2BUPS** | 1 | "Fonte UPS carregador de bateria 18650 com 2 slots, USB-C 5V 3A". Tem os **suportes das baterias** na própria placa, entrada 5V+/5V− e saída 5 V. |
+| 3 | **Bateria 18650 de topo plano** | 1 ou 2 | Li-ion 3,7 V, **2.500–3.000 mAh reais** (Samsung, LG, Sony/Murata, Panasonic). **Topo plano (flat-top)**, para encaixar nos suportes do módulo. Desconfiar de "9.800 mAh". Duas baterias dobram a autonomia. |
+| 4 | **Conector USB-C fêmea de painel com 2 fios** | 1 | Preso na caixa; a fonte encaixa nele. Os **2 fios** (vermelho/preto) vão aos terminais de entrada **5V+ / 5V−** do módulo UPS. De preferência **com resistores 5,1 kΩ no CC** (ver acima). |
+| 5 | **Capacitor eletrolítico 1000 µF / 16 V** | 1 | Entre +5 V e GND, perto dos servos. Tem polaridade (faixa "−" no GND). |
+| 6 | **Fio 22 AWG** vermelho e preto | ~1 m cada | Saída do módulo UPS → VIN do ESP32 e servos. |
+| 7 | **Placa perfurada** ou barramento de bornes | 1 | Para fazer os "trilhos" de +5 V e GND com solda (mais firme que protoboard para uso contínuo). |
+| 8 | **Termo-retrátil** sortido | 1 kit | Isolar as emendas soldadas. |
+| 9 | **Multímetro** | 1 | Conferir polaridade e os 5 V da saída **antes** de ligar o ESP32. |
+| 10 | Ferro de solda + estanho | — | Para os terminais do módulo UPS, a placa perfurada e as emendas. |
+| 11 | *Módulo relógio DS3231 + bateria LIR2032* (opcional) | 1 | Ver [E9](#e9-módulo-de-relógio-ds3231): mantém a hora certa sem internet. |
 
-> Módulos IP5306 costumam vir também com uma **saída USB-A**. Ela entrega os mesmos
-> 5 V, mas para o dispenser use os **pads de saída soldados**: a ligação fica firme e não
-> depende de um conector que pode se soltar.
+> Se o módulo tiver também uma **saída USB**, ela entrega os mesmos 5 V; para o
+> dispenser, use os **terminais de saída** com fios: a ligação fica firme e não depende
+> de um conector que pode se soltar.
 
 ## E5. Montagem passo a passo
 
 > Monte **sem a bateria e sem a fonte ligadas**. Só energize nas etapas indicadas.
 
-1. **Conector de entrada:** fixe o conector USB-C fêmea na caixa e solde os 2 fios nos
-   pads de **entrada** do IP5306: **vermelho → 5V (IN+)** e **preto → GND (IN−)**. Isole
+1. **Conector de entrada:** fixe o conector USB-C fêmea na caixa e ligue os 2 fios nos
+   terminais de **entrada** do módulo UPS: **vermelho → 5V+** e **preto → 5V−**. Isole
    com termo-retrátil. Antes, faça o teste dos 5 V no conector (ver E3).
-2. **Bateria:** solde os fios do suporte da 18650 nos pads **B+** (vermelho) e **B−**
-   (preto). Confira a polaridade com o multímetro antes de encaixar a bateria.
-3. **Saída:** solde um fio vermelho em **OUT+ (5V)** e um preto em **OUT− (GND)** e leve
-   até a placa perfurada, formando os **trilhos de +5 V e GND**.
-4. **Teste sem o ESP32:** encaixe a bateria e ligue a fonte na tomada. Com o multímetro,
-   meça os trilhos: devem marcar **entre 4,9 V e 5,2 V**. Desligue tudo.
+2. **Saída:** ligue um fio vermelho na **saída 5 V (+)** do módulo e um preto na **saída
+   GND (−)** e leve até a placa perfurada, formando os **trilhos de +5 V e GND**.
+3. **Baterias:** encaixe 1 ou 2 baterias 18650 de topo plano nos suportes do módulo,
+   respeitando o **+** e o **−** marcados na placa.
+4. **Teste sem o ESP32:** ligue a fonte na tomada. Com o multímetro, meça os trilhos:
+   devem marcar **entre 4,9 V e 5,2 V**. Desligue tudo.
 5. **Capacitor:** solde o capacitor de 1000 µF entre os trilhos, **perto dos servos**
    (faixa "−" no GND).
 6. **Servos:** fio **vermelho** de cada servo no trilho de +5 V, **marrom** no GND. Os
@@ -1841,14 +1850,15 @@ Com o dispenser funcionando (relógio no LCD):
 4. Faça um **alarme de teste** com o dispenser na bateria (servo abrindo e fechando),
    para confirmar que a bateria aguenta o pico dos servos.
 
-**Outros cuidados com o IP5306:**
+**Outros cuidados com o módulo UPS:**
 
-- No modo bateria, ele **se desliga sozinho se o consumo ficar abaixo de ~50 mA**. O
-  dispenser com Wi-Fi consome mais que isso, então não deve acontecer — mas se a bateria
-  **zerar**, algumas placas só religam a saída ao **apertar o botãozinho** do módulo ou
-  quando a energia da rua volta.
+- Se a bateria **se esgotar** numa falta longa, o módulo corta a saída quando ela chega
+  a **2,6 V** e religa sozinho quando a recarga passa de **3 V**, com a energia da rua
+  de volta.
+- A carga é de **1 A**: uma bateria vazia leva cerca de 3 h para encher (duas baterias,
+  cerca de 6 h). O dispenser funciona normalmente durante a carga.
 - Carregando e alimentando ao mesmo tempo, o módulo **esquenta um pouco**: deixe-o com
-  ventilação e sem encostar na bateria.
+  ventilação dentro da caixa.
 
 ## E7. Autonomia da bateria
 
@@ -1859,7 +1869,8 @@ Conta para **uma 18650 real de 2.500–3.000 mAh**:
 | Energia da bateria | 2.500 mAh × 3,7 V ≈ **9,3 Wh** |
 | Perda na elevação para 5 V (~85%) | sobram ≈ **7,9 Wh** |
 | Consumo médio do dispenser (ESP32 com Wi-Fi, LCD, servos parados) | ≈ **0,75 a 1 W** |
-| **Autonomia sem energia da rua** | **≈ 8 a 10 horas** |
+| **Autonomia sem energia da rua (1 bateria)** | **≈ 8 a 10 horas** |
+| **Autonomia com 2 baterias** | **≈ 16 a 20 horas** |
 
 Os servos se mexem só alguns segundos por dia e quase não pesam na conta. Para saber
 o número real da sua bateria: carregue até o fim, tire da tomada e anote quanto tempo o
@@ -1869,7 +1880,7 @@ dispenser fica ligado.
 
 | Situação | O que acontece |
 |---|---|
-| **Falta energia (até ~8–10 h)** | O dispenser **continua funcionando pela bateria**. Os alarmes tocam; o Telegram depende de a internet (roteador) também estar ligada. |
+| **Falta energia (até ~8–10 h com 1 bateria; ~16–20 h com 2)** | O dispenser **continua funcionando pela bateria**. Os alarmes tocam; o Telegram depende de a internet (roteador) também estar ligada. |
 | **Falta energia por mais tempo** (bateria acaba) | O dispenser desliga. Cadastro, horários e histórico **ficam salvos**; horários que passarem desligado **não tocam** depois. |
 | **Energia volta, com internet** | Liga sozinho, conecta no Wi-Fi, acerta a hora e volta ao normal; a bateria recarrega. |
 | **Energia volta, sem internet — sem o DS3231** | **Sem hora certa, os alarmes não tocam** até a internet voltar (o dispenser fica no modo de configuração). |
@@ -1922,7 +1933,7 @@ de 3V3.
 
 **Instalar o módulo:**
 
-1. **Desligue o dispenser da energia** (fonte e bateria/IP5306).
+1. **Desligue o dispenser da energia** (fonte e baterias do módulo UPS).
 2. Coloque a **LIR2032** no módulo e ligue os 4 fios: VCC → 3V3, GND → GND, SDA →
    GPIO 21, SCL → GPIO 22.
 3. Religue **com internet**. No Serial Monitor deve aparecer
@@ -1954,7 +1965,7 @@ de 3V3.
 
 A montagem autônoma não impede atualizações:
 
-1. **Desconecte a saída do IP5306 do VIN** do ESP32 (solte o fio do VIN ou use um borne
+1. **Desconecte a saída do módulo UPS do VIN** do ESP32 (solte o fio do VIN ou use um borne
    que se possa abrir). **Nunca ligue o USB e o VIN ao mesmo tempo.**
 2. Ligue o **USB do ESP32 no laptop** e grave a versão nova (Build → Upload), como na
    bancada.
@@ -1991,10 +2002,9 @@ bateria, Parte E). As ilustrações são desenhos simplificados para identificar
 | Componente e códigos | Ilustração | Função | Preço de referência |
 |---|:---:|---|---|
 | **Fonte de tomada 5 V / 3 A, saída USB-C** · 1 un.<br>bivolt · 15 W · com certificação Inmetro | <img src="docs/componentes/fonte.svg" width="110" alt="fonte"> | Energia da rua para o dispenser e para carregar a bateria. | R$ 35,98–50 |
-| **Módulo IP5306 5 V 2,1 A (power bank)** · 1 un.<br>IP5306 · entrada USB-C · pads IN, B+/B−, OUT | <img src="docs/componentes/ip5306.svg" width="110" alt="ip5306"> | Carrega a bateria e entrega 5 V estáveis, com ou sem energia da rua. | R$ 15–25 \* |
-| **Bateria Li-ion 18650** · 1 un.<br>Onistek ON-18650 · 3,7 V · rótulo 3.800 mAh (real provável 1.500–2.500 mAh) | <img src="docs/componentes/bateria18650.svg" width="110" alt="bateria18650"> | Mantém o dispenser ligado se faltar energia (~4–10 h, conforme a capacidade real). | R$ 17,15 |
-| **Suporte para 1 bateria 18650** · 1 un.<br>com fios vermelho/preto | <img src="docs/componentes/suporte18650.svg" width="110" alt="suporte18650"> | Segura a bateria e evita soldar direto nela. | R$ 9,17 |
-| **Conector USB-C fêmea de painel, com 2 fios** · 1 un.<br>"jack USB tipo C fêmea com rabicho 2 fios" · 5 V · ≥ 2,5 A · de preferência com resistores 5,1 kΩ | <img src="docs/componentes/conector_usbc.svg" width="110" alt="conector_usbc"> | Entrada de energia na caixa: a fonte encaixa nele e os 2 fios são **soldados** na entrada (IN) do IP5306. | R$ 12–30 |
+| **Módulo UPS LX-2BUPS** · 1 un.<br>5 V / 3 A · entrada USB-C e 5V+/5V− · 2 suportes 18650 na placa | <img src="docs/componentes/ups.svg" width="110" alt="ups"> | Carrega a bateria e mantém 5 V estáveis, com ou sem energia da rua, sem interrupção na troca. | R$ 60,00 |
+| **Bateria Li-ion 18650** · 1 un. (2 para dobrar a autonomia)<br>Onistek ON-18650 · 3,7 V · rótulo 3.800 mAh (real provável 1.500–2.500 mAh) | <img src="docs/componentes/bateria18650.svg" width="110" alt="bateria18650"> | Mantém o dispenser ligado se faltar energia (~4–10 h, conforme a capacidade real). | R$ 17,15 |
+| **Conector USB-C fêmea de painel, com 2 fios** · 1 un.<br>"jack USB tipo C fêmea com rabicho 2 fios" · 5 V · ≥ 2,5 A · de preferência com resistores 5,1 kΩ | <img src="docs/componentes/conector_usbc.svg" width="110" alt="conector_usbc"> | Entrada de energia na caixa: a fonte encaixa nele e os 2 fios vão à entrada **5V+ / 5V−** do módulo UPS. | R$ 12–30 |
 | **Resistor 5,1 kΩ, ¼ W** · pacote com 10 *(plano B: só se usar o módulo USB-C de 6 pinos)*<br>faixas: verde-marrom-vermelho-dourado | <img src="docs/componentes/resistor5k1.svg" width="110" alt="resistor5k1"> | Um em cada pino CC (CC1 e CC2) até o GND: faz a fonte USB-C liberar os 5 V. | R$ 0,60 (10 un.) |
 | **Capacitor eletrolítico 1000 µF / 16 V** · 1 un.<br>105 °C · tem polaridade (faixa "−") | <img src="docs/componentes/capacitor.svg" width="110" alt="capacitor"> | Absorve o pico de corrente dos servos e evita que o ESP32 reinicie. | R$ 0,73–3 |
 
@@ -2004,7 +2014,7 @@ bateria, Parte E). As ilustrações são desenhos simplificados para identificar
 |---|:---:|---|---|
 | **Placa perfurada ilhada 7×9 cm** · 1 un.<br>fenolite ou fibra de vidro | <img src="docs/componentes/placa.svg" width="110" alt="placa"> | Base firme, soldada, para os trilhos de +5 V e GND (mais durável que protoboard). | R$ 3,90–12,50 |
 | **Jumpers macho/fêmea 20 cm** · 1 kit (40 un.) | <img src="docs/componentes/jumpers.svg" width="110" alt="jumpers"> | Ligações entre o ESP32, o LCD, os servos e a placa. | R$ 8,90 |
-| **Fio flexível 22 AWG** · vermelho e preto, ~2 m de cada | <img src="docs/componentes/fio22awg.svg" width="110" alt="fio22awg"> | Ligações de energia: saída do IP5306 → VIN e servos. | R$ 1,20–3 por metro<br>**R$ 5–12** (4 m) |
+| **Fio flexível 22 AWG** · vermelho e preto, ~2 m de cada | <img src="docs/componentes/fio22awg.svg" width="110" alt="fio22awg"> | Ligações de energia: saída do módulo UPS → VIN e servos. | R$ 1,20–3 por metro<br>**R$ 5–12** (4 m) |
 | **Tubo termo-retrátil** · 1 kit sortido | <img src="docs/componentes/termo.svg" width="110" alt="termo"> | Isola as emendas soldadas (evita curto-circuito). | R$ 16,88–43 |
 | **Cabo USB-A → micro-USB (dados)** · 1 un. | <img src="docs/componentes/cabo_microusb.svg" width="110" alt="cabo_microusb"> | Gravar e atualizar o programa pelo laptop. | a partir de R$ 11,69 |
 
@@ -2023,7 +2033,7 @@ emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, s�
 
 | Ferramenta | Ilustração | Para quê | Modelo recomendado e ajustes |
 |---|:---:|---|---|
-| **Ferro de solda com ajuste de temperatura** | <img src="docs/componentes/ferro.svg" width="110" alt="ferro"> | Soldar os fios nos pads do IP5306, no conector USB-C e na placa perfurada. | **Estação ou ferro com controle de temperatura**, 50–60 W, faixa ~200–480 °C (ex.: **Hikari HK-936B** ou **Yaxun 936**).<br>• **Temperatura:** **320–350 °C** para os pads pequenos (IP5306, pinos, resistores); até **370 °C** para os fios 22 AWG e os trilhos da placa.<br>• **Ponta:** cônica fina (0,5–1 mm) ou chanfrada pequena (~1,6 mm).<br>• Evite ferros simples **sem ajuste** (ex.: linhas "60 W" comuns, que passam de 500 °C): o excesso de calor pode **soltar os pads** do IP5306 e danificar a bateria se encostar nela. |
+| **Ferro de solda com ajuste de temperatura** | <img src="docs/componentes/ferro.svg" width="110" alt="ferro"> | Soldar os fios do conector USB-C, das ligações do módulo UPS e da placa perfurada. | **Estação ou ferro com controle de temperatura**, 50–60 W, faixa ~200–480 °C (ex.: **Hikari HK-936B** ou **Yaxun 936**).<br>• **Temperatura:** **320–350 °C** para os pontos pequenos (pinos, resistores, terminais); até **370 °C** para os fios 22 AWG e os trilhos da placa.<br>• **Ponta:** cônica fina (0,5–1 mm) ou chanfrada pequena (~1,6 mm).<br>• Evite ferros simples **sem ajuste** (ex.: linhas "60 W" comuns, que passam de 500 °C): o excesso de calor pode **soltar as ilhas** da placa perfurada e danificar a bateria se encostar nela. |
 | **Estanho (solda) 60/40 com fluxo, 0,5 mm** | <img src="docs/componentes/estanho.svg" width="110" alt="estanho"> | Material da solda. | Fio **0,5 mm** (fino, próprio para peças pequenas), liga **60/40** com **fluxo resinoso** (ex.: **Cobix 0,5 mm RA T2**, carretel pequeno de 250 g ou tubinho). |
 | **Multímetro digital** | <img src="docs/componentes/multimetro.svg" width="110" alt="multimetro"> | Conferir os 5 V da saída e a polaridade **antes** de ligar o ESP32. | Modelo básico com **tensão DC** e **teste de continuidade** (bip) (ex.: **Hikari HM-1001** ou **Minipa ET-1002**). |
 | **Acessórios de bancada** | — | Preparar fios e corrigir erros. | Suporte com esponja para o ferro (costuma vir com a estação) · **alicate de corte rente** pequeno · **decapador** para fio 22 AWG · **malha dessoldadora** ou sugador · pinça · "terceira mão" com lupa (opcional) · isqueiro ou soprador para o termo-retrátil. |
@@ -2034,9 +2044,9 @@ emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, s�
 | Grupo | Faixa de preço |
 |---|---|
 | F1. Eletrônica do dispenser | R$ 134 – 147 |
-| F2. Energia autônoma *(com a bateria)* | R$ 90 – 135 |
+| F2. Energia autônoma *(com a bateria)* | R$ 126 – 161 |
 | F3. Montagem e ligações | R$ 46 – 96 |
-| **Total para montar o dispenser** | **≈ R$ 270 – 378** |
+| **Total para montar o dispenser** | **≈ R$ 306 – 404** |
 | F4. Relógio sem internet (opcional, à parte) | + R$ 38 – 60 |
 
 **Não inclui:** ferramentas (F5), frete e a estrutura física do dispenser (caixa, portas e
@@ -2199,15 +2209,14 @@ R$ 9,29 (G1). A fonte é comprada no Brasil, porque precisa da certificação do
 | 3 servos SG90 | 2,10–3,00 | 19,50–27,86 |
 | LCD 16x2 + I2C | 1,50–2,20 | 13,93–20,43 |
 | Buzzer, LED, resistor e botão | 0,20–0,35 | 1,86–3,25 |
-| Módulo IP5306 | 0,60–1,00 | 5,57–9,29 |
+| Módulo UPS LX-2BUPS | 3,00–5,00 | 27,87–46,45 |
 | Bateria 18650 | 1,50–2,50 | 13,93–23,22 |
-| Suporte 18650 | 0,10–0,20 | 0,93–1,86 |
 | Conector USB-C de painel | 0,25–0,50 | 2,32–4,64 |
 | Capacitor 1000 µF | 0,05 | 0,46 |
 | Placa, fios e termo-retrátil | 0,80–1,50 | 7,43–13,93 |
 | Relógio DS3231 + LIR2032 | 0,90–1,50 | 8,36–13,93 |
 | Fonte 5 V/3 A USB-C (Inmetro, compra nacional) | — | 15,00–22,00 |
-| **Total** | | **R$ 112,52–173,39** |
+| **Total** | | **R$ 133,89–208,69** |
 
 **Cenário 2 — placa de circuito própria** (ESP32, carregador, USB-C, relógio, buzzer,
 botão e LED numa única placa, montada pela fábrica)
@@ -2215,7 +2224,7 @@ botão e LED numa única placa, montada pela fábrica)
 | Componente | R$ posto no Brasil |
 |---|---|
 | Módulo ESP32-WROOM-32E | 18,58–24,15 |
-| Placa + montagem automática (IP5306, USB-C, relógio, buzzer, botão, LED) | 27,86–51,08 |
+| Placa + montagem automática (circuito de carga e UPS, USB-C, relógio, buzzer, botão, LED) | 27,86–51,08 |
 | LCD 16x2 + I2C | 12,07–17,65 |
 | 3 servos SG90 | 19,50–27,86 |
 | Bateria 18650 + suporte | 14,86–25,08 |
@@ -2227,24 +2236,24 @@ As peças custam praticamente o mesmo nos dois cenários. O ganho da placa próp
 **montagem** (de ~55 para ~20 min por unidade), na **confiabilidade** (sem fios soltos) e
 no **tamanho**.
 
-Protótipo (Parte F, varejo) × produção (atacado): **R$ 278–378 → R$ 111–173**, cerca de
-**55–60 % menos**.
+Protótipo (Parte F, varejo) × produção (atacado): **R$ 306–404 → R$ 134–209** (cenário 1)
+ou **R$ 111–173** (cenário 2), cerca de **50 a 60 % menos**.
 
 ## G6. Custo por unidade em três escalas
 
 | Item | Lote piloto — 100 un. | Pequena série — 1.000 un. | Série — 10.000 un. |
 |---|---|---|---|
 | Arranjo | módulos + impressão 3D | placa própria + impressão 3D | placa própria + injeção (aço) |
-| Componentes | R$ 135–208 ¹ | R$ 111–173 | R$ 111–173 |
+| Componentes | R$ 161–250 ¹ | R$ 111–173 | R$ 111–173 |
 | Gabinete | R$ 100–157 | R$ 100–157 | R$ 14–21 |
 | Ferragens (parafusos, pinos das portas, pés, visor do LCD) | R$ 5–9 | R$ 5–9 | R$ 5–9 |
 | Montagem e teste | 55 min → R$ 18 | 20 min → R$ 7 | 20 min → R$ 7 |
 | Embalagem e manual | R$ 8–14 | R$ 6–12 | R$ 6–12 |
 | Projeto da placa (R$ 5–20 mil) amortizado | — | R$ 5–20 | R$ 0,50–2 |
 | Moldes de aço (R$ 180–325 mil) amortizados | — | — | R$ 18–33 |
-| **Custo de fabricação** | **R$ 267–406** | **R$ 234–378** | **R$ 161–257** |
+| **Custo de fabricação** | **R$ 292–448** | **R$ 234–378** | **R$ 161–257** |
 | Homologação Anatel (R$ 10–30 mil) amortizada | R$ 100–300 | R$ 10–30 | R$ 1–3 |
-| **Custo total por unidade** | **R$ 367–706** | **R$ 244–408** | **R$ 162–260** |
+| **Custo total por unidade** | **R$ 392–748** | **R$ 244–408** | **R$ 162–260** |
 
 ¹ Componentes do cenário 1 com acréscimo de 20 % por comprar lotes pequenos.
 
@@ -2275,7 +2284,7 @@ assistência técnica e lucro.
 
 | Escala | Custo total por unidade | Preço de venda estimado (× 2,5 a × 4) |
 |---|---|---|
-| Lote piloto (100) | R$ 367–706 | R$ 920–2.820 |
+| Lote piloto (100) | R$ 392–748 | R$ 980–2.990 |
 | Pequena série (1.000) | R$ 244–408 | R$ 610–1.630 |
 | Série (10.000) | R$ 162–260 | **R$ 400–1.040** |
 
@@ -2323,8 +2332,6 @@ CHEN HSONG BRASIL. **Custo da hora-homem-máquina para operadores de injetoras**
 
 CURTO CIRCUITO. **Servo motor 9 g SG90**. Disponível em: <https://curtocircuito.com.br/servo-motor-9g-sg90.html>. Acesso em: 27 set. 2026.
 
-EBAY. **Módulo carregador IP5306, 2,1 A**. Disponível em: <https://www.ebay.de/itm/134628665112>. Acesso em: 27 set. 2026.
-
 ELETROGATE. **Jumpers macho-fêmea, 40 unidades de 20 cm**. Disponível em: <https://www.eletrogate.com/jumpers-macho-femea-40-unidades-de-20-cm>. Acesso em: 27 set. 2026.
 
 ELETROGATE. **LED difuso 5 mm vermelho**. Disponível em: <https://www.eletrogate.com/led-difuso-5mm-vermelho>. Acesso em: 27 set. 2026.
@@ -2340,6 +2347,8 @@ ELETROGATE. **Resistor 5,1 kΩ, 1/4 W, 10 unidades**. Disponível em: <https://w
 FERMARC. **Placa de circuito perfurada face simples, 7 × 9 cm**. Disponível em: <https://www.fermarc.com/placa-de-circuito-perfurada-face-simples-7x9>. Acesso em: 27 set. 2026.
 
 FERRO DE SOLDA PROFISSIONAL. **Ferros de solda com controle de temperatura**. Disponível em: <https://ferrodesoldaprofissional.com.br/ferro-de-solda/>. Acesso em: 27 set. 2026.
+
+HESTORE. **LX2-BUPS-5V: boost charging module, UPS function, 2 × 18650, 15 W, 5 V, 3 A, USB-C**. Disponível em: <https://www.hestore.eu/en/prod_10048959.html>. Acesso em: 28 set. 2026.
 
 GALPÃO DAS MÁQUINAS. **Como calcular o custo por peça na impressão 3D**. Disponível em: <https://galpaodasmaquinas.com.br/blog/plastico/custo-peca-impressora-3d/>. Acesso em: 27 set. 2026.
 
@@ -2367,9 +2376,7 @@ MERCADO LIVRE. **Bateria 18650 3,7 V 3.800 mAh Onistek**. Disponível em: <https
 
 MERCADO LIVRE. **Módulo RTC (real time clock) DS3231**. Disponível em: <https://www.mercadolivre.com.br/modulo-rtc-real-time-clock-ds3231-arduino-esp8266-esp32-rasp/p/MLB42966007>. Acesso em: 27 set. 2026.
 
-MERCADO LIVRE. **Módulo de carga e descarga para bateria 18650 IP5306, 2 A, 5 V, USB-C**. Disponível em: <https://www.mercadolivre.com.br/modulo-carga-y-descarga-bateria-18650-ip5306-2a-5v-usb-c/p/MLB2064132227>. Acesso em: 27 set. 2026.
-
-MERCADO LIVRE. **Suporte para 1 bateria 18650**. Disponível em: <https://www.mercadolivre.com.br>. Acesso em: 27 set. 2026.
+MERCADO LIVRE. **Módulo UPS bateria 18650 5 V para Raspberry Pi, ESP32 e Arduino**. Disponível em: <https://produto.mercadolivre.com.br/MLB-3830950767-modulo-ups-bateria-18650-5v-raspberry-pi-esp32-arduino-_JM>. Acesso em: 28 set. 2026.
 
 MERCADO SHOPS. **Kit com 5 conectores jack tipo C fêmea com rabicho de 2 fios**. Disponível em: <https://ralphcouch.mercadoshops.com.br/MLB-3667070205-kit-com-5-conector-jack-tipo-c-com-rabicho-2-fios-fmea-_JM>. Acesso em: 27 set. 2026.
 
@@ -2396,6 +2403,8 @@ SMARTPROJECTS. **Placa fenolite perfurada ilhada, 7 × 9 cm**. Disponível em: <
 SUBMARINO. **Cabo micro-USB, 1 metro**. Disponível em: <https://www.submarino.com.br>. Acesso em: 27 set. 2026.
 
 TERMOTUBOS. **Kit de termo-retráteis variados**. Disponível em: <https://loja.termotubos.com.br/kits/termo-retrateis-variados>. Acesso em: 27 set. 2026.
+
+USINAINFO. **Fonte UPS carregador de bateria 18650 com 2 slots, USB-C 5 V 3 A, alimentação ininterrupta LX-2BUPS**. Disponível em: <https://www.usinainfo.com.br/carregador-de-bateria/fonte-ups-carregador-de-bateria-18650-com-2-slots-usb-c-5v-3a-alimentacao-ininterrupta-lx-2bups-9161.html>. Acesso em: 28 set. 2026.
 
 USINAINFO. **Conector USB-C fêmea com rabicho de alimentação de 2 fios para painel**. Disponível em: <https://www.usinainfo.com.br/conector-usb/conector-usb-c-femea-com-rabicho-de-alimentacao-2-fios-para-painel-diy-9169.html>. Acesso em: 27 set. 2026.
 
