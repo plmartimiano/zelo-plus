@@ -859,19 +859,45 @@ um compartimento de cada vez.
 
 ## Passo 9 — Movendo as portas (servos)
 
-**O que faz:** abre e fecha as portas **devagar** (1 grau a cada 15 ms), para não
-dar tranco no mecanismo.
+**O que faz:** abre e fecha as portas **devagar e sem trancos**. Cada movimento dura
+2,5 s: a porta começa lenta, acelera no meio e freia ao chegar.
 
 ```cpp
-void abrirCompartimento(int c) {
-  for (int angulo = ANGULO_FECHADO[c]; angulo <= ANGULO_ABERTO[c]; angulo++) {
-    servos[c].write(angulo);
-    delay(15);
+// Duracao de cada movimento de porta (abrir ou fechar), em milissegundos.
+// Aumente para deixar as portas mais lentas.
+const unsigned long TEMPO_MOVIMENTO_PORTA = 2500;
+
+// Move a porta devagar e sem trancos: comeca lento, acelera no meio e freia no
+// fim (curva de cosseno). Um passo a cada 20 ms, o intervalo do sinal do servo.
+void moverPorta(int c, int de, int para) {
+  const int passos = TEMPO_MOVIMENTO_PORTA / 20;
+  for (int i = 1; i <= passos; i++) {
+    float t = (float)i / passos;          // 0 -> 1 ao longo do movimento
+    float suave = (1 - cos(t * PI)) / 2;  // 0 -> 1, lento no inicio e no fim
+    servos[c].write(de + (int)round((para - de) * suave));
+    delay(20);
   }
 }
 ```
 
-- 90 passos × 15 ms ≈ **1,4 s** para abrir.
+- **Passos:** 2.500 ms ÷ 20 ms = **125 posições** por movimento. O servo recebe uma
+  nova posição a cada pulso do seu sinal (a cada 20 ms).
+- **Curva suave:** `(1 − cos(t·π)) / 2` vai de 0 a 1 com início e fim lentos. Na
+  abertura, a porta está em ~9° aos 0,5 s, em 45° na metade do tempo e chega a 90°
+  aos 2,5 s. Isso evita o impacto da tampa no fim do curso e reduz o pico de corrente
+  na partida do motor.
+- **Ajuste:** para mudar a velocidade, basta alterar `TEMPO_MOVIMENTO_PORTA`
+  (ex.: 3000 para 3 s).
+
+```cpp
+void abrirCompartimento(int c) {
+  moverPorta(c, ANGULO_FECHADO[c], ANGULO_ABERTO[c]);
+}
+
+void fecharCompartimento(int c) {
+  moverPorta(c, ANGULO_ABERTO[c], ANGULO_FECHADO[c]);
+}
+```
 
 Para abrir **vários** compartimentos com um único toque, sem que dois servos se
 movam juntos (o que sobrecarregaria a fonte), eles abrem **um depois do outro**:

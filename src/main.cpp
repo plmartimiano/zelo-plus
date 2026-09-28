@@ -155,18 +155,28 @@ int totalMedicamentosAtivos() {
 // ---------- PORTAS (servos) ----------
 // Nunca move dois servos ao mesmo tempo, para nao sobrecarregar a fonte.
 
-void abrirCompartimento(int c) {
-  for (int angulo = ANGULO_FECHADO[c]; angulo <= ANGULO_ABERTO[c]; angulo++) {
-    servos[c].write(angulo);
-    delay(15);
+// Duracao de cada movimento de porta (abrir ou fechar), em milissegundos.
+// Aumente para deixar as portas mais lentas.
+const unsigned long TEMPO_MOVIMENTO_PORTA = 2500;
+
+// Move a porta devagar e sem trancos: comeca lento, acelera no meio e freia no
+// fim (curva de cosseno). Um passo a cada 20 ms, o intervalo do sinal do servo.
+void moverPorta(int c, int de, int para) {
+  const int passos = TEMPO_MOVIMENTO_PORTA / 20;
+  for (int i = 1; i <= passos; i++) {
+    float t = (float)i / passos;          // 0 -> 1 ao longo do movimento
+    float suave = (1 - cos(t * PI)) / 2;  // 0 -> 1, lento no inicio e no fim
+    servos[c].write(de + (int)round((para - de) * suave));
+    delay(20);
   }
 }
 
+void abrirCompartimento(int c) {
+  moverPorta(c, ANGULO_FECHADO[c], ANGULO_ABERTO[c]);
+}
+
 void fecharCompartimento(int c) {
-  for (int angulo = ANGULO_ABERTO[c]; angulo >= ANGULO_FECHADO[c]; angulo--) {
-    servos[c].write(angulo);
-    delay(15);
-  }
+  moverPorta(c, ANGULO_ABERTO[c], ANGULO_FECHADO[c]);
 }
 
 // Abre os compartimentos marcados, um logo apos o outro.
