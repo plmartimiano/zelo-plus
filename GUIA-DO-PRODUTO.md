@@ -3,7 +3,8 @@
 > Este guia apresenta o dispenser inteligente de medicamentos Zelo+: a concepção do
 > produto, o desenho técnico do gabinete, o funcionamento do programa (com o **trecho de
 > código** de cada etapa; o arquivo completo está em [`src/main.cpp`](src/main.cpp)), a
-> montagem para uso autônomo, a lista de componentes e a estimativa de custo de produção.
+> montagem para uso autônomo, a lista de componentes, a estimativa de custo de produção
+> e as propostas de evolução com inteligência artificial.
 
 <!-- so-github -->
 ![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
@@ -77,6 +78,13 @@
   - [G7. Investimentos iniciais (uma vez só)](#g7-investimentos-iniciais-uma-vez-só)
   - [G8. Preço de venda e viabilidade](#g8-preço-de-venda-e-viabilidade)
   - [G9. Limitações da estimativa](#g9-limitações-da-estimativa)
+- [Parte H — Evolução do produto: funcionalidades com inteligência artificial](#parte-h--evolução-do-produto-funcionalidades-com-inteligência-artificial)
+  - [H1. Princípios de projeto](#h1-princípios-de-projeto)
+  - [H2. Arquitetura proposta](#h2-arquitetura-proposta)
+  - [H3. Funcionalidades propostas](#h3-funcionalidades-propostas)
+  - [H4. Quadro-resumo dos impactos](#h4-quadro-resumo-dos-impactos)
+  - [H5. Impactos gerais da mudança](#h5-impactos-gerais-da-mudança)
+  - [H6. Etapas de implantação](#h6-etapas-de-implantação)
 - [Referências](#referências)
 
 ---
@@ -2382,18 +2390,221 @@ pouco investimento.
 
 ---
 
+# Parte H — Evolução do produto: funcionalidades com inteligência artificial
+
+Esta parte reúne propostas de novas funcionalidades baseadas em **inteligência
+artificial (IA)**, definidas a partir do funcionamento do protótipo e dos ensaios
+práticos. As propostas priorizam o que pode ser feito **sem novos módulos ou
+sensores**, aproveitando o celular do cuidador, a página do Zelo+, o histórico de doses
+e o bot do Telegram já existentes. A única exceção, a voz para o paciente (H3.11),
+exige um módulo de áudio e foi mantida por seu impacto na acessibilidade.
+
+## H1. Princípios de projeto
+
+Todas as propostas seguem quatro princípios:
+
+| Princípio | Aplicação no Zelo+ |
+|---|---|
+| **A decisão é sempre do cuidador** | A IA sugere, confere e alerta. Nenhuma alteração de cadastro, dose ou horário é feita sem confirmação, e cada confirmação fica registrada no histórico. |
+| **Fonte oficial antes da IA** | Sempre que existir uma base oficial, ela é consultada primeiro: código de barras (EAN) na lista de preços da CMED e posologia no Bulário Eletrônico da Anvisa. A IA lê, organiza e compara, mas não substitui essas fontes. |
+| **Funções essenciais independentes** | Alarme, portas, botão, fechamento automático e histórico continuam funcionando sem internet e sem IA. As funções de IA acrescentam recursos, sem se tornar ponto de falha. |
+| **Privacidade dos dados de saúde** | Dados de saúde são dados pessoais sensíveis (BRASIL, 2018, art. 11). Só o mínimo necessário é enviado à IA (por exemplo, a foto da caixa, sem o nome do paciente), com consentimento e possibilidade de exclusão. |
+
+## H2. Arquitetura proposta
+
+O ESP32 não tem memória nem capacidade de processamento para executar modelos de
+visão ou de linguagem. As funções de IA passam por um **serviço intermediário na
+nuvem**, que concentra as chamadas aos modelos e às bases oficiais:
+
+```text
+ Celular do cuidador          Serviço Zelo+ na nuvem          Provedores
+ (página / Telegram)   ───►   (regras, chaves)        ───►    modelo de IA
+  foto, código de barras,            │                 └──►   CMED e Bulário Anvisa
+  áudio, perguntas                   ▼
+                              ESP32 do dispenser
+                              (cadastro, alarmes, portas, histórico)
+```
+
+- **Página do Zelo+:** ganha o botão "Tirar foto", que abre a câmera do celular e
+  envia a imagem. Esse recurso funciona na página local, sem exigir conexão segura
+  (HTTPS).
+- **Serviço na nuvem:** guarda as chaves de acesso aos modelos de IA, que nunca ficam
+  na placa nem na página, e aplica as regras de conferência.
+- **ESP32:** continua responsável pela rotina do dispenser. Recebe do serviço apenas
+  cadastros já confirmados pelo cuidador e envia o histórico para os relatórios.
+
+## H3. Funcionalidades propostas
+
+### H3.1 Cadastro do medicamento por código de barras ou foto
+
+| Item | Descrição |
+|---|---|
+| **Proposta** | No cadastro, em vez de digitar, o cuidador escaneia o código de barras ou fotografa a caixa. O sistema preenche nome, princípio ativo, concentração e forma farmacêutica, e o cuidador confirma. |
+| **Atuação da IA** | Quando o código de barras não é lido (embalagem danificada, medicamento manipulado), um modelo de visão lê o texto da caixa e extrai os mesmos dados, além de **lote e validade**. |
+| **Fontes de dados** | Código EAN-13 da embalagem, cruzado com a lista de preços da CMED, que traz o EAN de cada apresentação registrada (ANVISA, 2026b). |
+| **Impacto para o usuário** | Elimina erros de digitação e de concentração no cadastro e torna o uso mais simples para cuidadores com pouca familiaridade com tecnologia. |
+| **Impacto no projeto** | Sem hardware novo. Página: botão de foto e tela de confirmação. Serviço na nuvem: leitura do código, consulta à CMED e chamada ao modelo de visão. |
+
+### H3.2 Conferência na reposição
+
+| Item | Descrição |
+|---|---|
+| **Proposta** | No abastecimento e na reposição, o cuidador escaneia a caixa nova. Se o produto ou a concentração forem diferentes do cadastrado (por exemplo, Losartana 50 mg no cadastro e Losartana 100 mg na caixa nova), o sistema exibe um alerta **antes de abrir a porta**. |
+| **Atuação da IA** | Mesma leitura da H3.1, comparando a embalagem nova com o cadastro. Também avisa sobre **validade vencida ou próxima do vencimento**. |
+| **Fontes de dados** | EAN e CMED; texto da embalagem. |
+| **Impacto para o usuário** | Evita o erro de dosagem na troca de embalagem, um dos mais comuns no uso doméstico. |
+| **Impacto no projeto** | Sem hardware novo. Firmware: a abertura para reposição passa a aguardar a conferência ou a confirmação do cuidador. |
+
+### H3.3 Verificação do intervalo pela bula
+
+| Item | Descrição |
+|---|---|
+| **Proposta** | Após o cadastro, o sistema compara os horários programados com a posologia usual da bula e aponta diferenças, por exemplo: "a bula indica uso a cada 12 h; o cadastro tem 08:00 e 14:00". |
+| **Atuação da IA** | Um modelo de linguagem lê a seção de posologia da bula e a converte em intervalos comparáveis aos do cadastro. |
+| **Fontes de dados** | Bulário Eletrônico da Anvisa (ANVISA, 2026a). |
+| **Impacto para o usuário** | Aumenta a segurança sem tirar a autonomia: a mensagem informa a diferença e recomenda conferir a receita, pois o médico pode prescrever posologia diferente da usual. O sistema não bloqueia nem corrige o cadastro. |
+| **Impacto no projeto** | Sem hardware novo. Serviço na nuvem: consulta à bula e comparação. Página: aviso junto ao medicamento. |
+
+### H3.4 Cadastro a partir da receita médica
+
+| Item | Descrição |
+|---|---|
+| **Proposta** | O cuidador fotografa a receita. O sistema propõe o cadastro completo: medicamentos, doses, frequência e horários distribuídos (por exemplo, "a cada 12 h" → 08:00 e 20:00). |
+| **Atuação da IA** | Modelo de visão com leitura de texto impresso e manuscrito. Trechos ilegíveis ou ambíguos são marcados como "confirmar" e nunca preenchidos por suposição. |
+| **Fontes de dados** | Imagem da receita; CMED para confirmar o nome do medicamento. |
+| **Impacto para o usuário** | Reduz o cadastro de vários medicamentos a uma foto e uma revisão. |
+| **Impacto no projeto** | Sem hardware novo. Página: tela de revisão item a item antes de salvar. |
+
+### H3.5 Alertas de interação e de cuidados de horário
+
+| Item | Descrição |
+|---|---|
+| **Proposta** | Com os medicamentos cadastrados, o sistema aponta interações conhecidas e cuidados de horário, por exemplo: medicamento que deve ser tomado em jejum, ou que precisa de intervalo em relação a outro. |
+| **Atuação da IA** | Modelo de linguagem consultando as bulas dos medicamentos cadastrados, com a fonte indicada em cada alerta. |
+| **Fontes de dados** | Bulário Eletrônico da Anvisa. |
+| **Impacto para o usuário** | Leva ao cuidador informações que costumam passar despercebidas. Os alertas recomendam levar a dúvida ao médico ou ao farmacêutico. |
+| **Impacto no projeto** | Sem hardware novo. Exige redação cuidadosa dos alertas e registro de quando o cuidador os viu. |
+
+### H3.6 Relatório de adesão ao tratamento
+
+| Item | Descrição |
+|---|---|
+| **Proposta** | Resumo semanal enviado pelo Telegram e relatório para levar à consulta médica, por exemplo: "92 % das doses no horário; as doses da noite atrasam em média 35 min; uma dose não retirada na quinta-feira". |
+| **Atuação da IA** | Um modelo de linguagem transforma o histórico de doses em texto claro e destaca tendências. |
+| **Fontes de dados** | Histórico de doses já registrado pelo Zelo+. |
+| **Impacto para o usuário** | Dá ao cuidador e ao médico uma visão objetiva da adesão, informação que normalmente depende da memória do paciente. |
+| **Impacto no projeto** | Sem hardware novo. Firmware: envio periódico do histórico ao serviço. |
+
+### H3.7 Assistente do cuidador no Telegram
+
+| Item | Descrição |
+|---|---|
+| **Proposta** | O cuidador conversa com o Zelo+ em linguagem natural, por texto ou áudio: "O remédio da noite foi tomado?", "Quantas doses de Losartana restam?", "Mude o Omeprazol para as 7 h". |
+| **Atuação da IA** | Modelo de linguagem com transcrição de voz, com acesso somente aos dados do dispenser. Pedidos de alteração exigem confirmação explícita antes de serem aplicados. |
+| **Fontes de dados** | Cadastro e histórico do Zelo+. |
+| **Impacto para o usuário** | Acesso rápido às informações sem abrir a página, inclusive para cuidadores com dificuldade de digitação. |
+| **Impacto no projeto** | Sem hardware novo; usa o bot do Telegram já existente. Serviço na nuvem: recepção das mensagens e controle das permissões. |
+
+### H3.8 Lembrete adaptativo e detecção de risco
+
+| Item | Descrição |
+|---|---|
+| **Proposta** | O sistema aprende a rotina do paciente e reage a mudanças de padrão, por exemplo: avisar o cuidador mais cedo quando o paciente passa a atrasar as doses, ou sinalizar três dias seguidos de atraso na dose da noite. |
+| **Atuação da IA** | Modelo estatístico de padrão de comportamento, leve o bastante para rodar no próprio ESP32. |
+| **Fontes de dados** | Horários de alarme e de retirada registrados no histórico. |
+| **Impacto para o usuário** | Permite agir antes que atrasos se tornem doses perdidas. Mudança súbita de padrão pode indicar alteração no estado de saúde e merece atenção. |
+| **Impacto no projeto** | Sem hardware novo. Firmware: cálculo do padrão e novos avisos no Telegram. |
+
+### H3.9 Previsão de estoque e aviso de compra
+
+| Item | Descrição |
+|---|---|
+| **Proposta** | O sistema calcula quando cada medicamento vai acabar e avisa com 5 a 7 dias de antecedência, junto com a lista de compras. |
+| **Atuação da IA** | A leitura da embalagem (H3.1) informa a quantidade de comprimidos; a previsão combina esse dado com o consumo registrado. |
+| **Fontes de dados** | Leitura da embalagem; abastecimentos e doses do histórico. |
+| **Impacto para o usuário** | Evita a interrupção do tratamento por falta do medicamento. |
+| **Impacto no projeto** | Sem hardware novo. Firmware: contagem de doses por compartimento. |
+
+### H3.10 Explicação simples do medicamento
+
+| Item | Descrição |
+|---|---|
+| **Proposta** | Para cada medicamento cadastrado, um resumo curto em linguagem acessível: para que serve, se deve ser tomado com ou sem alimento e quais sinais merecem atenção. |
+| **Atuação da IA** | Modelo de linguagem resumindo a bula, sempre com indicação da fonte. |
+| **Fontes de dados** | Bulário Eletrônico da Anvisa. |
+| **Impacto para o usuário** | Aumenta a compreensão do tratamento por cuidadores leigos. |
+| **Impacto no projeto** | Sem hardware novo. Página: campo informativo em cada medicamento. |
+
+### H3.11 Voz para o paciente
+
+| Item | Descrição |
+|---|---|
+| **Proposta** | No horário da dose, além do alarme sonoro, o Zelo+ fala uma mensagem, por exemplo: "Dona Maria, hora da Losartana, compartimento azul". |
+| **Atuação da IA** | Síntese de voz. As frases são geradas uma única vez, no cadastro, e gravadas na memória da placa; a reprodução não depende de internet. |
+| **Fontes de dados** | Nome do paciente, nome do medicamento e cor do compartimento. |
+| **Impacto para o usuário** | Grande ganho de acessibilidade para pacientes com baixa visão, e reforço de qual compartimento abrir. |
+| **Impacto no projeto** | **Hardware novo:** módulo amplificador I2S MAX98357A (a partir de R$ 59,90, conforme TECH SUL ELETRÔNICOS, 2026) e alto-falante pequeno, ligados a três pinos livres do ESP32. Gabinete: furação para o alto-falante. |
+
+## H4. Quadro-resumo dos impactos
+
+| Funcionalidade | Hardware novo | Firmware | Página | Serviço na nuvem | Benefício principal |
+|---|:---:|:---:|:---:|:---:|---|
+| H3.1 Cadastro por código de barras ou foto | — | baixo | sim | sim | Cadastro sem erros |
+| H3.2 Conferência na reposição | — | médio | sim | sim | Evita troca de dosagem |
+| H3.3 Intervalo pela bula | — | — | sim | sim | Alerta de posologia |
+| H3.4 Cadastro pela receita | — | baixo | sim | sim | Cadastro rápido |
+| H3.5 Interações e horários | — | — | sim | sim | Segurança do tratamento |
+| H3.6 Relatório de adesão | — | baixo | — | sim | Informação para a consulta |
+| H3.7 Assistente no Telegram | — | baixo | — | sim | Acesso por texto e voz |
+| H3.8 Lembrete adaptativo | — | médio | — | — | Prevenção de doses perdidas |
+| H3.9 Previsão de estoque | — | baixo | sim | — | Tratamento sem interrupção |
+| H3.10 Explicação do medicamento | — | — | sim | sim | Compreensão do tratamento |
+| H3.11 Voz para o paciente | amplificador e alto-falante | médio | — | geração das frases | Acessibilidade |
+
+## H5. Impactos gerais da mudança
+
+| Aspecto | Impacto |
+|---|---|
+| **Arquitetura** | Inclusão de um serviço na nuvem entre o dispenser e os modelos de IA. O Zelo+ passa de dispositivo isolado a sistema conectado. |
+| **Custo de operação** | Hospedagem do serviço e uso dos modelos de IA, cobrado por chamada. Com poucas fotos e mensagens por semana, o custo por usuário tende a ser baixo, mas deve ser cotado com o provedor escolhido e considerado no preço de venda (Parte G). |
+| **Dependência de internet** | Apenas as funções de IA dependem de internet; a rotina de doses segue funcionando sem conexão (H1). |
+| **Segurança da informação** | Chaves de acesso somente no serviço, comunicação cifrada entre o serviço e os provedores, e controle de quem pode consultar e alterar os dados de cada dispenser. |
+| **Proteção de dados** | Dados de saúde são dados pessoais sensíveis e exigem consentimento, finalidade definida, envio mínimo de dados e possibilidade de exclusão (BRASIL, 2018). |
+| **Regulação** | Funções que apoiam decisões sobre medicamentos podem enquadrar o software como dispositivo médico, o que exige avaliação de classe de risco e notificação ou registro na Anvisa antes da comercialização (ANVISA, 2022). |
+| **Manutenção** | Atualização periódica das bases oficiais (a lista da CMED é atualizada mensalmente) e acompanhamento da qualidade das respostas dos modelos. |
+
+## H6. Etapas de implantação
+
+| Etapa | Funcionalidades | Justificativa |
+|---|---|---|
+| **1ª** | H3.1, H3.2 e H3.6 | Evitam os erros mais graves (cadastro e troca de dosagem), usam apenas o celular e são fáceis de demonstrar. |
+| **2ª** | H3.4 e H3.7 | Grande ganho de praticidade, aproveitando o bot do Telegram já existente. |
+| **3ª** | H3.3, H3.5, H3.8, H3.9 e H3.10 | Alto valor, mas exigem validação cuidadosa dos alertas e mais tempo de histórico. |
+| **Com hardware** | H3.11 | Único item com compra de componente; maior impacto na acessibilidade do paciente. |
+
+---
+
 # Referências
 
-Fontes consultadas para os preços, as especificações dos componentes e os parâmetros
-de custo utilizados nas Partes F e G (consulta em setembro de 2026).
+Fontes consultadas para os preços, as especificações dos componentes, os parâmetros
+de custo utilizados nas Partes F e G e as bases oficiais e normas citadas na Parte H
+(consulta em setembro de 2026).
 
 <div class="referencias" markdown="1">
+
+AGÊNCIA NACIONAL DE VIGILÂNCIA SANITÁRIA (ANVISA). **Perguntas & respostas: RDC nº 657, de 24 de março de 2022**: software como dispositivo médico. Brasília, DF: Anvisa, 2022. Disponível em: <https://www.gov.br/anvisa/pt-br/assuntos/noticias-anvisa/2022/software-como-dispositivo-medico-perguntas-e-respostas/perguntas-respostas-rdc-657-de-2022-v1-01-09-2022.pdf>. Acesso em: 29 set. 2026.
+
+AGÊNCIA NACIONAL DE VIGILÂNCIA SANITÁRIA (ANVISA). **Bulário eletrônico**. Brasília, DF: Anvisa, 2026a. Disponível em: <https://consultas.anvisa.gov.br/#/bulario/>. Acesso em: 29 set. 2026.
+
+AGÊNCIA NACIONAL DE VIGILÂNCIA SANITÁRIA (ANVISA). Câmara de Regulação do Mercado de Medicamentos (CMED). **Listas de preços de medicamentos**. Brasília, DF: Anvisa, 2026b. Disponível em: <https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos>. Acesso em: 29 set. 2026.
 
 AMAZON.COM.BR. **Display LCD 16x2 com módulo I2C PCF8574**. Disponível em: <https://www.amazon.com.br/Display-PCF8574-Endere%C3%A7o-Controlador-80x35mm/dp/B0H346LHKM>. Acesso em: 27 set. 2026.
 
 AMAZON.COM.BR. **Placa breakout USB tipo C fêmea, 6 pinos**. Disponível em: <https://www.amazon.com.br/naughtystarts-pe%C3%A7as-breakout-conector-direito/dp/B0B19TP2MX>. Acesso em: 27 set. 2026.
 
 BAÚ DA ELETRÔNICA. **Rolo de solda estanho 500 g, 0,5 mm, Cobix**. Disponível em: <https://www.baudaeletronica.com.br/produto/rolo-de-solda-estanho-500g-05mm-cobix.html>. Acesso em: 27 set. 2026.
+
+BRASIL. **Lei nº 13.709, de 14 de agosto de 2018**. Lei Geral de Proteção de Dados Pessoais (LGPD). Brasília, DF: Presidência da República, 2018. Disponível em: <https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm>. Acesso em: 29 set. 2026.
 
 CASA DA ROBÓTICA. **Ferro de solda Hikari SC-60, 60 W**. Disponível em: <https://www.casadarobotica.com/prototipagem-e-ferramentas/prototipagem/soldas/ferro-de-solda-hk-plus-hikari-profissional-sc-60w-220v>. Acesso em: 27 set. 2026.
 
@@ -2417,9 +2628,9 @@ FERMARC. **Placa de circuito perfurada face simples, 7 × 9 cm**. Disponível em
 
 FERRO DE SOLDA PROFISSIONAL. **Ferros de solda com controle de temperatura**. Disponível em: <https://ferrodesoldaprofissional.com.br/ferro-de-solda/>. Acesso em: 27 set. 2026.
 
-HESTORE. **LX2-BUPS-5V: boost charging module, UPS function, 2 × 18650, 15 W, 5 V, 3 A, USB-C**. Disponível em: <https://www.hestore.eu/en/prod_10048959.html>. Acesso em: 28 set. 2026.
-
 GALPÃO DAS MÁQUINAS. **Como calcular o custo por peça na impressão 3D**. Disponível em: <https://galpaodasmaquinas.com.br/blog/plastico/custo-peca-impressora-3d/>. Acesso em: 27 set. 2026.
+
+HESTORE. **LX2-BUPS-5V: boost charging module, UPS function, 2 × 18650, 15 W, 5 V, 3 A, USB-C**. Disponível em: <https://www.hestore.eu/en/prod_10048959.html>. Acesso em: 28 set. 2026.
 
 INFOMONEY. **Aneel projeta alta média de 8% para tarifas de consumidores de energia elétrica**. Disponível em: <https://www.infomoney.com.br/economia/aneel-projeta-alta-media-de-8-para-tarifas-de-consumidores-de-energia-eletrica/>. Acesso em: 27 set. 2026.
 
@@ -2470,6 +2681,8 @@ REVISTA FÓRUM. **Preço do dólar hoje: veja a cotação da moeda em reais atua
 SMARTPROJECTS. **Placa fenolite perfurada ilhada, 7 × 9 cm**. Disponível em: <https://www.smartprojectsbrasil.com.br/placa-fenolite-perfurada-ilhada-fibra-de-vidro-7x9-cm>. Acesso em: 27 set. 2026.
 
 SUBMARINO. **Cabo micro-USB, 1 metro**. Disponível em: <https://www.submarino.com.br>. Acesso em: 27 set. 2026.
+
+TECH SUL ELETRÔNICOS. **MAX98357 I2S classe D amplificador**. Disponível em: <https://techsuleletronicos.com.br/product/max98357-i2s-classe-d-amplificador/>. Acesso em: 29 set. 2026.
 
 TERMOTUBOS. **Kit de termo-retráteis variados**. Disponível em: <https://loja.termotubos.com.br/kits/termo-retrateis-variados>. Acesso em: 27 set. 2026.
 
