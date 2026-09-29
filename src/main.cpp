@@ -49,6 +49,7 @@ const long gmtOffset_sec = -10800; // Brasília (GMT-3)
 const int daylightOffset_sec = 0;
 
 bool modoConfig = false;
+bool modoLocal = false;  // sem internet: o dispenser usa a propria rede (ZeloPlus-Config)
 String configErro = "";
 
 // ---------- RELOGIO DS3231 (opcional) ----------
@@ -787,6 +788,15 @@ String htmlHistorico() {
 
 void handleConfigRoot() {
   int redesEncontradas = WiFi.scanNetworks();
+  if (redesEncontradas < 0) {
+    // A busca falha enquanto a placa ainda tenta a rede antiga: interrompe e repete
+    WiFi.disconnect();
+    delay(200);
+    redesEncontradas = WiFi.scanNetworks();
+  }
+  if (redesEncontradas < 0) {
+    redesEncontradas = 0;
+  }
 
   String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
   html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
@@ -799,15 +809,28 @@ void handleConfigRoot() {
 
   html += "<form action='/conectar' method='POST'>";
   html += "<label>Rede Wi-Fi:</label><br>";
-  html += "<select name='ssid' style='width:100%;padding:8px;margin:6px 0' required>";
+  if (redesEncontradas == 0) {
+    html += "<p>Nenhuma rede encontrada. O dispenser so enxerga redes de 2,4 GHz.</p>";
+  }
+  html += "<select name='ssid' style='width:100%;padding:8px;margin:6px 0'>";
   for (int i = 0; i < redesEncontradas; i++) {
     String ssidEscapado = escaparHTML(WiFi.SSID(i));
     html += "<option value='" + ssidEscapado + "'>" + ssidEscapado + "</option>";
   }
   html += "</select><br>";
+  html += "<p style='margin:4px 0'><a href='/'>Atualizar lista</a></p>";
+  html += "<label>Ou digite o nome da rede:</label><br>";
+  html += "<input type='text' name='ssid_manual' autocapitalize='off' style='width:100%;padding:8px;margin:6px 0'><br>";
   html += "<label>Senha da rede:</label><br>";
   html += "<input type='password' name='senha' style='width:100%;padding:8px;margin:6px 0'><br><br>";
   html += "<button type='submit' style='width:100%;padding:12px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:16px'>Conectar</button>";
+  html += "</form>";
+  // Sem internet: o dispenser funciona na propria rede, com a hora deste aparelho
+  html += "<hr style='margin:24px 0'><h3>Sem internet</h3>";
+  html += "<p>Use o dispenser na rede dele mesmo (ZeloPlus-Config). A hora vem deste aparelho. Os avisos do Telegram ficam desligados.</p>";
+  html += "<form action='/modo-local' method='POST' onsubmit=\"this.epoch.value=Math.floor(Date.now()/1000)\">";
+  html += "<input type='hidden' name='epoch' value=''>";
+  html += "<button type='submit' style='width:100%;padding:12px;background:#16a34a;color:white;border:none;border-radius:6px;font-size:16px'>Usar sem internet</button>";
   html += "</form>";
   html += "</body></html>";
 
@@ -815,12 +838,18 @@ void handleConfigRoot() {
 }
 
 void handleConectar() {
-  if (!server.hasArg("ssid")) {
-    server.send(400, "text/plain", "Dados incompletos");
+  String ssid = server.arg("ssid_manual");
+  ssid.trim();
+  if (ssid == "") {
+    ssid = server.arg("ssid");
+  }
+  if (ssid == "") {
+    configErro = "Escolha uma rede da lista ou digite o nome dela.";
+    server.sendHeader("Location", "/");
+    server.send(303);
     return;
   }
 
-  String ssid = server.arg("ssid");
   String senha = server.arg("senha");
 
   lcd.clear();
@@ -860,9 +889,44 @@ void handleCaptivePortal() {
   server.send(302, "text/plain", "");
 }
 
+void handleRoot();
+void iniciarModoNormal();
+
+// O endereco "/" mostra a configuracao ou, depois de "Usar sem internet", a
+// pagina do dispenser.
+void handleInicio() {
+  if (modoConfig) {
+    handleConfigRoot();
+  } else {
+    handleRoot();
+  }
+}
+
+// "Usar sem internet": acerta o relogio com a hora do celular e liga o modo
+// normal, mantendo a rede ZeloPlus-Config no ar.
+void handleModoLocal() {
+  uint32_t segundos = strtoul(server.arg("epoch").c_str(), nullptr, 10);
+  if (segundos >= HORA_MINIMA_VALIDA) {
+    struct timeval agora = { (time_t)segundos, 0 };
+    settimeofday(&agora, nullptr);
+    if (rtcPresente) rtc.adjust(DateTime(segundos));
+  } else if (!horaDoRtc) {
+    configErro = "Nao foi possivel ler a hora deste aparelho. Tente novamente.";
+    server.sendHeader("Location", "/");
+    server.send(303);
+    return;
+  }
+
+  modoLocal = true;
+  server.sendHeader("Location", "/");
+  server.send(303);
+  iniciarModoNormal();
+}
+
 void iniciarModoConfig() {
   modoConfig = true;
 
+  WiFi.disconnect();  // para de tentar a rede salva, senao a busca de redes falha
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   WiFi.softAP("ZeloPlus-Config");
@@ -875,8 +939,9 @@ void iniciarModoConfig() {
   lcd.setCursor(0, 1);
   lcd.print("ZeloPlus-Config");
 
-  server.on("/", handleConfigRoot);
+  server.on("/", handleInicio);
   server.on("/conectar", HTTP_POST, handleConectar);
+  server.on("/modo-local", HTTP_POST, handleModoLocal);
 
   server.on("/generate_204", handleCaptivePortal);
   server.on("/gen_204", handleCaptivePortal);
@@ -1091,6 +1156,10 @@ void handleRoot() {
   html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
   html += "<title>Zelo+</title><style>" + String(CSS_PAGINA) + "</style></head><body>";
   html += "<h1>Zelo+</h1>";
+
+  if (modoLocal) {
+    html += "<div class='aviso'>&#128246; Modo sem internet: o dispenser funciona na rede ZeloPlus-Config e os avisos pelo Telegram ficam desligados.</div>";
+  }
 
   if (pendente && cuidador.nome != "") {
     html += "<div class='aviso'>&#9888;&#65039; Os avisos pelo Telegram ainda não estão prontos";
@@ -1679,8 +1748,21 @@ void atualizarLCDRelogio() {
   if (millis() - ultimaAtualizacao < 1000) return;
   ultimaAtualizacao = millis();
 
+  // Hora desconhecida (sem internet e sem DS3231): os alarmes nao disparam.
+  // O LCD pede o acerto e o LED pisca, para ninguem achar que esta tudo normal.
+  static bool avisoHoraAtivo = false;
   struct tm timeinfo;
-  if (!getLocalTime(&timeinfo, 10)) return;
+  if (!getLocalTime(&timeinfo, 10)) {
+    avisoHoraAtivo = true;
+    escreverLinhaLCD(0, "Acerte a hora");
+    escreverLinhaLCD(1, "pelo celular");
+    digitalWrite(LED_PIN, digitalRead(LED_PIN) == HIGH ? LOW : HIGH);
+    return;
+  }
+  if (avisoHoraAtivo) {
+    avisoHoraAtivo = false;
+    digitalWrite(LED_PIN, LOW);
+  }
 
   // Linha 1: hora e minuto, centralizados.
   char horaBuffer[6];
@@ -1762,6 +1844,7 @@ void manterWiFi() {
     Serial.println(WiFi.localIP());
   }
   estavaConectado = conectado;
+  if (modoLocal) return;  // na rede propria, nao ha rede externa para tentar
   if (conectado || millis() - ultimaTentativa < 30000) return;
   ultimaTentativa = millis();
   WiFi.reconnect();
@@ -1774,7 +1857,12 @@ void iniciarModoNormal() {
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
   lcd.clear();
-  if (WiFi.status() == WL_CONNECTED) {
+  if (modoLocal) {
+    lcd.print("ZeloPlus-Config");
+    lcd.setCursor(0, 1);
+    lcd.print(apIP);
+    Serial.println("Sem internet: rede ZeloPlus-Config, acesse http://192.168.4.1");
+  } else if (WiFi.status() == WL_CONNECTED) {
     lcd.print("IP do sistema:");
     lcd.setCursor(0, 1);
     lcd.print(WiFi.localIP());
@@ -1798,7 +1886,9 @@ void iniciarModoNormal() {
   server.on("/historico.csv", handleHistoricoCSV);
   server.on("/limpar-historico", HTTP_POST, handleLimparHistorico);
   server.on("/trocar-wifi", handleTrocarWifi);
-  server.begin();
+  if (!modoLocal) {
+    server.begin();  // no modo sem internet o servidor ja esta no ar
+  }
 }
 
 void setup() {
@@ -1835,6 +1925,14 @@ void setup() {
   String ssidSalvo = preferences.getString("ssid", "");
   String senhaSalva = preferences.getString("pass", "");
 
+  // Botao apertado ao ligar: vai direto para a configuracao (rede ZeloPlus-Config)
+  bool forcarConfig = (digitalRead(BUTTON_PIN) == LOW);
+
+  if (forcarConfig) {
+    iniciarModoConfig();
+    return;
+  }
+
   if (ssidSalvo != "") {
     lcd.clear();
     lcd.print("Conectando...");
@@ -1858,7 +1956,7 @@ void setup() {
 }
 
 void loop() {
-  if (modoConfig) {
+  if (modoConfig || modoLocal) {
     dnsServer.processNextRequest();
   }
   server.handleClient();
