@@ -85,7 +85,9 @@ Medicamento medicamentos[NUM_COMPARTIMENTOS];
 Contato cuidador;
 Contato familiares[MAX_FAMILIARES];
 String tokenTelegram = ""; // token do bot, criado pelo cuidador no @BotFather
-String chaveIA = "";       // chave da API da Anthropic (leitura da caixa por foto)
+String chaveIA = "";       // chave da API do Gemini (leitura da caixa por foto)
+const char* MODELO_IA_PADRAO = "gemini-3.5-flash";
+String modeloIA = MODELO_IA_PADRAO; // modelo do Gemini usado na leitura
 int ultimoMinutoChecado = -1;
 
 const unsigned long TEMPO_PORTA_ABERTA = 3UL * 60UL * 1000UL;
@@ -482,6 +484,7 @@ void salvarCadastro() {
 
   prefsCadastro.putString("tg_token", tokenTelegram);
   prefsCadastro.putString("ia_chave", chaveIA);
+  prefsCadastro.putString("ia_modelo", modeloIA);
   salvarContato("cuid", cuidador);
   for (int i = 0; i < MAX_FAMILIARES; i++) {
     salvarContato(prefixoFamiliar(i).c_str(), familiares[i]);
@@ -517,6 +520,7 @@ void carregarCadastro() {
 
   tokenTelegram = prefsCadastro.getString("tg_token", "");
   chaveIA = prefsCadastro.getString("ia_chave", "");
+  modeloIA = prefsCadastro.getString("ia_modelo", MODELO_IA_PADRAO);
   carregarContato("cuid", cuidador);
   for (int i = 0; i < MAX_FAMILIARES; i++) {
     carregarContato(prefixoFamiliar(i).c_str(), familiares[i]);
@@ -1160,16 +1164,18 @@ String blocoIA() {
   html += chaveIA != "" ? "<span class='ok'>configurada &#10003;</span>" : "<span class='falta'>falta a chave da IA</span>";
   html += "</small></span><span class='seta'></span></summary><div class='conteudo'>";
   html += "<p class='suave'>No cadastro, o botão <b>Foto da caixa do remédio</b> lê o nome e a concentração impressos na embalagem ";
-  html += "usando inteligência artificial (Claude, da Anthropic). O nome só é preenchido depois da sua confirmação. Precisa de internet.</p>";
-  html += "<label>Chave da API da Anthropic:</label>";
+  html += "usando inteligência artificial (Gemini, do Google). O nome só é preenchido depois da sua confirmação. Precisa de internet.</p>";
+  html += "<label>Chave da API do Gemini:</label>";
   html += "<input type='password' form='cadastro' name='ia_chave' autocomplete='off' placeholder='";
-  html += chaveIA != "" ? "(salva &mdash; deixe em branco para manter)" : "cole aqui a chave (começa com sk-ant-)";
+  html += chaveIA != "" ? "(salva &mdash; deixe em branco para manter)" : "cole aqui a chave criada no Google AI Studio";
   html += "'>";
+  html += "<label>Modelo:</label>";
+  html += "<input type='text' form='cadastro' name='ia_modelo' autocomplete='off' autocapitalize='off' value='" + escaparHTML(modeloIA) + "'>";
   html += "<button type='submit' form='cadastro' class='principal'>&#128190; Salvar</button>";
   html += "<details class='caixa'><summary>&#10067; Como obter a chave<span class='seta'></span></summary><div class='conteudo'><ol>";
-  html += "<li>Acesse <b>platform.claude.com</b>, crie uma conta e cadastre um meio de pagamento (a cobrança é por uso).</li>";
-  html += "<li>Em <b>API Keys</b>, crie uma chave e copie.</li>";
-  html += "<li>Cole a chave acima e toque em <b>Salvar</b>.</li></ol></div></details>";
+  html += "<li>Acesse <b>aistudio.google.com</b> com uma conta Google.</li>";
+  html += "<li>Toque em <b>Get API key</b> e crie uma chave (a camada gratuita não pede cartão).</li>";
+  html += "<li>Cole a chave acima e toque em <b>Salvar</b>. O campo Modelo já vem preenchido.</li></ol></div></details>";
   html += "</div></details>";
   return html;
 }
@@ -1667,27 +1673,23 @@ class CorpoPedidoIA : public Stream {
   size_t pos = 0;
 };
 
-// Instrucoes e formato da resposta pedidos a IA (Claude). A resposta vem em JSON
-// com os campos do esquema abaixo (saida estruturada).
+// Instrucoes e formato da resposta pedidos a IA (Gemini). A foto vai entre o
+// inicio e o fim; a resposta vem em JSON com os campos do esquema (saida estruturada).
 const char* PEDIDO_IA_INICIO =
-    "{\"model\":\"claude-opus-5-5\",\"max_tokens\":2000,\"fallbacks\":\"default\","
-    "\"output_config\":{\"effort\":\"low\",\"format\":{\"type\":\"json_schema\",\"schema\":{"
-    "\"type\":\"object\",\"properties\":{"
-    "\"nome\":{\"type\":\"string\"},\"concentracao\":{\"type\":\"string\"},"
-    "\"codigo_barras\":{\"type\":\"string\"},\"legivel\":{\"type\":\"boolean\"}},"
-    "\"required\":[\"nome\",\"concentracao\",\"codigo_barras\",\"legivel\"],"
-    "\"additionalProperties\":false}}},"
-    "\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"image\","
-    "\"source\":{\"type\":\"base64\",\"media_type\":\"image/jpeg\",\"data\":\"";
+    "{\"contents\":[{\"parts\":[{\"inline_data\":{\"mime_type\":\"image/jpeg\",\"data\":\"";
 const char* PEDIDO_IA_FIM =
-    "\"}},{\"type\":\"text\",\"text\":\""
+    "\"}},{\"text\":\""
     "A imagem mostra a embalagem de um medicamento, fotografada por um cuidador para cadastrar o remédio "
     "num dispenser. Transcreva exatamente como impresso: em nome, o nome do medicamento (nome comercial ou "
     "princípio ativo, o que estiver em destaque); em concentracao, a dosagem (ex.: 50 mg); em codigo_barras, "
     "os dígitos impressos sob o código de barras, se estiverem visíveis. Não deduza o nome a partir do código "
     "de barras nem de outras informações: se o nome não estiver legível na foto, deixe nome vazio e legivel "
     "como false. Campos que não aparecem na foto ficam vazios."
-    "\"}]}]}";
+    "\"}]}],\"generationConfig\":{\"responseMimeType\":\"application/json\",\"responseSchema\":{"
+    "\"type\":\"OBJECT\",\"properties\":{"
+    "\"nome\":{\"type\":\"STRING\"},\"concentracao\":{\"type\":\"STRING\"},"
+    "\"codigo_barras\":{\"type\":\"STRING\"},\"legivel\":{\"type\":\"BOOLEAN\"}},"
+    "\"required\":[\"nome\",\"concentracao\",\"codigo_barras\",\"legivel\"]}}}";
 
 void responderLeitura(const String& erro, const String& nome = "", const String& concentracao = "",
                       const String& codigo = "") {
@@ -1742,11 +1744,10 @@ void handleLerCaixa() {
   http.setTimeout(40000);
   String resposta;
   int codigo = -1;
-  if (http.begin(cliente, "https://api.anthropic.com/v1/messages")) {
+  String endereco = "https://generativelanguage.googleapis.com/v1beta/models/" + modeloIA + ":generateContent";
+  if (http.begin(cliente, endereco)) {
     http.addHeader("Content-Type", "application/json");
-    http.addHeader("x-api-key", chaveIA);
-    http.addHeader("anthropic-version", "2023-06-01");
-    http.addHeader("anthropic-beta", "server-side-fallback-2026-07-01");
+    http.addHeader("x-goog-api-key", chaveIA);
     codigo = http.sendRequest("POST", &corpo, corpo.tamanho());
     if (codigo > 0) resposta = http.getString();
     http.end();
@@ -1756,11 +1757,23 @@ void handleLerCaixa() {
   Serial.print("IA (leitura da caixa): HTTP ");
   Serial.println(codigo);
 
+  if (codigo == 400 && resposta.indexOf("API_KEY_INVALID") >= 0) {
+    responderLeitura("Chave da IA recusada. Confira a chave no quadro Leitura da caixa por foto.");
+    return;
+  }
   if (codigo == 401 || codigo == 403) {
     responderLeitura("Chave da IA recusada. Confira a chave no quadro Leitura da caixa por foto.");
     return;
   }
-  if (codigo == 429 || codigo == 529 || codigo >= 500) {
+  if (codigo == 404) {
+    responderLeitura("Modelo de IA não encontrado (" + modeloIA + "). Confira o nome do modelo no Google AI Studio.");
+    return;
+  }
+  if (codigo == 429) {
+    responderLeitura("Limite de uso da IA atingido por agora. Tente de novo mais tarde.");
+    return;
+  }
+  if (codigo >= 500) {
     responderLeitura("O serviço de IA está ocupado. Tente de novo em instantes.");
     return;
   }
@@ -1770,20 +1783,22 @@ void handleLerCaixa() {
   }
 
   JsonDocument filtro;
-  filtro["stop_reason"] = true;
-  filtro["content"][0]["type"] = true;
-  filtro["content"][0]["text"] = true;
+  filtro["candidates"][0]["finishReason"] = true;
+  filtro["candidates"][0]["content"]["parts"][0]["text"] = true;
+  filtro["candidates"][0]["content"]["parts"][0]["thought"] = true;
   JsonDocument doc;
   if (deserializeJson(doc, resposta, DeserializationOption::Filter(filtro))) {
     responderLeitura("Resposta da IA não reconhecida. Tente de novo.");
     return;
   }
+  JsonObject candidato = doc["candidates"][0];
   String texto = "";
-  for (JsonObject bloco : doc["content"].as<JsonArray>()) {
-    if (bloco["type"] == "text") texto += bloco["text"].as<String>();
+  for (JsonObject parte : candidato["content"]["parts"].as<JsonArray>()) {
+    if (parte["thought"] | false) continue; // resumo do raciocinio, nao e a resposta
+    texto += parte["text"] | "";
   }
   JsonDocument leitura;
-  if (doc["stop_reason"] != "end_turn" || texto == "" || deserializeJson(leitura, texto)) {
+  if (candidato["finishReason"] != "STOP" || texto == "" || deserializeJson(leitura, texto)) {
     responderLeitura("Não foi possível ler a caixa. Tente outra foto.");
     return;
   }
@@ -1932,6 +1947,16 @@ void handleSalvar() {
   String novaChave = server.arg("ia_chave");
   novaChave.trim();
   if (novaChave != "") chaveIA = novaChave; // em branco = mantem a chave salva
+
+  // Nome do modelo: so letras minusculas, numeros, ponto e hifen (vai na URL).
+  String novoModelo = server.arg("ia_modelo");
+  novoModelo.trim();
+  bool modeloValido = novoModelo.length() > 0 && novoModelo.length() <= 60;
+  for (unsigned int i = 0; i < novoModelo.length() && modeloValido; i++) {
+    char ch = novoModelo[i];
+    modeloValido = (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '.' || ch == '-';
+  }
+  if (modeloValido) modeloIA = novoModelo;
 
   nomePaciente = server.arg("paciente");
   nomePaciente.trim();

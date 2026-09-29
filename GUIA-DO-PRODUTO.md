@@ -86,6 +86,7 @@
   - [H4. Quadro-resumo dos impactos](#h4-quadro-resumo-dos-impactos)
   - [H5. Impactos gerais da mudança](#h5-impactos-gerais-da-mudança)
   - [H6. Etapas de implantação](#h6-etapas-de-implantação)
+  - [H7. Modelo próprio de IA (etapa futura)](#h7-modelo-próprio-de-ia-etapa-futura)
 - [Referências](#referências)
 
 ---
@@ -257,7 +258,7 @@ familiaridade com tecnologia:
 | **Trocar rede Wi-Fi** | Link (pede confirmação) | — | 4 |
 | **Relógio DS3231** (rodapé) | "conectado" ou "não instalado" | — | 19 |
 | **Avisos pelo Telegram** | "configurado ✓" ou "falta configurar" | Token, "Buscar IDs", ID de cada pessoa, teste | 15 |
-| **Leitura da caixa por foto** | "configurada ✓" ou "falta a chave da IA" | Chave da API da Anthropic e como obtê-la | 20 |
+| **Leitura da caixa por foto** | "configurada ✓" ou "falta a chave da IA" | Chave da API do Gemini, nome do modelo e como obter a chave | 20 |
 
 ---
 
@@ -1696,7 +1697,7 @@ As mensagens do Serial Monitor de cada situação estão na [E9](#e9-módulo-de-
 
 **O que faz:** no cadastro, o botão **"Foto da caixa do remédio"** abre a câmera do
 celular. A foto é enviada ao dispenser, que consulta um modelo de inteligência
-artificial com visão (Claude, da Anthropic). O modelo lê o **nome** e a
+artificial com visão (Gemini, do Google). O modelo lê o **nome** e a
 **concentração** impressos na embalagem e, se estiverem visíveis, os dígitos do
 **código de barras**. O cuidador confere o resultado e só então o nome é preenchido.
 É a primeira funcionalidade da [Parte H](#parte-h--evolução-do-produto-funcionalidades-com-inteligência-artificial)
@@ -1761,23 +1762,28 @@ void receberFoto() {
 
 **3. O pedido à IA**
 
-O pedido segue a API de mensagens da Anthropic. A classe `CorpoPedidoIA` envia, em
-sequência, o início do JSON, a foto convertida em base64 no momento do envio e o fim do
-JSON:
+O pedido segue a API do Gemini, método `generateContent` (GOOGLE, 2026a). A classe `CorpoPedidoIA`
+envia, em sequência, o início do JSON, a foto convertida em base64 no momento do envio
+e o fim do JSON, que traz as instruções e o formato da resposta:
 
 ```cpp
 const char* PEDIDO_IA_INICIO =
-    "{\"model\":\"claude-opus-5-5\",\"max_tokens\":2000,\"fallbacks\":\"default\","
-    "\"output_config\":{\"effort\":\"low\",\"format\":{\"type\":\"json_schema\",\"schema\":{"
-    ...
+    "{\"contents\":[{\"parts\":[{\"inline_data\":{\"mime_type\":\"image/jpeg\",\"data\":\"";
+```
+
+```cpp
+  String endereco = "https://generativelanguage.googleapis.com/v1beta/models/" + modeloIA + ":generateContent";
+  if (http.begin(cliente, endereco)) {
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("x-goog-api-key", chaveIA);
 ```
 
 | Parâmetro | Função |
 |---|---|
-| `model` | Modelo de IA com visão (Claude Opus 5.5). |
-| `effort: "low"` | Pouco raciocínio: a tarefa é só ler a embalagem, o que reduz tempo e custo. |
-| `format: json_schema` | Obriga a resposta a vir em JSON com os campos `nome`, `concentracao`, `codigo_barras` e `legivel`. |
-| `fallbacks: "default"` | Se o modelo recusar o pedido, outro modelo da Anthropic responde no lugar. |
+| `modeloIA` | Modelo do Gemini com visão; o padrão é `gemini-3.5-flash`, e o nome pode ser trocado na página sem gravar o programa de novo. |
+| `inline_data` | A foto da embalagem, em JPEG codificado em base64. |
+| `responseMimeType` e `responseSchema` | Obrigam a resposta a vir em JSON com os campos `nome`, `concentracao`, `codigo_barras` e `legivel`. |
+| `x-goog-api-key` | Chave de acesso criada no Google AI Studio. |
 
 As instruções enviadas junto com a foto pedem ao modelo que **transcreva exatamente o
 que está impresso** e que **não deduza o nome a partir do código de barras**. Se o nome
@@ -1804,26 +1810,33 @@ isso a leitura usa o nome impresso na embalagem.
 
 **5. A chave da IA**
 
-A chave de acesso da Anthropic é cadastrada no quadro **"Leitura da caixa por foto"**,
-no fim da página, do mesmo jeito que o token do Telegram (Passo 15): fica na memória do
-dispenser e nunca é mostrada na página.
+A chave de acesso do Gemini é criada gratuitamente no **Google AI Studio**
+(aistudio.google.com, opção "Get API key") e cadastrada no quadro **"Leitura da caixa
+por foto"**, no fim da página, do mesmo jeito que o token do Telegram (Passo 15): fica
+na memória do dispenser e nunca é mostrada na página. No mesmo quadro fica o nome do
+modelo usado.
 
 | Mensagem na página | Significado |
 |---|---|
 | "Cadastre antes a chave da IA..." | A chave ainda não foi salva. |
 | "Sem internet: a leitura por foto precisa de conexão..." | O dispenser está sem internet (por exemplo, na rede própria). |
 | "Chave da IA recusada..." | Chave inválida ou revogada. |
-| "O serviço de IA está ocupado..." | Limite de uso ou instabilidade momentânea; basta repetir. |
+| "Modelo de IA não encontrado..." | O nome do modelo não existe mais; conferir no Google AI Studio e corrigir no quadro. |
+| "Limite de uso da IA atingido por agora..." | Limite da camada gratuita alcançado; basta tentar mais tarde. |
+| "O serviço de IA está ocupado..." | Instabilidade momentânea; basta repetir. |
 | "Código de barras lido (...), mas o nome do remédio não aparece na foto." | Fotografar a frente da caixa. |
 
-**Custo de uso:** a foto reduzida (até 900 × 675 px) equivale a cerca de 825 *tokens*
-de imagem (ANTHROPIC, 2026b). Somando as instruções e a resposta, cada leitura consome
-na ordem de 1.300 *tokens* de entrada e algumas centenas de saída, o que resulta em
-aproximadamente **US$ 0,01 a 0,02 por foto** pelos preços do modelo (ANTHROPIC, 2026a).
-A leitura acontece só no cadastro e na troca de remédio, algumas vezes por mês.
+**Custo de uso:** a leitura usa a **camada gratuita** da API do Gemini, que não exige
+cartão de crédito e tem limites de pedidos por minuto e por dia (GOOGLE, 2026b). Como a
+leitura acontece só no cadastro e na troca de remédio, algumas vezes por mês, o uso fica
+muito abaixo desses limites e o custo é zero.
 
 **Privacidade:** apenas a foto da embalagem é enviada; o nome do paciente e os horários
-não saem do dispenser (princípio de [H1](#h1-princípios-de-projeto)).
+não saem do dispenser (princípio de [H1](#h1-princípios-de-projeto)). Nos termos da
+camada gratuita, o conteúdo enviado pode ser usado pelo Google para melhorar seus
+produtos (GOOGLE, 2026b). Por isso a foto deve mostrar só a embalagem, sem receitas,
+nomes ou documentos. Numa versão comercial, a camada paga, cujo conteúdo não é usado
+dessa forma, ou um modelo próprio (H7) evitam essa limitação.
 
 **Ensaios da leitura por foto:**
 
@@ -2738,6 +2751,27 @@ comercial, essa chamada passa a ser feita pelo serviço na nuvem.
 | **2ª** | H3.4 e H3.7 | Grande ganho de praticidade, aproveitando o bot do Telegram já existente. |
 | **3ª** | H3.3, H3.5, H3.8, H3.9 e H3.10 | Alto valor, mas exigem validação cuidadosa dos alertas e mais tempo de histórico. |
 | **Com hardware** | H3.11 | Único item com compra de componente; maior impacto na acessibilidade do paciente. |
+| **Futura (cerca de 12 meses)** | H7 | Modelo de IA próprio, desenvolvido pela equipe, para reduzir a dependência de serviços comerciais. |
+
+## H7. Modelo próprio de IA (etapa futura)
+
+As funcionalidades de leitura e interpretação (H3.1 a H3.5 e H3.10) usam, nesta fase,
+modelos comerciais acessados pela internet. Como etapa futura, com horizonte de cerca de
+um ano, propõe-se o desenvolvimento de um **modelo de IA próprio**, simples e
+especializado nas tarefas do Zelo+, para que o produto funcione sem depender desses
+serviços.
+
+| Aspecto | Proposta |
+|---|---|
+| **Objetivo** | Ler o nome e a concentração na embalagem e identificar o medicamento sem serviços de terceiros. |
+| **Abordagem** | Em vez de um modelo generativo de grande porte, um conjunto de etapas simples: localização do texto na foto, reconhecimento dos caracteres (OCR) e comparação aproximada com os nomes da lista da CMED, que corrige erros de leitura. |
+| **Onde roda** | No celular do cuidador (dentro do navegador) ou num pequeno servidor local. O ESP32 não tem capacidade para executar o modelo (H2), mas continua responsável pela rotina de doses. |
+| **Dados** | Base de fotos de embalagens reunida pela equipe e rotulada com nome e concentração, sem dados de pacientes. |
+| **Avaliação** | Taxa de acerto do nome e da concentração num mesmo conjunto de fotos, comparada à do modelo comercial, usado como referência (linha de base). |
+| **Ganhos** | Custo de uso zero, nenhuma imagem enviada a terceiros (privacidade), independência de limites e mudanças de serviços externos, e domínio da tecnologia pela equipe. |
+
+O lembrete adaptativo (H3.8) já segue essa linha: é um modelo estatístico próprio, leve
+o bastante para rodar no ESP32.
 
 ---
 
@@ -2758,10 +2792,6 @@ AGÊNCIA NACIONAL DE VIGILÂNCIA SANITÁRIA (ANVISA). Câmara de Regulação do 
 AMAZON.COM.BR. **Display LCD 16x2 com módulo I2C PCF8574**. Disponível em: <https://www.amazon.com.br/Display-PCF8574-Endere%C3%A7o-Controlador-80x35mm/dp/B0H346LHKM>. Acesso em: 27 set. 2026.
 
 AMAZON.COM.BR. **Placa breakout USB tipo C fêmea, 6 pinos**. Disponível em: <https://www.amazon.com.br/naughtystarts-pe%C3%A7as-breakout-conector-direito/dp/B0B19TP2MX>. Acesso em: 27 set. 2026.
-
-ANTHROPIC. **Pricing**. San Francisco: Anthropic, 2026a. Disponível em: <https://platform.claude.com/docs/en/about-claude/pricing>. Acesso em: 29 set. 2026.
-
-ANTHROPIC. **Vision**. San Francisco: Anthropic, 2026b. Disponível em: <https://platform.claude.com/docs/en/build-with-claude/vision>. Acesso em: 29 set. 2026.
 
 BAÚ DA ELETRÔNICA. **Rolo de solda estanho 500 g, 0,5 mm, Cobix**. Disponível em: <https://www.baudaeletronica.com.br/produto/rolo-de-solda-estanho-500g-05mm-cobix.html>. Acesso em: 27 set. 2026.
 
@@ -2790,6 +2820,10 @@ FERMARC. **Placa de circuito perfurada face simples, 7 × 9 cm**. Disponível em
 FERRO DE SOLDA PROFISSIONAL. **Ferros de solda com controle de temperatura**. Disponível em: <https://ferrodesoldaprofissional.com.br/ferro-de-solda/>. Acesso em: 27 set. 2026.
 
 GALPÃO DAS MÁQUINAS. **Como calcular o custo por peça na impressão 3D**. Disponível em: <https://galpaodasmaquinas.com.br/blog/plastico/custo-peca-impressora-3d/>. Acesso em: 27 set. 2026.
+
+GOOGLE. **Gemini API: generating content**. Mountain View: Google, 2026a. Disponível em: <https://ai.google.dev/api/generate-content>. Acesso em: 29 set. 2026.
+
+GOOGLE. **Gemini API: billing**. Mountain View: Google, 2026b. Disponível em: <https://ai.google.dev/gemini-api/docs/billing>. Acesso em: 29 set. 2026.
 
 HESTORE. **LX2-BUPS-5V: boost charging module, UPS function, 2 × 18650, 15 W, 5 V, 3 A, USB-C**. Disponível em: <https://www.hestore.eu/en/prod_10048959.html>. Acesso em: 28 set. 2026.
 

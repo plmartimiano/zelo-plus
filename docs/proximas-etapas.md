@@ -67,13 +67,21 @@ I2C** (endereço 0x3C).
 
 ## 4. Já no código, falta validar no hardware
 
-- Leitura da caixa do remédio por foto (IA, Claude Opus 5.5), Passo 20 do guia.
-  Exige a chave da API da Anthropic, cadastrada no quadro "Leitura da caixa por
-  foto". Custo estimado de US$ 0,01–0,02 por foto. A consulta do código de barras à
-  CMED fica para depois.
+- Leitura da caixa do remédio por foto (IA, Gemini, camada gratuita), Passo 20 do
+  guia. Exige a chave criada no Google AI Studio, cadastrada no quadro "Leitura da
+  caixa por foto". O modelo padrão é `gemini-3.5-flash` e pode ser trocado na página.
+  A consulta do código de barras à CMED fica para depois.
 
 - Correção da lista de redes vazia fora de casa.
 - Botão "Usar sem internet".
 - Botão apertado ao ligar leva à configuração.
 - Aviso "Acerte a hora".
 - Pendentes de ensaio: abastecimento guiado, ç/ã no visor, DS3231 e `MODO_TESTE 0`.
+
+## 5. Modelo próprio de IA — etapa futura (cerca de 12 meses)
+
+- O curso é de Inteligência Artificial: a meta é um modelo simples e próprio, para o
+  Zelo+ não depender de modelos comerciais.
+- Registrado no guia como H7: localização do texto, OCR e comparação com a lista da
+  CMED; roda no celular ou num servidor local; avaliado contra o Gemini como linha de
+  base.
