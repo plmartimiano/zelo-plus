@@ -247,6 +247,7 @@ familiaridade com tecnologia:
 
 | Bloco | Fechado mostra | Aberto mostra | Passo |
 |---|---|---|---|
+| **Aviso de sem internet** (só na rede própria) | Motivo, nome e senha da rede, "Tentar conectar novamente", "Trocar rede Wi-Fi" | — | 4 |
 | **Aviso amarelo** (só se faltar algo) | Quem ainda não recebe avisos + "Configurar agora" | — | 7 |
 | **Paciente** | Nome do paciente | Campo para editar o nome | 7 |
 | **Remédios 1, 2 e 3** | Número, cor, remédio e horários | Nome, "Foto da caixa do remédio", horários (até 6), dica de onde colocar, "Esvaziar" | 7, 14, 20 |
@@ -526,21 +527,20 @@ Depois, carrega a memória e decide o modo de Wi-Fi:
 ```cpp
   if (WiFi.status() == WL_CONNECTED) {
     iniciarModoNormal();
-  } else if (ssidSalvo != "" && horaDoRtc) {
-    // Rede conhecida fora do ar, mas o DS3231 deu a hora: os alarmes funcionam
-    // e o Wi-Fi continua sendo tentado em segundo plano (manterWiFi).
-    iniciarModoNormal();
+  } else if (ssidSalvo != "") {
+    // Rede salva fora do ar, fora de alcance ou com senha recusada: o dispenser
+    // abre a rede propria e continua funcionando (hora pelo DS3231 ou pelo celular).
+    iniciarModoLocal(descreverFalhaWiFi(WiFi.status()));
   } else {
     iniciarModoConfig();
   }
 ```
 
 - Se existe rede salva e a conexão funciona → **modo normal** (Passo 5).
-- Se a rede salva **não respondeu**, mas o **DS3231 deu a hora certa** → também modo
-  normal, **sem internet**: os alarmes funcionam e o Wi-Fi é tentado de novo a cada
-  30 s (Passo 19).
-- Nos outros casos (nenhuma rede salva, ou sem internet e sem relógio) → **modo de
-  configuração** (Passo 4).
+- Se existe rede salva, mas ela **não conectou** (fora do ar, fora de alcance, só em
+  5 GHz ou com a senha recusada) → **rede própria automática**: o dispenser abre a rede
+  `ZeloPlus` e continua funcionando sem internet (Passo 4).
+- Se **nenhuma rede foi salva** → **modo de configuração** (Passo 4).
 
 ## Passo 4 — Wi-Fi sem senha no código (captive portal)
 
@@ -614,6 +614,84 @@ reposição. Os avisos pelo **Telegram** não são enviados, pois dependem de in
 Sem o DS3231, a hora se perde ao desligar o dispenser e precisa ser informada de novo
 pelo mesmo botão.
 
+**Rede própria automática.** Quando já existe uma rede salva, mas ela não conecta ao
+ligar, o dispenser não para: ele abre sozinho a rede **`ZeloPlus`**, protegida pela
+senha **`zelo1234`**, e segue no modo normal. O motivo da falha fica registrado para o
+aviso da página:
+
+```cpp
+String descreverFalhaWiFi(wl_status_t situacao) {
+  if (situacao == WL_NO_SSID_AVAIL) {
+    return "a rede " + redeSalva + " não foi encontrada (o dispenser só enxerga redes de 2,4 GHz)";
+  }
+  if (situacao == WL_CONNECT_FAILED) {
+    return "a rede " + redeSalva + " recusou a conexão (confira a senha)";
+  }
+  return "não foi possível conectar à rede " + redeSalva;
+}
+```
+
+```cpp
+void iniciarModoLocal(const String& motivo) {
+  modoLocal = true;
+  nomeRedeLocal = NOME_REDE_LOCAL;
+  motivoSemInternet = motivo;
+  WiFi.setAutoReconnect(false); // novas tentativas so no horario certo (manterRedeLocal)
+  WiFi.disconnect();
+  WiFi.mode(WIFI_AP_STA);
+  WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+  WiFi.softAP(NOME_REDE_LOCAL, SENHA_REDE_LOCAL);
+  dnsServer.start(DNS_PORT, "*", apIP);
+  registrarPortalCativo();
+  Serial.println("Sem internet: " + motivo);
+  iniciarModoNormal();
+}
+```
+
+- O LCD mostra `Rede ZeloPlus` / `senha zelo1234` e, em seguida, `Pagina:` /
+  `192.168.4.1`. Ao conectar o celular à rede `ZeloPlus`, a página do dispenser abre
+  sozinha.
+- No topo da página aparece um **aviso** com o motivo, o nome e a senha da rede e o
+  botão **"Tentar conectar novamente"**, além do link "Trocar rede Wi-Fi".
+- Se o dispenser não souber a hora (sem internet e sem DS3231), a página envia a hora
+  do celular assim que é aberta (rota `/acertar-hora`), e os alarmes passam a
+  funcionar.
+
+**Novas tentativas.** Na rede própria, o dispenser tenta a rede salva **a cada 10
+minutos**, sem travar o programa:
+
+```cpp
+void manterRedeLocal() {
+  static unsigned long ultimaTentativaLocal = millis();
+  if (tentandoRede) {
+    wl_status_t situacao = WiFi.status();
+    if (situacao == WL_CONNECTED) {
+      sairModoLocal();
+      return;
+    }
+    if (millis() - tentativaIniciadaEm < DURACAO_TENTATIVA) return;
+    tentandoRede = false;
+    motivoSemInternet = descreverFalhaWiFi(situacao);
+    WiFi.disconnect(); // so a conexao com a rede salva; a rede propria continua
+    ultimaTentativaLocal = millis();
+    Serial.println("Ainda sem internet: " + motivoSemInternet);
+    return;
+  }
+  if (redeSalva == "") return;
+  if (millis() - ultimaTentativaLocal < INTERVALO_NOVA_TENTATIVA) return;
+  if (WiFi.softAPgetStationNum() > 0) return;
+  iniciarTentativaRede();
+}
+```
+
+- `softAPgetStationNum()`: número de aparelhos conectados à rede `ZeloPlus`. A tentativa
+  automática espera ninguém estar conectado, porque o ESP32 tem um único rádio e, ao
+  procurar a rede salva, derrubaria a conexão de quem está usando a página.
+- O botão **"Tentar conectar novamente"** faz a mesma tentativa na hora, avisando antes
+  que a conexão com a rede `ZeloPlus` pode cair.
+- Quando a rede salva conecta (`sairModoLocal`), a rede `ZeloPlus` é desligada, o LCD
+  mostra o novo IP e o Telegram volta a funcionar.
+
 ## Passo 5 — Modo normal: relógio pela internet e rotas da página
 
 **O que faz:** acerta o relógio pela internet, mostra o IP no LCD e diz ao servidor
@@ -636,22 +714,25 @@ const int daylightOffset_sec = 0;
   que acertar a hora. É esse aviso que faz o programa gravar a hora no DS3231
   (Passo 19).
 
-Em seguida o LCD mostra o **IP** da página ou, se o dispenser ligou sem internet
-usando a hora do DS3231, o aviso `Sem internet` / `Hora do relogio`:
+Em seguida o LCD mostra o **IP** da página ou, na rede própria (Passo 4), o nome e a
+senha da rede e o endereço `192.168.4.1`:
 
 ```cpp
   lcd.clear();
-  if (WiFi.status() == WL_CONNECTED) {
+  if (modoLocal) {
+    // Visor: nome e senha da rede propria, depois o endereco da pagina.
+    escreverLinhaLCD(0, "Rede " + nomeRedeLocal);
+    escreverLinhaLCD(1, nomeRedeLocal == NOME_REDE_LOCAL ? "senha " + String(SENHA_REDE_LOCAL) : "sem senha");
+    delay(4000);
+    escreverLinhaLCD(0, "Pagina:");
+    escreverLinhaLCD(1, "192.168.4.1");
+    Serial.println("Sem internet: rede " + nomeRedeLocal + ", acesse http://192.168.4.1");
+  } else {
     lcd.print("IP do sistema:");
     lcd.setCursor(0, 1);
     lcd.print(WiFi.localIP());
     Serial.print("Acesse: http://");
     Serial.println(WiFi.localIP());
-  } else {
-    lcd.print("Sem internet");
-    lcd.setCursor(0, 1);
-    lcd.print("Hora do relogio");
-    Serial.println("Sem internet: alarmes pela hora do DS3231");
   }
 ```
 
@@ -668,8 +749,11 @@ As **rotas** ligam um endereço a uma função:
   server.on("/historico.csv", handleHistoricoCSV);
   server.on("/limpar-historico", HTTP_POST, handleLimparHistorico);
   server.on("/trocar-wifi", handleTrocarWifi);
-  if (!modoLocal) {
-    server.begin();  // no modo sem internet o servidor ja esta no ar
+  server.on("/tentar-wifi", HTTP_POST, handleTentarWifi);
+  server.on("/acertar-hora", HTTP_POST, handleAcertarHora);
+  if (!servidorNoAr) {
+    server.begin();
+    servidorNoAr = true;
   }
 ```
 
@@ -681,6 +765,7 @@ As **rotas** ligam um endereço a uma função:
 | `/esvaziar` | Esvazia um compartimento (Passo 14) |
 | `/testar-mensagens`, `/telegram-ids` | Telegram (Passo 15) |
 | `/ler-caixa` | Leitura da caixa do remédio por foto (Passo 20) |
+| `/tentar-wifi`, `/acertar-hora`, `/trocar-wifi` | Rede própria: nova tentativa, hora pelo celular e troca de rede (Passo 4) |
 | `/historico.csv`, `/limpar-historico` | Histórico (Passo 16) |
 
 ## Passo 6 — Memória permanente (Preferences)
@@ -1500,6 +1585,7 @@ doses:
 | Dose pendente | `15:40` (centralizado) | `Dose pendente!` |
 | Nenhum remédio cadastrado | hora (centralizada) | `Sem remedio` |
 | Hora desconhecida (sem internet e sem DS3231) | `Acerte a hora` | `pelo celular` (LED piscando) |
+| Rede própria ao ligar (Passo 4) | `Rede ZeloPlus` / `Pagina:` | `senha zelo1234` / `192.168.4.1` |
 
 Quando a hora não é conhecida, os alarmes não podem disparar. Para que a situação não
 passe despercebida, a tela de espera pede o acerto e o LED pisca:
@@ -1645,6 +1731,10 @@ void gravarHoraNoRTC() {
 void manterWiFi() {
   static unsigned long ultimaTentativa = 0;
   static bool estavaConectado = true;
+  if (modoLocal) {
+    manterRedeLocal();
+    return;
+  }
   bool conectado = (WiFi.status() == WL_CONNECTED);
   if (conectado && !estavaConectado) {
     Serial.print("Wi-Fi reconectado. Acesse: http://");
@@ -1657,8 +1747,10 @@ void manterWiFi() {
 }
 ```
 
-- Sem internet, tenta a rede salva **a cada 30 s**, sem travar o programa (o alarme
-  continua funcionando enquanto isso).
+- Se a conexão **cair com o dispenser em funcionamento**, tenta a rede salva **a cada
+  30 s**, sem travar o programa (o alarme continua funcionando enquanto isso).
+- Se o dispenser **ligou sem a rede salva**, ele está na rede própria e as tentativas
+  são feitas a cada 10 minutos por `manterRedeLocal()` (Passo 4).
 - Quando conecta, a página volta a abrir **no mesmo IP**, o Telegram volta a funcionar e
   o NTP acerta a hora (e o DS3231 é regravado).
 
@@ -1679,7 +1771,7 @@ No rodapé, abaixo de "Trocar rede Wi-Fi", aparece o estado do módulo:
 | **Sem o módulo** | Segue como antes: hora pela internet. Página: "não instalado". |
 | **Módulo novo** (nunca acertado) | Espera a internet; no primeiro acerto, **grava a hora no módulo**. |
 | **Módulo com hora, com internet** | Usa a hora do módulo na hora; o NTP confere e regrava a cada acerto. |
-| **Módulo com hora, sem internet** | Modo normal **sem internet**: LCD `Sem internet` / `Hora do relogio`; **alarmes funcionam**; Wi-Fi tentado a cada 30 s. |
+| **Módulo com hora, sem internet** | Rede própria `ZeloPlus` (Passo 4) com a hora do módulo: **alarmes funcionam**; rede salva tentada a cada 10 minutos. |
 | **Nenhuma rede cadastrada** | Modo de configuração (Passo 4), como antes. |
 
 As mensagens do Serial Monitor de cada situação estão na [E9](#e9-módulo-de-relógio-ds3231).
@@ -2102,8 +2194,8 @@ dispenser fica ligado.
 | **Falta energia (até ~8–10 h com 1 bateria; ~16–20 h com 2)** | O dispenser **continua funcionando pela bateria**. Os alarmes tocam; o Telegram depende de a internet (roteador) também estar ligada. |
 | **Falta energia por mais tempo** (bateria acaba) | O dispenser desliga. Cadastro, horários e histórico **ficam salvos**; horários que passarem desligado **não tocam** depois. |
 | **Energia volta, com internet** | Liga sozinho, conecta no Wi-Fi, acerta a hora e volta ao normal; a bateria recarrega. |
-| **Energia volta, sem internet — sem o DS3231** | **Sem hora certa, os alarmes não tocam.** O LCD mostra `Acerte a hora` / `pelo celular` e o LED pisca. Os alarmes voltam assim que a hora é acertada pelo celular, na página do dispenser, ou pela internet. |
-| **Energia volta, sem internet — com o DS3231** | Liga com a hora do relógio (`Sem internet` / `Hora do relogio` no LCD): **os alarmes tocam normalmente**. O Wi-Fi é tentado a cada 30 s; o Telegram volta junto com a internet. |
+| **Energia volta, sem internet — sem o DS3231** | O dispenser abre a rede própria `ZeloPlus` (senha `zelo1234`). **Sem hora certa, os alarmes não tocam:** o LCD mostra `Acerte a hora` / `pelo celular` e o LED pisca. Basta conectar o celular à rede `ZeloPlus` e abrir a página: a hora do celular é enviada e os alarmes voltam. A rede salva é tentada a cada 10 minutos. |
+| **Energia volta, sem internet — com o DS3231** | O dispenser abre a rede própria `ZeloPlus` com a hora do relógio: **os alarmes tocam normalmente**. A rede salva é tentada a cada 10 minutos; o Telegram volta junto com a internet. |
 | **Internet cai, energia ok** | O relógio interno continua contando: **os alarmes tocam normalmente**. Só as mensagens do Telegram não saem. |
 
 ## E9. Módulo de relógio DS3231
@@ -2166,7 +2258,8 @@ de 3V3.
 2. **Com internet:** a cada acerto de hora pelo NTP (ao conectar e depois a cada ~1 h),
    **grava a hora certa no DS3231**, para ele nunca se afastar da hora certa.
 3. **Sem internet:** segue pelo DS3231. Os alarmes funcionam normalmente; o Wi-Fi é
-   tentado a cada 30 s e só o Telegram espera a internet voltar.
+   tentado a cada 10 minutos (rede própria, Passo 4) e só o Telegram espera a internet
+   voltar.
 4. **Sem o módulo:** o programa percebe na hora de ligar e segue como antes.
 
 **Instalar o módulo:**
@@ -2187,16 +2280,16 @@ de 3V3.
 | `DS3231 sem hora valida - aguardando a internet` | Módulo novo ou bateria LIR2032 descarregada. |
 | `DS3231: hora carregada do relogio` | Hora certa já ao ligar. |
 | `DS3231: hora gravada (vinda da internet)` | O NTP acertou a hora e o módulo foi atualizado. |
-| `Sem internet: alarmes pela hora do DS3231` | Ligou sem internet, funcionando pelo relógio. |
+| `Sem internet: rede ZeloPlus, acesse http://192.168.4.1` | Ligou sem a rede salva; funcionando na rede própria, pela hora do relógio. |
 
 **Ensaios do relógio:**
 
 | Ensaio | Resultado esperado |
 |---|---|
 | Página aberta com o módulo instalado | Rodapé mostra "Relógio DS3231: conectado" |
-| Religamento sem internet (roteador desligado) | LCD mostra `Sem internet` / `Hora do relogio` e, em seguida, a hora correta |
+| Religamento sem internet (roteador desligado) | LCD mostra `Rede ZeloPlus` / `senha zelo1234`, depois `192.168.4.1` e, em seguida, a hora correta |
 | Horário de dose com o roteador desligado | O alarme toca no horário |
-| Retorno da internet | Em até ~30 s o dispenser reconecta; a página e o Telegram voltam a funcionar |
+| Retorno da internet | Em até 10 minutos (ou na hora, pelo botão "Tentar conectar novamente") o dispenser reconecta, desliga a rede `ZeloPlus` e mostra o IP no LCD; a página e o Telegram voltam a funcionar |
 | Religamento sem o módulo | Rodapé mostra "não instalado"; hora obtida pela internet |
 
 ## E10. Atualizar o programa depois de montado

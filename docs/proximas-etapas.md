@@ -45,19 +45,16 @@ I2C** (endereço 0x3C).
 5. **Ensaios:** leitura a 1 m e a 2 m, de frente e de lado, com as telas de espera,
    alarme, retirada e dose pendente.
 
-## 2. Alternância automática de Wi-Fi — aprovada, a implementar
+## 2. Alternância automática de Wi-Fi — implementada, falta validar no hardware
 
-- Ao ligar, o dispenser tenta a rede salva. Se a rede não for encontrada ou a senha
-  for recusada, ele abre sozinho a rede própria **ZeloPlus**, com senha **`zelo1234`**,
-  no endereço 192.168.4.1.
-- **Web app:**
-  - aviso da condição (motivo e Telegram desligado);
-  - botões **"Tentar conectar novamente"** e **"Trocar rede Wi-Fi"**;
-  - hora acertada pelo celular ao abrir a página.
-- Nova tentativa automática **a cada 10 minutos**, só quando ninguém estiver conectado
-  à rede ZeloPlus.
-- Não citar placa com Wi-Fi de 5 GHz no guia.
-- Para a apresentação, usar o roteamento do celular em 2,4 GHz.
+- Ao ligar, o dispenser tenta a rede salva. Se ela não conectar, abre sozinho a
+  rede ZeloPlus (senha `zelo1234`, 192.168.4.1).
+- A página mostra um aviso com o motivo e os botões "Tentar conectar novamente" e
+  "Trocar rede Wi-Fi"; a hora é acertada pelo celular ao abrir a página.
+- Nova tentativa automática a cada 10 minutos, só quando ninguém está conectado à
+  ZeloPlus.
+- Não citar placa com Wi-Fi de 5 GHz no guia. Para a apresentação, usar o
+  roteamento do celular em 2,4 GHz, se quiser mostrar o Telegram.
 
 ## 3. Relógio DS3231 — próxima etapa, necessária ao produto
 

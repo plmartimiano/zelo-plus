@@ -49,7 +49,20 @@ const long gmtOffset_sec = -10800; // Brasília (GMT-3)
 const int daylightOffset_sec = 0;
 
 bool modoConfig = false;
-bool modoLocal = false;  // sem internet: o dispenser usa a propria rede (ZeloPlus-Config)
+bool modoLocal = false;  // sem internet: o dispenser usa a propria rede
+bool servidorNoAr = false;
+
+// Rede propria aberta automaticamente quando a rede salva nao conecta ao ligar.
+const char* NOME_REDE_LOCAL = "ZeloPlus";
+const char* SENHA_REDE_LOCAL = "zelo1234";
+const unsigned long INTERVALO_NOVA_TENTATIVA = 10UL * 60UL * 1000UL; // 10 min
+const unsigned long DURACAO_TENTATIVA = 20000;
+String nomeRedeLocal = "";      // ZeloPlus (automatica) ou ZeloPlus-Config (pela configuracao)
+String motivoSemInternet = "";  // mostrado no aviso da pagina
+String redeSalva = "";
+String senhaRedeSalva = "";
+bool tentandoRede = false;
+unsigned long tentativaIniciadaEm = 0;
 String configErro = "";
 
 // ---------- RELOGIO DS3231 (opcional) ----------
@@ -899,6 +912,45 @@ void handleCaptivePortal() {
 void handleRoot();
 void iniciarModoNormal();
 
+// Enderecos que o celular consulta para saber se ha internet: todos levam a
+// pagina do dispenser, que abre sozinha ao conectar na rede propria.
+void registrarPortalCativo() {
+  server.on("/generate_204", handleCaptivePortal);
+  server.on("/gen_204", handleCaptivePortal);
+  server.on("/hotspot-detect.html", handleCaptivePortal);
+  server.on("/library/test/success.html", handleCaptivePortal);
+  server.on("/ncsi.txt", handleCaptivePortal);
+  server.onNotFound(handleCaptivePortal);
+}
+
+// Explica por que a rede salva nao conectou (aparece no aviso da pagina).
+String descreverFalhaWiFi(wl_status_t situacao) {
+  if (situacao == WL_NO_SSID_AVAIL) {
+    return "a rede " + redeSalva + " não foi encontrada (o dispenser só enxerga redes de 2,4 GHz)";
+  }
+  if (situacao == WL_CONNECT_FAILED) {
+    return "a rede " + redeSalva + " recusou a conexão (confira a senha)";
+  }
+  return "não foi possível conectar à rede " + redeSalva;
+}
+
+// Sem a rede salva: abre a rede propria ZeloPlus (com senha) e segue no modo
+// normal. Alarmes, portas e historico funcionam; o Telegram espera a internet.
+void iniciarModoLocal(const String& motivo) {
+  modoLocal = true;
+  nomeRedeLocal = NOME_REDE_LOCAL;
+  motivoSemInternet = motivo;
+  WiFi.setAutoReconnect(false); // novas tentativas so no horario certo (manterRedeLocal)
+  WiFi.disconnect();
+  WiFi.mode(WIFI_AP_STA);
+  WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+  WiFi.softAP(NOME_REDE_LOCAL, SENHA_REDE_LOCAL);
+  dnsServer.start(DNS_PORT, "*", apIP);
+  registrarPortalCativo();
+  Serial.println("Sem internet: " + motivo);
+  iniciarModoNormal();
+}
+
 // O endereco "/" mostra a configuracao ou, depois de "Usar sem internet", a
 // pagina do dispenser.
 void handleInicio() {
@@ -925,6 +977,7 @@ void handleModoLocal() {
   }
 
   modoLocal = true;
+  nomeRedeLocal = "ZeloPlus-Config";
   server.sendHeader("Location", "/");
   server.send(303);
   iniciarModoNormal();
@@ -949,15 +1002,10 @@ void iniciarModoConfig() {
   server.on("/", handleInicio);
   server.on("/conectar", HTTP_POST, handleConectar);
   server.on("/modo-local", HTTP_POST, handleModoLocal);
-
-  server.on("/generate_204", handleCaptivePortal);
-  server.on("/gen_204", handleCaptivePortal);
-  server.on("/hotspot-detect.html", handleCaptivePortal);
-  server.on("/library/test/success.html", handleCaptivePortal);
-  server.on("/ncsi.txt", handleCaptivePortal);
-  server.onNotFound(handleCaptivePortal);
+  registrarPortalCativo();
 
   server.begin();
+  servidorNoAr = true;
 }
 
 // ---------- MODO NORMAL (rotina do dispenser) ----------
@@ -1191,7 +1239,17 @@ void handleRoot() {
   html += "<h1>Zelo+</h1>";
 
   if (modoLocal) {
-    html += "<div class='aviso'>&#128246; Modo sem internet: o dispenser funciona na rede ZeloPlus-Config e os avisos pelo Telegram ficam desligados.</div>";
+    html += "<div class='aviso'>&#128246; <b>Sem internet</b>";
+    if (motivoSemInternet != "") html += ": " + escaparHTML(motivoSemInternet);
+    html += ". O dispenser está funcionando na rede própria <b>" + nomeRedeLocal + "</b>";
+    if (nomeRedeLocal == NOME_REDE_LOCAL) html += " (senha <b>" + String(SENHA_REDE_LOCAL) + "</b>)";
+    html += ". Alarmes, portas e histórico funcionam normalmente; os avisos pelo Telegram ficam desligados até a internet voltar.";
+    if (redeSalva != "") {
+      html += " O dispenser tenta a rede <b>" + escaparHTML(redeSalva) + "</b> de novo a cada 10 minutos.";
+      html += "<button type='button' class='secundario' onclick='tentarWifi()'>&#128260; Tentar conectar novamente</button>";
+    }
+    html += "<a href='/trocar-wifi' onclick=\"return confirm('O dispenser vai esquecer a rede Wi-Fi e reiniciar no modo de configuração. Continuar?')\">&#128246; Trocar rede Wi-Fi</a>";
+    html += "</div>";
   }
 
   if (pendente && cuidador.nome != "") {
@@ -1264,6 +1322,18 @@ void handleRoot() {
 
   html += "<script>";
   html += "var TEM_CHAVE_IA = " + String(chaveIA != "" ? "true" : "false") + ";";
+  // Sem hora (sem internet e sem DS3231): usa a hora deste aparelho ao abrir a pagina.
+  html += "var HORA_DESCONHECIDA = " + String(time(nullptr) < (time_t)HORA_MINIMA_VALIDA ? "true" : "false") + ";";
+  html += "if (HORA_DESCONHECIDA) {";
+  html += "  var corpoHora = new URLSearchParams(); corpoHora.append('epoch', Math.floor(Date.now() / 1000));";
+  html += "  fetch('/acertar-hora', {method:'POST', body: corpoHora}).then(function(r){ return r.text(); })";
+  html += "    .then(function(t){ if (t == 'OK') location.reload(); });";
+  html += "}";
+  html += "function tentarWifi() {";
+  html += "  fetch('/tentar-wifi', {method:'POST'}).then(function(r){ return r.text(); })";
+  html += "    .then(function(t){ alert(t); setTimeout(function(){ location.reload(); }, 25000); })";
+  html += "    .catch(function(){ alert('Não foi possível falar com o dispenser.'); });";
+  html += "}";
   html += "var NUM_COMPARTIMENTOS = " + String(NUM_COMPARTIMENTOS) + ";";
   html += "var MAX_HORARIOS = " + String(MAX_HORARIOS) + ";";
   html += "var MAX_FAMILIARES = " + String(MAX_FAMILIARES) + ";";
@@ -2160,18 +2230,103 @@ void gravarHoraNoRTC() {
   Serial.println("DS3231: hora gravada (vinda da internet)");
 }
 
-// Sem internet, tenta a rede salva de novo a cada 30 s. Quando conecta, a pagina
-// volta a abrir no mesmo IP e o NTP acerta a hora (e o DS3231).
+// Comeca uma tentativa na rede salva sem travar o programa; manterRedeLocal()
+// acompanha o resultado. Com a rede propria no ar, o ESP32 pode trocar de canal
+// durante a tentativa, e quem estiver conectado a ela perde a conexao.
+void iniciarTentativaRede() {
+  if (redeSalva == "" || tentandoRede) return;
+  tentandoRede = true;
+  tentativaIniciadaEm = millis();
+  WiFi.begin(redeSalva.c_str(), senhaRedeSalva.c_str());
+  Serial.println("Tentando a rede " + redeSalva + "...");
+}
+
+// A rede salva voltou: desliga a rede propria e segue com internet.
+void sairModoLocal() {
+  modoLocal = false;
+  tentandoRede = false;
+  motivoSemInternet = "";
+  dnsServer.stop();
+  WiFi.softAPdisconnect(true);
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+  Serial.print("Rede salva conectada. Acesse: http://");
+  Serial.println(WiFi.localIP());
+  if (estadoAtual == AGUARDANDO) {
+    lcd.clear();
+    lcd.print("IP do sistema:");
+    lcd.setCursor(0, 1);
+    lcd.print(WiFi.localIP());
+    delay(5000);
+    lcd.clear();
+  }
+}
+
+// Na rede propria: tenta a rede salva a cada 10 minutos, so quando ninguem esta
+// conectado a rede propria (a tentativa derrubaria essa conexao).
+void manterRedeLocal() {
+  static unsigned long ultimaTentativaLocal = millis();
+  if (tentandoRede) {
+    wl_status_t situacao = WiFi.status();
+    if (situacao == WL_CONNECTED) {
+      sairModoLocal();
+      return;
+    }
+    if (millis() - tentativaIniciadaEm < DURACAO_TENTATIVA) return;
+    tentandoRede = false;
+    motivoSemInternet = descreverFalhaWiFi(situacao);
+    WiFi.disconnect(); // so a conexao com a rede salva; a rede propria continua
+    ultimaTentativaLocal = millis();
+    Serial.println("Ainda sem internet: " + motivoSemInternet);
+    return;
+  }
+  if (redeSalva == "") return;
+  if (millis() - ultimaTentativaLocal < INTERVALO_NOVA_TENTATIVA) return;
+  if (WiFi.softAPgetStationNum() > 0) return;
+  iniciarTentativaRede();
+}
+
+// Botao "Tentar conectar novamente" da pagina.
+void handleTentarWifi() {
+  if (!modoLocal || redeSalva == "") {
+    server.send(200, "text/plain; charset=utf-8", "Não há rede salva para tentar. Use Trocar rede Wi-Fi.");
+    return;
+  }
+  server.send(200, "text/plain; charset=utf-8",
+              "Tentando conectar à rede " + redeSalva + ". Se conseguir, a rede " + String(NOME_REDE_LOCAL) +
+                  " será desligada: volte o celular para a rede de casa e abra o endereço que aparecer no visor.");
+  iniciarTentativaRede();
+}
+
+// Sem hora conhecida, a pagina envia a hora do celular ao abrir.
+void handleAcertarHora() {
+  uint32_t segundos = strtoul(server.arg("epoch").c_str(), nullptr, 10);
+  if (time(nullptr) >= (time_t)HORA_MINIMA_VALIDA || segundos < HORA_MINIMA_VALIDA) {
+    server.send(200, "text/plain", "MANTIDA");
+    return;
+  }
+  struct timeval agora = { (time_t)segundos, 0 };
+  settimeofday(&agora, nullptr);
+  if (rtcPresente) rtc.adjust(DateTime(segundos));
+  Serial.println("Hora acertada pelo celular");
+  server.send(200, "text/plain", "OK");
+}
+
+// Com internet, se a conexao cair, tenta a rede salva de novo a cada 30 s. Quando
+// conecta, a pagina volta a abrir no mesmo IP e o NTP acerta a hora (e o DS3231).
 void manterWiFi() {
   static unsigned long ultimaTentativa = 0;
   static bool estavaConectado = true;
+  if (modoLocal) {
+    manterRedeLocal();
+    return;
+  }
   bool conectado = (WiFi.status() == WL_CONNECTED);
   if (conectado && !estavaConectado) {
     Serial.print("Wi-Fi reconectado. Acesse: http://");
     Serial.println(WiFi.localIP());
   }
   estavaConectado = conectado;
-  if (modoLocal) return;  // na rede propria, nao ha rede externa para tentar
   if (conectado || millis() - ultimaTentativa < 30000) return;
   ultimaTentativa = millis();
   WiFi.reconnect();
@@ -2185,21 +2340,19 @@ void iniciarModoNormal() {
 
   lcd.clear();
   if (modoLocal) {
-    lcd.print("ZeloPlus-Config");
-    lcd.setCursor(0, 1);
-    lcd.print(apIP);
-    Serial.println("Sem internet: rede ZeloPlus-Config, acesse http://192.168.4.1");
-  } else if (WiFi.status() == WL_CONNECTED) {
+    // Visor: nome e senha da rede propria, depois o endereco da pagina.
+    escreverLinhaLCD(0, "Rede " + nomeRedeLocal);
+    escreverLinhaLCD(1, nomeRedeLocal == NOME_REDE_LOCAL ? "senha " + String(SENHA_REDE_LOCAL) : "sem senha");
+    delay(4000);
+    escreverLinhaLCD(0, "Pagina:");
+    escreverLinhaLCD(1, "192.168.4.1");
+    Serial.println("Sem internet: rede " + nomeRedeLocal + ", acesse http://192.168.4.1");
+  } else {
     lcd.print("IP do sistema:");
     lcd.setCursor(0, 1);
     lcd.print(WiFi.localIP());
     Serial.print("Acesse: http://");
     Serial.println(WiFi.localIP());
-  } else {
-    lcd.print("Sem internet");
-    lcd.setCursor(0, 1);
-    lcd.print("Hora do relogio");
-    Serial.println("Sem internet: alarmes pela hora do DS3231");
   }
   delay(6000);
   lcd.clear();
@@ -2214,8 +2367,11 @@ void iniciarModoNormal() {
   server.on("/historico.csv", handleHistoricoCSV);
   server.on("/limpar-historico", HTTP_POST, handleLimparHistorico);
   server.on("/trocar-wifi", handleTrocarWifi);
-  if (!modoLocal) {
-    server.begin();  // no modo sem internet o servidor ja esta no ar
+  server.on("/tentar-wifi", HTTP_POST, handleTentarWifi);
+  server.on("/acertar-hora", HTTP_POST, handleAcertarHora);
+  if (!servidorNoAr) {
+    server.begin();
+    servidorNoAr = true;
   }
 }
 
@@ -2252,6 +2408,8 @@ void setup() {
   preferences.begin("wifi", false);
   String ssidSalvo = preferences.getString("ssid", "");
   String senhaSalva = preferences.getString("pass", "");
+  redeSalva = ssidSalvo;
+  senhaRedeSalva = senhaSalva;
 
   // Botao apertado ao ligar: vai direto para a configuracao (rede ZeloPlus-Config)
   bool forcarConfig = (digitalRead(BUTTON_PIN) == LOW);
@@ -2274,10 +2432,10 @@ void setup() {
 
   if (WiFi.status() == WL_CONNECTED) {
     iniciarModoNormal();
-  } else if (ssidSalvo != "" && horaDoRtc) {
-    // Rede conhecida fora do ar, mas o DS3231 deu a hora: os alarmes funcionam
-    // e o Wi-Fi continua sendo tentado em segundo plano (manterWiFi).
-    iniciarModoNormal();
+  } else if (ssidSalvo != "") {
+    // Rede salva fora do ar, fora de alcance ou com senha recusada: o dispenser
+    // abre a rede propria e continua funcionando (hora pelo DS3231 ou pelo celular).
+    iniciarModoLocal(descreverFalhaWiFi(WiFi.status()));
   } else {
     iniciarModoConfig();
   }
