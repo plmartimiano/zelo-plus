@@ -85,6 +85,7 @@ Medicamento medicamentos[NUM_COMPARTIMENTOS];
 Contato cuidador;
 Contato familiares[MAX_FAMILIARES];
 String tokenTelegram = ""; // token do bot, criado pelo cuidador no @BotFather
+String chaveIA = "";       // chave da API da Anthropic (leitura da caixa por foto)
 int ultimoMinutoChecado = -1;
 
 const unsigned long TEMPO_PORTA_ABERTA = 3UL * 60UL * 1000UL;
@@ -480,6 +481,7 @@ void salvarCadastro() {
   }
 
   prefsCadastro.putString("tg_token", tokenTelegram);
+  prefsCadastro.putString("ia_chave", chaveIA);
   salvarContato("cuid", cuidador);
   for (int i = 0; i < MAX_FAMILIARES; i++) {
     salvarContato(prefixoFamiliar(i).c_str(), familiares[i]);
@@ -514,6 +516,7 @@ void carregarCadastro() {
   }
 
   tokenTelegram = prefsCadastro.getString("tg_token", "");
+  chaveIA = prefsCadastro.getString("ia_chave", "");
   carregarContato("cuid", cuidador);
   for (int i = 0; i < MAX_FAMILIARES; i++) {
     carregarContato(prefixoFamiliar(i).c_str(), familiares[i]);
@@ -1042,6 +1045,9 @@ String cartaoCompartimento(int c, bool aberto) {
   html += "<label>Nome do remédio:</label>";
   html += "<input type='text' name='m" + String(c) + "_nome' id='m" + String(c) + "_nome' value='" + escaparHTML(m.nome) +
           "' data-original='" + escaparHTML(m.nome) + "' oninput='atualizarDica(" + String(c) + ")' maxlength='40'>";
+  html += "<button type='button' class='secundario' onclick='tirarFoto(" + String(c) + ")'>&#128247; Foto da caixa do remédio</button>";
+  html += "<input type='file' accept='image/*' capture='environment' id='foto-" + String(c) + "' style='display:none' onchange='enviarFoto(" + String(c) + ", this)'>";
+  html += "<p class='suave' id='foto-status-" + String(c) + "' style='display:none'></p>";
   html += "<label>Horários:</label>";
   html += "<div id='horarios-" + String(c) + "'>";
   for (int i = 0; i < m.totalHorarios; i++) {
@@ -1147,6 +1153,27 @@ String blocoTelegram(bool pendente) {
   return html;
 }
 
+// Bloco da leitura da caixa por foto (fim da pagina): so pede a chave da IA.
+String blocoIA() {
+  String html = "<details class='caixa' id='leitura-foto'>";
+  html += "<summary><span style='font-size:26px'>&#128247;</span><span><b>Leitura da caixa por foto</b><small>";
+  html += chaveIA != "" ? "<span class='ok'>configurada &#10003;</span>" : "<span class='falta'>falta a chave da IA</span>";
+  html += "</small></span><span class='seta'></span></summary><div class='conteudo'>";
+  html += "<p class='suave'>No cadastro, o botão <b>Foto da caixa do remédio</b> lê o nome e a concentração impressos na embalagem ";
+  html += "usando inteligência artificial (Claude, da Anthropic). O nome só é preenchido depois da sua confirmação. Precisa de internet.</p>";
+  html += "<label>Chave da API da Anthropic:</label>";
+  html += "<input type='password' form='cadastro' name='ia_chave' autocomplete='off' placeholder='";
+  html += chaveIA != "" ? "(salva &mdash; deixe em branco para manter)" : "cole aqui a chave (começa com sk-ant-)";
+  html += "'>";
+  html += "<button type='submit' form='cadastro' class='principal'>&#128190; Salvar</button>";
+  html += "<details class='caixa'><summary>&#10067; Como obter a chave<span class='seta'></span></summary><div class='conteudo'><ol>";
+  html += "<li>Acesse <b>platform.claude.com</b>, crie uma conta e cadastre um meio de pagamento (a cobrança é por uso).</li>";
+  html += "<li>Em <b>API Keys</b>, crie uma chave e copie.</li>";
+  html += "<li>Cole a chave acima e toque em <b>Salvar</b>.</li></ol></div></details>";
+  html += "</div></details>";
+  return html;
+}
+
 void handleRoot() {
   int ativos = totalMedicamentosAtivos();
   String faltando;
@@ -1227,8 +1254,10 @@ void handleRoot() {
   html += rtcPresente ? "conectado" : "não instalado (hora pela internet)";
   html += "</p>";
   html += blocoTelegram(pendente);
+  html += blocoIA();
 
   html += "<script>";
+  html += "var TEM_CHAVE_IA = " + String(chaveIA != "" ? "true" : "false") + ";";
   html += "var NUM_COMPARTIMENTOS = " + String(NUM_COMPARTIMENTOS) + ";";
   html += "var MAX_HORARIOS = " + String(MAX_HORARIOS) + ";";
   html += "var MAX_FAMILIARES = " + String(MAX_FAMILIARES) + ";";
@@ -1263,6 +1292,49 @@ void handleRoot() {
   html += "}";
   // Envia o cadastro com fetch (como os outros comandos): o envio classico de
   // formulario por http faz o navegador mostrar o aviso "informacoes nao protegidas".
+  // Foto da caixa: o celular reduz a imagem (ate 800 px) e envia ao dispenser,
+  // que consulta a IA. O nome so e preenchido depois da confirmacao.
+  html += "function tirarFoto(c) {";
+  html += "  if (!TEM_CHAVE_IA) { alert('Para ler a caixa por foto, cole antes a chave da IA no quadro \\u0022Leitura da caixa por foto\\u0022, no fim da página, e salve.'); return; }";
+  html += "  document.getElementById('foto-' + c).click();";
+  html += "}";
+  html += "function enviarFoto(c, entrada) {";
+  html += "  var arquivo = entrada.files[0]; if (!arquivo) return;";
+  html += "  var status = document.getElementById('foto-status-' + c);";
+  html += "  status.style.display = 'block'; status.textContent = 'Lendo a caixa... isso pode levar alguns segundos.';";
+  html += "  var endereco = URL.createObjectURL(arquivo); var img = new Image();";
+  html += "  img.onerror = function(){ status.textContent = 'Não foi possível abrir a foto.'; entrada.value = ''; };";
+  html += "  img.onload = function() {";
+  html += "    URL.revokeObjectURL(endereco); entrada.value = '';";
+  html += "    comprimirFoto(img, 900, 0.7, function(foto) {";
+  html += "      var dados = new FormData(); dados.append('foto', foto, 'caixa.jpg');";
+  html += "      fetch('/ler-caixa', {method:'POST', body: dados})";
+  html += "      .then(function(r){ return r.json(); })";
+  html += "      .then(function(d){";
+  html += "        if (!d.ok) { status.textContent = d.erro; return; }";
+  html += "        var sugestao = (d.nome + ' ' + d.concentracao).trim().substring(0, 40);";
+  html += "        var texto = 'Lido na foto:\\n\\n' + sugestao + (d.codigo ? '\\nCódigo de barras: ' + d.codigo : '') + '\\n\\nConfira com a caixa. Preencher o nome do remédio?';";
+  html += "        if (confirm(texto)) {";
+  html += "          document.getElementById('m' + c + '_nome').value = sugestao; atualizarDica(c);";
+  html += "          status.textContent = 'Nome preenchido pela foto. Confira e toque em Salvar.';";
+  html += "        } else { status.textContent = 'Leitura descartada.'; }";
+  html += "      })";
+  html += "      .catch(function(){ status.textContent = 'Não foi possível falar com o dispenser. Tente de novo.'; });";
+  html += "    });";
+  html += "  };";
+  html += "  img.src = endereco;";
+  html += "}";
+  // Reduz a foto ate caber no limite do dispenser (cerca de 100 KB).
+  html += "function comprimirFoto(img, lado, qualidade, pronto) {";
+  html += "  var escala = Math.min(1, lado / Math.max(img.width, img.height));";
+  html += "  var tela = document.createElement('canvas');";
+  html += "  tela.width = Math.round(img.width * escala); tela.height = Math.round(img.height * escala);";
+  html += "  tela.getContext('2d').drawImage(img, 0, 0, tela.width, tela.height);";
+  html += "  tela.toBlob(function(foto) {";
+  html += "    if (foto.size > 100000 && lado > 500) { comprimirFoto(img, Math.round(lado * 0.8), 0.6, pronto); return; }";
+  html += "    pronto(foto);";
+  html += "  }, 'image/jpeg', qualidade);";
+  html += "}";
   html += "function enviarCadastro(e) {";
   html += "  e.preventDefault();";
   html += "  if (!confirmarTrocas()) return false;";
@@ -1508,6 +1580,232 @@ void handleTelegramIds() {
   server.send(200, "text/plain; charset=utf-8", lista);
 }
 
+// ---------- LEITURA DA CAIXA POR FOTO (IA) ----------
+
+// Foto recebida da pagina (JPEG). Fica numa unica area de memoria: o ESP32 nao
+// comporta duas copias de uma foto de ~80 KB.
+const size_t FOTO_MAX = 110000;
+uint8_t* fotoRecebida = nullptr;
+size_t fotoTamanho = 0;
+bool fotoRecusada = false;
+
+void descartarFoto() {
+  free(fotoRecebida);
+  fotoRecebida = nullptr;
+  fotoTamanho = 0;
+}
+
+// Recebe a foto em pedacos, conforme ela chega pela rede.
+void receberFoto() {
+  HTTPUpload& envio = server.upload();
+  if (envio.status == UPLOAD_FILE_START) {
+    descartarFoto();
+    fotoRecusada = false;
+  } else if (envio.status == UPLOAD_FILE_WRITE) {
+    if (fotoRecusada) return;
+    if (fotoTamanho + envio.currentSize > FOTO_MAX) {
+      fotoRecusada = true;
+      descartarFoto();
+      return;
+    }
+    uint8_t* maior = (uint8_t*)realloc(fotoRecebida, fotoTamanho + envio.currentSize);
+    if (maior == nullptr) {
+      fotoRecusada = true;
+      descartarFoto();
+      return;
+    }
+    fotoRecebida = maior;
+    memcpy(fotoRecebida + fotoTamanho, envio.buf, envio.currentSize);
+    fotoTamanho += envio.currentSize;
+  }
+}
+
+// Corpo do pedido a IA: inicio do JSON, foto convertida para base64 no momento
+// do envio (sem uma segunda copia na memoria) e fim do JSON.
+class CorpoPedidoIA : public Stream {
+ public:
+  CorpoPedidoIA(const char* inicio, const uint8_t* dados, size_t tamanhoDados, const char* fim)
+      : inicio(inicio), fim(fim), dados(dados), tamanhoDados(tamanhoDados),
+        tamanhoInicio(strlen(inicio)), tamanhoBase64((tamanhoDados + 2) / 3 * 4), tamanhoFim(strlen(fim)) {}
+  size_t tamanho() const { return tamanhoInicio + tamanhoBase64 + tamanhoFim; }
+  int available() override { return tamanho() - pos; }
+  int read() override {
+    int c = peek();
+    if (c >= 0) pos++;
+    return c;
+  }
+  int peek() override { return pos < tamanho() ? (uint8_t)caractere(pos) : -1; }
+  size_t readBytes(char* buffer, size_t tamanhoMax) {
+    size_t lidos = 0;
+    while (lidos < tamanhoMax && pos < tamanho()) buffer[lidos++] = caractere(pos++);
+    return lidos;
+  }
+  size_t write(uint8_t) override { return 0; }
+
+ private:
+  char caractere(size_t i) const {
+    if (i < tamanhoInicio) return inicio[i];
+    i -= tamanhoInicio;
+    if (i < tamanhoBase64) return base64(i);
+    return fim[i - tamanhoBase64];
+  }
+  char base64(size_t i) const {
+    static const char* ALFABETO = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    size_t g = i / 4 * 3;
+    int p = i % 4;
+    if (p == 2 && g + 1 >= tamanhoDados) return '=';
+    if (p == 3 && g + 2 >= tamanhoDados) return '=';
+    uint32_t v = (uint32_t)dados[g] << 16;
+    if (g + 1 < tamanhoDados) v |= (uint32_t)dados[g + 1] << 8;
+    if (g + 2 < tamanhoDados) v |= dados[g + 2];
+    return ALFABETO[(v >> (18 - 6 * p)) & 63];
+  }
+  const char* inicio;
+  const char* fim;
+  const uint8_t* dados;
+  size_t tamanhoDados, tamanhoInicio, tamanhoBase64, tamanhoFim;
+  size_t pos = 0;
+};
+
+// Instrucoes e formato da resposta pedidos a IA (Claude). A resposta vem em JSON
+// com os campos do esquema abaixo (saida estruturada).
+const char* PEDIDO_IA_INICIO =
+    "{\"model\":\"claude-opus-5-5\",\"max_tokens\":2000,\"fallbacks\":\"default\","
+    "\"output_config\":{\"effort\":\"low\",\"format\":{\"type\":\"json_schema\",\"schema\":{"
+    "\"type\":\"object\",\"properties\":{"
+    "\"nome\":{\"type\":\"string\"},\"concentracao\":{\"type\":\"string\"},"
+    "\"codigo_barras\":{\"type\":\"string\"},\"legivel\":{\"type\":\"boolean\"}},"
+    "\"required\":[\"nome\",\"concentracao\",\"codigo_barras\",\"legivel\"],"
+    "\"additionalProperties\":false}}},"
+    "\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"image\","
+    "\"source\":{\"type\":\"base64\",\"media_type\":\"image/jpeg\",\"data\":\"";
+const char* PEDIDO_IA_FIM =
+    "\"}},{\"type\":\"text\",\"text\":\""
+    "A imagem mostra a embalagem de um medicamento, fotografada por um cuidador para cadastrar o remédio "
+    "num dispenser. Transcreva exatamente como impresso: em nome, o nome do medicamento (nome comercial ou "
+    "princípio ativo, o que estiver em destaque); em concentracao, a dosagem (ex.: 50 mg); em codigo_barras, "
+    "os dígitos impressos sob o código de barras, se estiverem visíveis. Não deduza o nome a partir do código "
+    "de barras nem de outras informações: se o nome não estiver legível na foto, deixe nome vazio e legivel "
+    "como false. Campos que não aparecem na foto ficam vazios."
+    "\"}]}]}";
+
+void responderLeitura(const String& erro, const String& nome = "", const String& concentracao = "",
+                      const String& codigo = "") {
+  JsonDocument doc;
+  doc["ok"] = (erro == "");
+  if (erro != "") {
+    doc["erro"] = erro;
+  } else {
+    doc["nome"] = nome;
+    doc["concentracao"] = concentracao;
+    doc["codigo"] = codigo;
+  }
+  String saida;
+  serializeJson(doc, saida);
+  server.send(200, "application/json; charset=utf-8", saida);
+}
+
+// Com a foto ja recebida (receberFoto), pergunta a IA o nome do
+// remedio e devolve o que foi lido. Quem confirma e preenche e a pagina.
+void handleLerCaixa() {
+  if (chaveIA == "") {
+    descartarFoto();
+    responderLeitura("Cadastre antes a chave da IA no quadro Leitura da caixa por foto.");
+    return;
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    descartarFoto();
+    responderLeitura("Sem internet: a leitura por foto precisa de conexão com a internet.");
+    return;
+  }
+  if (fotoRecusada || fotoRecebida == nullptr) {
+    descartarFoto();
+    responderLeitura("Foto grande demais ou não recebida. Tente de novo.");
+    return;
+  }
+  if (fotoTamanho < 1000 || fotoRecebida[0] != 0xFF || fotoRecebida[1] != 0xD8) {
+    descartarFoto();
+    responderLeitura("A foto não chegou em formato JPEG. Tente de novo.");
+    return;
+  }
+
+  if (estadoAtual == AGUARDANDO) {
+    lcd.clear();
+    escreverLinhaLCD(0, "Lendo a caixa...");
+  }
+
+  CorpoPedidoIA corpo(PEDIDO_IA_INICIO, fotoRecebida, fotoTamanho, PEDIDO_IA_FIM);
+
+  WiFiClientSecure cliente;
+  cliente.setInsecure(); // prototipo: nao valida o certificado do servidor
+  HTTPClient http;
+  http.setTimeout(40000);
+  String resposta;
+  int codigo = -1;
+  if (http.begin(cliente, "https://api.anthropic.com/v1/messages")) {
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("x-api-key", chaveIA);
+    http.addHeader("anthropic-version", "2023-06-01");
+    http.addHeader("anthropic-beta", "server-side-fallback-2026-07-01");
+    codigo = http.sendRequest("POST", &corpo, corpo.tamanho());
+    if (codigo > 0) resposta = http.getString();
+    http.end();
+  }
+  descartarFoto();
+  if (estadoAtual == AGUARDANDO) lcd.clear();
+  Serial.print("IA (leitura da caixa): HTTP ");
+  Serial.println(codigo);
+
+  if (codigo == 401 || codigo == 403) {
+    responderLeitura("Chave da IA recusada. Confira a chave no quadro Leitura da caixa por foto.");
+    return;
+  }
+  if (codigo == 429 || codigo == 529 || codigo >= 500) {
+    responderLeitura("O serviço de IA está ocupado. Tente de novo em instantes.");
+    return;
+  }
+  if (codigo != 200) {
+    responderLeitura("Não foi possível falar com o serviço de IA (código " + String(codigo) + "). Tente de novo.");
+    return;
+  }
+
+  JsonDocument filtro;
+  filtro["stop_reason"] = true;
+  filtro["content"][0]["type"] = true;
+  filtro["content"][0]["text"] = true;
+  JsonDocument doc;
+  if (deserializeJson(doc, resposta, DeserializationOption::Filter(filtro))) {
+    responderLeitura("Resposta da IA não reconhecida. Tente de novo.");
+    return;
+  }
+  String texto = "";
+  for (JsonObject bloco : doc["content"].as<JsonArray>()) {
+    if (bloco["type"] == "text") texto += bloco["text"].as<String>();
+  }
+  JsonDocument leitura;
+  if (doc["stop_reason"] != "end_turn" || texto == "" || deserializeJson(leitura, texto)) {
+    responderLeitura("Não foi possível ler a caixa. Tente outra foto.");
+    return;
+  }
+
+  String nome = leitura["nome"] | "";
+  String concentracao = leitura["concentracao"] | "";
+  String codigoBarras = leitura["codigo_barras"] | "";
+  nome.trim();
+  concentracao.trim();
+  codigoBarras.trim();
+  if (!(leitura["legivel"] | false) || nome == "") {
+    if (codigoBarras != "") {
+      responderLeitura("Código de barras lido (" + codigoBarras + "), mas o nome do remédio não aparece na foto. "
+                       "Fotografe a frente da caixa, onde o nome está escrito.");
+    } else {
+      responderLeitura("Não foi possível ler o nome do remédio. Tente uma foto mais próxima, com boa luz.");
+    }
+    return;
+  }
+  responderLeitura("", nome, concentracao, codigoBarras);
+}
+
 void handleHistoricoCSV() {
   String csv = "data;horario;medicamento;compartimento;situacao;atraso_minutos\r\n";
   for (int k = totalHistorico - 1; k >= 0; k--) { // do mais antigo para o mais recente
@@ -1630,6 +1928,10 @@ void handleSalvar() {
   String novoToken = server.arg("tg_token");
   novoToken.trim();
   if (novoToken != "") tokenTelegram = novoToken; // em branco = mantem o token salvo
+
+  String novaChave = server.arg("ia_chave");
+  novaChave.trim();
+  if (novaChave != "") chaveIA = novaChave; // em branco = mantem a chave salva
 
   nomePaciente = server.arg("paciente");
   nomePaciente.trim();
@@ -1883,6 +2185,7 @@ void iniciarModoNormal() {
   server.on("/esvaziar", HTTP_POST, handleEsvaziar);
   server.on("/testar-mensagens", HTTP_POST, handleTestarMensagens);
   server.on("/telegram-ids", HTTP_POST, handleTelegramIds);
+  server.on("/ler-caixa", HTTP_POST, handleLerCaixa, receberFoto);
   server.on("/historico.csv", handleHistoricoCSV);
   server.on("/limpar-historico", HTTP_POST, handleLimparHistorico);
   server.on("/trocar-wifi", handleTrocarWifi);

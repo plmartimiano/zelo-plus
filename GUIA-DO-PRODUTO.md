@@ -47,6 +47,7 @@
   - [Passo 17 — Escrevendo no LCD](#passo-17--escrevendo-no-lcd)
   - [Passo 18 — Modo de teste](#passo-18--modo-de-teste)
   - [Passo 19 — Relógio DS3231 (próxima etapa)](#passo-19--relógio-ds3231-próxima-etapa)
+  - [Passo 20 — Leitura da caixa do remédio por foto (IA)](#passo-20--leitura-da-caixa-do-remédio-por-foto-ia)
 - [Parte D — Juntando tudo](#parte-d--juntando-tudo)
   - [D1. Linha do tempo de uma dose](#d1-linha-do-tempo-de-uma-dose)
   - [D2. Referência rápida](#d2-referência-rápida)
@@ -227,7 +228,8 @@ rodapé do VSCode.
   topo** e o bloco do Telegram (no fim da página) vem **aberto**, marcando quem falta.
 - **②** Com tudo configurado, a página fica curta: o Telegram vira uma linha
   "configurado ✓" no rodapé.
-- **③** O que aparece ao tocar: compartimento 1 em edição (nome, horários, dica
+- **③** O que aparece ao tocar: compartimento 1 em edição (nome, botão de foto da
+  caixa, horários, dica
   "coloque no compartimento 1 (azul)"), o familiar João aberto, o formulário de um
   **familiar novo** e a **reposição**, com a escolha do remédio pelas cores.
 
@@ -246,7 +248,7 @@ familiaridade com tecnologia:
 |---|---|---|---|
 | **Aviso amarelo** (só se faltar algo) | Quem ainda não recebe avisos + "Configurar agora" | — | 7 |
 | **Paciente** | Nome do paciente | Campo para editar o nome | 7 |
-| **Remédios 1, 2 e 3** | Número, cor, remédio e horários | Nome, horários (até 6), dica de onde colocar, "Esvaziar" | 7, 14 |
+| **Remédios 1, 2 e 3** | Número, cor, remédio e horários | Nome, "Foto da caixa do remédio", horários (até 6), dica de onde colocar, "Esvaziar" | 7, 14, 20 |
 | **Cuidador(a)** | Nome | Nome e celular | 7, 8 |
 | **Familiares** | Nome de cada um | Nome, celular, "Remover"; "+ Cadastrar familiar" no fim | 7 |
 | **Salvar alterações** | Botão azul grande | — | 8 |
@@ -255,6 +257,7 @@ familiaridade com tecnologia:
 | **Trocar rede Wi-Fi** | Link (pede confirmação) | — | 4 |
 | **Relógio DS3231** (rodapé) | "conectado" ou "não instalado" | — | 19 |
 | **Avisos pelo Telegram** | "configurado ✓" ou "falta configurar" | Token, "Buscar IDs", ID de cada pessoa, teste | 15 |
+| **Leitura da caixa por foto** | "configurada ✓" ou "falta a chave da IA" | Chave da API da Anthropic e como obtê-la | 20 |
 
 ---
 
@@ -660,10 +663,13 @@ As **rotas** ligam um endereço a uma função:
   server.on("/esvaziar", HTTP_POST, handleEsvaziar);
   server.on("/testar-mensagens", HTTP_POST, handleTestarMensagens);
   server.on("/telegram-ids", HTTP_POST, handleTelegramIds);
+  server.on("/ler-caixa", HTTP_POST, handleLerCaixa, receberFoto);
   server.on("/historico.csv", handleHistoricoCSV);
   server.on("/limpar-historico", HTTP_POST, handleLimparHistorico);
   server.on("/trocar-wifi", handleTrocarWifi);
-  server.begin();
+  if (!modoLocal) {
+    server.begin();  // no modo sem internet o servidor ja esta no ar
+  }
 ```
 
 | Endereço | O que acontece |
@@ -673,6 +679,7 @@ As **rotas** ligam um endereço a uma função:
 | `/abrir-manual` | Abre um compartimento para reposição (Passo 14) |
 | `/esvaziar` | Esvazia um compartimento (Passo 14) |
 | `/testar-mensagens`, `/telegram-ids` | Telegram (Passo 15) |
+| `/ler-caixa` | Leitura da caixa do remédio por foto (Passo 20) |
 | `/historico.csv`, `/limpar-historico` | Histórico (Passo 16) |
 
 ## Passo 6 — Memória permanente (Preferences)
@@ -1685,6 +1692,150 @@ As mensagens do Serial Monitor de cada situação estão na [E9](#e9-módulo-de-
 
 ---
 
+## Passo 20 — Leitura da caixa do remédio por foto (IA)
+
+**O que faz:** no cadastro, o botão **"Foto da caixa do remédio"** abre a câmera do
+celular. A foto é enviada ao dispenser, que consulta um modelo de inteligência
+artificial com visão (Claude, da Anthropic). O modelo lê o **nome** e a
+**concentração** impressos na embalagem e, se estiverem visíveis, os dígitos do
+**código de barras**. O cuidador confere o resultado e só então o nome é preenchido.
+É a primeira funcionalidade da [Parte H](#parte-h--evolução-do-produto-funcionalidades-com-inteligência-artificial)
+(H3.1).
+
+**Por que existe:** digitar o nome do remédio é a etapa do cadastro mais sujeita a
+erro, especialmente a concentração (50 mg × 100 mg). A leitura da própria embalagem
+reduz esse risco e simplifica o uso.
+
+**Fluxo completo:**
+
+| Etapa | Onde acontece | O que acontece |
+|---|---|---|
+| 1. Foto | Celular | A câmera abre pelo campo de arquivo da página, que funciona na página local (sem HTTPS). |
+| 2. Redução | Celular | A página reduz a foto para até 900 px e ~100 KB (JPEG), pois a memória do ESP32 é limitada. |
+| 3. Envio | Celular → ESP32 | A foto chega em pedaços (`receberFoto`) e é guardada numa única área de memória. |
+| 4. Consulta | ESP32 → IA | O ESP32 monta o pedido e envia a foto em base64, convertida durante o envio. |
+| 5. Resposta | IA → ESP32 → Celular | O modelo devolve um JSON com nome, concentração e código; o ESP32 repassa à página. |
+| 6. Confirmação | Celular | A página mostra o que foi lido; o nome só é preenchido se o cuidador confirmar. |
+
+**1. O botão na página (reduzindo a foto no celular)**
+
+```cpp
+  html += "<button type='button' class='secundario' onclick='tirarFoto(" + String(c) + ")'>&#128247; Foto da caixa do remédio</button>";
+  html += "<input type='file' accept='image/*' capture='environment' id='foto-" + String(c) + "' style='display:none' onchange='enviarFoto(" + String(c) + ", this)'>";
+```
+
+```cpp
+  html += "function comprimirFoto(img, lado, qualidade, pronto) {";
+  html += "  var escala = Math.min(1, lado / Math.max(img.width, img.height));";
+  ...
+  html += "  tela.toBlob(function(foto) {";
+  html += "    if (foto.size > 100000 && lado > 500) { comprimirFoto(img, Math.round(lado * 0.8), 0.6, pronto); return; }";
+  html += "    pronto(foto);";
+  html += "  }, 'image/jpeg', qualidade);";
+```
+
+- `capture='environment'`: abre direto a câmera traseira do celular.
+- `comprimirFoto`: redesenha a foto menor num `canvas`; se ainda passar de 100 KB,
+  tenta de novo com 80 % do tamanho.
+
+**2. Recebendo a foto no ESP32, em pedaços**
+
+```cpp
+void receberFoto() {
+  HTTPUpload& envio = server.upload();
+  if (envio.status == UPLOAD_FILE_START) {
+    descartarFoto();
+    fotoRecusada = false;
+  } else if (envio.status == UPLOAD_FILE_WRITE) {
+    ...
+    uint8_t* maior = (uint8_t*)realloc(fotoRecebida, fotoTamanho + envio.currentSize);
+    ...
+    memcpy(fotoRecebida + fotoTamanho, envio.buf, envio.currentSize);
+    fotoTamanho += envio.currentSize;
+  }
+}
+```
+
+- A foto nunca é copiada duas vezes: o ESP32 tem pouco mais de 300 KB de memória de
+  trabalho, e parte dela já é usada pelo Wi-Fi e pela conexão segura.
+
+**3. O pedido à IA**
+
+O pedido segue a API de mensagens da Anthropic. A classe `CorpoPedidoIA` envia, em
+sequência, o início do JSON, a foto convertida em base64 no momento do envio e o fim do
+JSON:
+
+```cpp
+const char* PEDIDO_IA_INICIO =
+    "{\"model\":\"claude-opus-5-5\",\"max_tokens\":2000,\"fallbacks\":\"default\","
+    "\"output_config\":{\"effort\":\"low\",\"format\":{\"type\":\"json_schema\",\"schema\":{"
+    ...
+```
+
+| Parâmetro | Função |
+|---|---|
+| `model` | Modelo de IA com visão (Claude Opus 5.5). |
+| `effort: "low"` | Pouco raciocínio: a tarefa é só ler a embalagem, o que reduz tempo e custo. |
+| `format: json_schema` | Obriga a resposta a vir em JSON com os campos `nome`, `concentracao`, `codigo_barras` e `legivel`. |
+| `fallbacks: "default"` | Se o modelo recusar o pedido, outro modelo da Anthropic responde no lugar. |
+
+As instruções enviadas junto com a foto pedem ao modelo que **transcreva exatamente o
+que está impresso** e que **não deduza o nome a partir do código de barras**. Se o nome
+não estiver legível, o campo volta vazio e `legivel` volta como falso.
+
+**4. Conferindo a resposta**
+
+```cpp
+  if (!(leitura["legivel"] | false) || nome == "") {
+    if (codigoBarras != "") {
+      responderLeitura("Código de barras lido (" + codigoBarras + "), mas o nome do remédio não aparece na foto. "
+                       "Fotografe a frente da caixa, onde o nome está escrito.");
+    } else {
+      responderLeitura("Não foi possível ler o nome do remédio. Tente uma foto mais próxima, com boa luz.");
+    }
+    return;
+  }
+```
+
+A foto só do código de barras não basta para preencher o nome: o código identifica o
+produto apenas quando consultado numa base de dados de medicamentos (lista da CMED,
+[H3.1](#h3-funcionalidades-propostas)), consulta que fica para a etapa seguinte. Por
+isso a leitura usa o nome impresso na embalagem.
+
+**5. A chave da IA**
+
+A chave de acesso da Anthropic é cadastrada no quadro **"Leitura da caixa por foto"**,
+no fim da página, do mesmo jeito que o token do Telegram (Passo 15): fica na memória do
+dispenser e nunca é mostrada na página.
+
+| Mensagem na página | Significado |
+|---|---|
+| "Cadastre antes a chave da IA..." | A chave ainda não foi salva. |
+| "Sem internet: a leitura por foto precisa de conexão..." | O dispenser está sem internet (por exemplo, na rede própria). |
+| "Chave da IA recusada..." | Chave inválida ou revogada. |
+| "O serviço de IA está ocupado..." | Limite de uso ou instabilidade momentânea; basta repetir. |
+| "Código de barras lido (...), mas o nome do remédio não aparece na foto." | Fotografar a frente da caixa. |
+
+**Custo de uso:** a foto reduzida (até 900 × 675 px) equivale a cerca de 825 *tokens*
+de imagem (ANTHROPIC, 2026b). Somando as instruções e a resposta, cada leitura consome
+na ordem de 1.300 *tokens* de entrada e algumas centenas de saída, o que resulta em
+aproximadamente **US$ 0,01 a 0,02 por foto** pelos preços do modelo (ANTHROPIC, 2026a).
+A leitura acontece só no cadastro e na troca de remédio, algumas vezes por mês.
+
+**Privacidade:** apenas a foto da embalagem é enviada; o nome do paciente e os horários
+não saem do dispenser (princípio de [H1](#h1-princípios-de-projeto)).
+
+**Ensaios da leitura por foto:**
+
+| Ensaio | Resultado esperado |
+|---|---|
+| Foto da frente da caixa, com boa luz | Nome e concentração corretos; campo preenchido só após confirmar |
+| Toque em "Cancelar" na confirmação | Campo permanece como estava ("Leitura descartada") |
+| Foto só do código de barras | Mensagem pedindo a foto da frente da caixa, com o código lido |
+| Foto desfocada ou escura | Mensagem pedindo nova foto; nenhum nome preenchido |
+| Chave não cadastrada | Aviso para cadastrar a chave, sem abrir a câmera |
+| Dispenser sem internet | Mensagem de falta de internet |
+
 # Parte D — Juntando tudo
 
 ## D1. Linha do tempo de uma dose
@@ -2433,6 +2584,11 @@ nuvem**, que concentra as chamadas aos modelos e às bases oficiais:
 - **ESP32:** continua responsável pela rotina do dispenser. Recebe do serviço apenas
   cadastros já confirmados pelo cuidador e envia o histórico para os relatórios.
 
+No protótipo, a leitura da caixa por foto (H3.1, [Passo 20](#passo-20--leitura-da-caixa-do-remédio-por-foto-ia))
+já funciona sem o serviço intermediário: o ESP32 consulta o modelo de IA diretamente,
+com a chave guardada na memória do dispenser, como o token do Telegram. Na versão
+comercial, essa chamada passa a ser feita pelo serviço na nuvem.
+
 ## H3. Funcionalidades propostas
 
 ### H3.1 Cadastro do medicamento por código de barras ou foto
@@ -2444,6 +2600,7 @@ nuvem**, que concentra as chamadas aos modelos e às bases oficiais:
 | **Fontes de dados** | Código EAN-13 da embalagem, cruzado com a lista de preços da CMED, que traz o EAN de cada apresentação registrada (ANVISA, 2026b). |
 | **Impacto para o usuário** | Elimina erros de digitação e de concentração no cadastro e torna o uso mais simples para cuidadores com pouca familiaridade com tecnologia. |
 | **Impacto no projeto** | Sem hardware novo. Página: botão de foto e tela de confirmação. Serviço na nuvem: leitura do código, consulta à CMED e chamada ao modelo de visão. |
+| **Situação** | A leitura do nome e da concentração pela foto já está implementada no protótipo ([Passo 20](#passo-20--leitura-da-caixa-do-remédio-por-foto-ia)). A consulta do código de barras à CMED é a etapa seguinte. |
 
 ### H3.2 Conferência na reposição
 
@@ -2587,8 +2744,8 @@ nuvem**, que concentra as chamadas aos modelos e às bases oficiais:
 # Referências
 
 Fontes consultadas para os preços, as especificações dos componentes, os parâmetros
-de custo utilizados nas Partes F e G e as bases oficiais e normas citadas na Parte H
-(consulta em setembro de 2026).
+de custo utilizados nas Partes F e G, a documentação do serviço de IA usado no Passo 20
+e as bases oficiais e normas citadas na Parte H (consulta em setembro de 2026).
 
 <div class="referencias" markdown="1">
 
@@ -2601,6 +2758,10 @@ AGÊNCIA NACIONAL DE VIGILÂNCIA SANITÁRIA (ANVISA). Câmara de Regulação do 
 AMAZON.COM.BR. **Display LCD 16x2 com módulo I2C PCF8574**. Disponível em: <https://www.amazon.com.br/Display-PCF8574-Endere%C3%A7o-Controlador-80x35mm/dp/B0H346LHKM>. Acesso em: 27 set. 2026.
 
 AMAZON.COM.BR. **Placa breakout USB tipo C fêmea, 6 pinos**. Disponível em: <https://www.amazon.com.br/naughtystarts-pe%C3%A7as-breakout-conector-direito/dp/B0B19TP2MX>. Acesso em: 27 set. 2026.
+
+ANTHROPIC. **Pricing**. San Francisco: Anthropic, 2026a. Disponível em: <https://platform.claude.com/docs/en/about-claude/pricing>. Acesso em: 29 set. 2026.
+
+ANTHROPIC. **Vision**. San Francisco: Anthropic, 2026b. Disponível em: <https://platform.claude.com/docs/en/build-with-claude/vision>. Acesso em: 29 set. 2026.
 
 BAÚ DA ELETRÔNICA. **Rolo de solda estanho 500 g, 0,5 mm, Cobix**. Disponível em: <https://www.baudaeletronica.com.br/produto/rolo-de-solda-estanho-500g-05mm-cobix.html>. Acesso em: 27 set. 2026.
 

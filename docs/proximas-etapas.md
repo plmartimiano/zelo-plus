@@ -67,6 +67,11 @@ I2C** (endereço 0x3C).
 
 ## 4. Já no código, falta validar no hardware
 
+- Leitura da caixa do remédio por foto (IA, Claude Opus 5.5), Passo 20 do guia.
+  Exige a chave da API da Anthropic, cadastrada no quadro "Leitura da caixa por
+  foto". Custo estimado de US$ 0,01–0,02 por foto. A consulta do código de barras à
+  CMED fica para depois.
+
 - Correção da lista de redes vazia fora de casa.
 - Botão "Usar sem internet".
 - Botão apertado ao ligar leva à configuração.
