@@ -234,6 +234,18 @@ rodapé do VSCode.
   "coloque no compartimento 1 (azul)"), o familiar João aberto, o formulário de um
   **familiar novo** e a **reposição**, com a escolha do remédio pelas cores.
 
+<figure markdown="1">
+![Página na rede própria, com o aviso de sem internet](docs/app-4.png)
+<figcaption><b>④ Sem internet</b> — página aberta pela rede própria ZeloPlus (parte superior).</figcaption>
+</figure>
+
+- **④** Quando a rede salva não conecta ao ligar, o dispenser abre a rede própria
+  `ZeloPlus` (Passo 4). No topo da página aparece o **aviso de sem internet**, com o
+  motivo (aqui, a rede de casa não foi encontrada), o nome e a senha da rede própria, o
+  botão **"Tentar conectar novamente"** e o link **"Trocar rede Wi-Fi"**. O restante da
+  página é igual ao da imagem ②: alarmes, portas e histórico funcionam normalmente; só
+  os avisos pelo Telegram aguardam a internet.
+
 O visual segue três ideias, pensando em cuidadores e familiares com pouca
 familiaridade com tecnologia:
 
