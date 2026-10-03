@@ -8,7 +8,10 @@
 #include <Preferences.h>
 #include <time.h>
 #include <Wire.h>
-#include <LiquidCrystal_I2C.h>
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7789.h>
+#include <U8g2_for_Adafruit_GFX.h>
 #include <ESP32Servo.h>
 #include <RTClib.h>
 #include <esp_sntp.h>
@@ -33,7 +36,16 @@ const char* COR_COMPARTIMENTO[NUM_COMPARTIMENTOS] = {"#2563eb", "#16a34a", "#933
 const char* FUNDO_COMPARTIMENTO[NUM_COMPARTIMENTOS] = {"#eff6ff", "#f0fdf4", "#faf5ff"};
 const char* NOME_COR[NUM_COMPARTIMENTOS] = {"azul", "verde", "roxo"};
 
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+// Visor: tela TFT 2,25" colorida (controlador ST7789P3, 76 x 284 pontos), ligada
+// por SPI (SCL -> GPIO 18, SDA -> GPIO 23). A luz de fundo deste modulo acende
+// com o pino BL em nivel BAIXO.
+#define TELA_CS 26
+#define TELA_DC 16
+#define TELA_RST 17
+#define TELA_BL 25
+#define CANAL_BRILHO 0
+Adafruit_ST7789 tela(TELA_CS, TELA_DC, TELA_RST);
+U8G2_FOR_ADAFRUIT_GFX texto;
 Servo servos[NUM_COMPARTIMENTOS];
 WebServer server(80);
 DNSServer dnsServer;
@@ -66,7 +78,7 @@ unsigned long tentativaIniciadaEm = 0;
 String configErro = "";
 
 // ---------- RELOGIO DS3231 (opcional) ----------
-// Modulo de relogio ligado no I2C, junto com o LCD (endereco 0x68). Guarda a hora
+// Modulo de relogio ligado no I2C (endereco 0x68). Guarda a hora
 // certa mesmo sem internet e sem energia. Sem o modulo, tudo funciona como antes,
 // com a hora vinda da internet (NTP).
 RTC_DS3231 rtc;
@@ -128,7 +140,7 @@ const unsigned long TEMPO_ALERTA_FINAL = 12UL * 60UL * 1000UL;
 enum Estado { AGUARDANDO, TOCANDO, PORTA_ABERTA_ESTADO, ABASTECENDO };
 Estado estadoAtual = AGUARDANDO;
 
-// Motivo da abertura no estado ABASTECENDO (so muda o texto do LCD).
+// Motivo da abertura no estado ABASTECENDO (so muda o texto do visor).
 enum ModoAbastecimento { ABAST_NOVO, ABAST_REPOR, ABAST_ESVAZIAR };
 ModoAbastecimento modoAbastecimento = ABAST_NOVO;
 int compartimentoAbastecendo = -1;
@@ -230,52 +242,155 @@ String escaparHTML(const String& texto) {
   return saida;
 }
 
-// O LCD 16x2 nao tem acentos. Dois caracteres especiais sao desenhados nele ao
-// ligar (setup): "ç" no codigo 1 e "ã" no codigo 2 (ex.: "Medicação em dia").
-const uint8_t LCD_CEDILHA = 1;
-const uint8_t LCD_A_TIL = 2;
-uint8_t DESENHO_CEDILHA[8] = {0b00000, 0b01110, 0b10000, 0b10000, 0b10001, 0b01110, 0b00100, 0b01100};
-uint8_t DESENHO_A_TIL[8] = {0b01101, 0b10010, 0b01110, 0b00001, 0b01111, 0b10001, 0b01111, 0b00000};
+// ---------- VISOR ----------
 
-// Prepara o texto para o LCD e corta em 'largura' caracteres. "ç" e "ã" usam os
-// caracteres especiais; as outras letras acentuadas perdem o acento. Com
-// maiusculas = true (nomes dos remedios), tudo vira maiusculas sem acento
-// (ex.: "Losartana Potássica" -> "LOSARTANA POTASSICA").
-String textoLCD(const String& texto, unsigned int largura = 16, bool maiusculas = false) {
+const int VISOR_LARGURA = 284;
+const int VISOR_ALTURA = 76;
+
+// Cores do visor (RGB). Os compartimentos usam as mesmas cores da pagina.
+const uint32_t COR_PRETO = 0x000000;
+const uint32_t COR_BRANCO = 0xFFFFFF;
+const uint32_t COR_AMARELO = 0xFACC15;
+const uint32_t COR_VERDE = 0x16A34A;
+const uint32_t COR_VERMELHO = 0xDC2626;
+const uint32_t COR_LARANJA = 0xEA580C;
+const uint32_t COR_CINZA = 0x4B5563;
+const uint32_t COR_AZUL_ESCURO = 0x1E3A8A;
+const uint32_t COR_VISOR_COMPARTIMENTO[NUM_COMPARTIMENTOS] = {0x2563EB, 0x16A34A, 0x9333EA};
+
+uint32_t corFundo = COR_PRETO;
+uint32_t corLinha[2] = {COR_BRANCO, COR_BRANCO};
+String linhaMostrada[2];
+bool telaEsperaDesenhada = false;
+
+uint16_t cor565(uint32_t rgb) {
+  return tela.color565((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+}
+
+// Brilho de 0 a 100 %. O pino BL acende em nivel baixo: 100 % = pino em 0.
+void brilhoVisor(int porcento) {
+  ledcWrite(CANAL_BRILHO, (100 - porcento) * 255 / 100);
+}
+
+// Troca a fonte mantendo o texto transparente (a biblioteca volta a pintar o
+// fundo das letras a cada troca de fonte).
+void fonteVisor(const uint8_t* fonte) {
+  texto.setFont(fonte);
+  texto.setFontMode(1);
+}
+
+// Cores da proxima tela: fundo e cor de cada linha. Vale a partir do
+// proximo limparVisor().
+void temaVisor(uint32_t fundo, uint32_t linha0 = COR_BRANCO, uint32_t linha1 = COR_BRANCO) {
+  corFundo = fundo;
+  corLinha[0] = linha0;
+  corLinha[1] = linha1;
+}
+
+void limparVisor() {
+  tela.fillScreen(cor565(corFundo));
+  linhaMostrada[0] = "\x01";
+  linhaMostrada[1] = "\x01";
+  telaEsperaDesenhada = false;
+}
+
+void iniciarVisor() {
+  ledcSetup(CANAL_BRILHO, 5000, 8);
+  ledcAttachPin(TELA_BL, CANAL_BRILHO);
+  brilhoVisor(100);
+  tela.init(VISOR_ALTURA, VISOR_LARGURA); // o painel e "em pe": 76 x 284
+  tela.setRotation(1);                    // deitado: 284 x 76
+  tela.invertDisplay(false);              // este painel nao usa inversao de cores
+  texto.begin(tela);
+  temaVisor(COR_PRETO);
+  limparVisor();
+}
+
+// Prepara o texto para o visor: corta em 'maxLetras' letras (sem partir os
+// acentos) e, com maiusculas = true (nomes dos remedios), passa tudo para
+// maiusculas, inclusive as letras acentuadas ("Losartana Potássica" ->
+// "LOSARTANA POTÁSSICA").
+String textoVisor(const String& original, unsigned int maxLetras = 40, bool maiusculas = false) {
   String saida;
-  for (unsigned int i = 0; i < texto.length() && saida.length() < largura; i++) {
-    uint8_t c = (uint8_t)texto[i];
-    if (c == 0xC3 && i + 1 < texto.length()) {
-      uint8_t original = (uint8_t)texto[++i];
-      if (!maiusculas && original == 0xA7) { saida += (char)LCD_CEDILHA; continue; }
-      if (!maiusculas && original == 0xA3) { saida += (char)LCD_A_TIL; continue; }
-      uint8_t d = original | 0x20; // 0x80-0x9F (maiusculas) -> minusculas
-      char base = '?';
-      if (d >= 0xA0 && d <= 0xA5) base = 'A';
-      else if (d == 0xA7) base = 'C';
-      else if (d >= 0xA8 && d <= 0xAB) base = 'E';
-      else if (d >= 0xAC && d <= 0xAF) base = 'I';
-      else if (d == 0xB1) base = 'N';
-      else if (d >= 0xB2 && d <= 0xB6) base = 'O';
-      else if (d >= 0xB9 && d <= 0xBC) base = 'U';
-      if (!maiusculas && original >= 0xA0 && base != '?') base = (char)tolower(base);
-      saida += base;
+  unsigned int letras = 0;
+  for (unsigned int i = 0; i < original.length() && letras < maxLetras; i++) {
+    uint8_t c = (uint8_t)original[i];
+    if (c == 0xC3 && i + 1 < original.length()) {
+      uint8_t segundo = (uint8_t)original[++i];
+      if (maiusculas && segundo >= 0xA0 && segundo <= 0xBE && segundo != 0xB7) segundo -= 0x20;
+      saida += (char)c;
+      saida += (char)segundo;
     } else if (c >= 0x80) {
-      // outro caractere especial: pula os bytes de continuacao
-      while (i + 1 < texto.length() && ((uint8_t)texto[i + 1] & 0xC0) == 0x80) i++;
-      saida += '?';
+      saida += (char)c;
+      while (i + 1 < original.length() && ((uint8_t)original[i + 1] & 0xC0) == 0x80) saida += original[++i];
     } else {
       saida += maiusculas ? (char)toupper(c) : (char)c;
     }
+    letras++;
   }
   return saida;
 }
 
-void escreverLinhaLCD(int linha, const String& texto) {
-  String t = textoLCD(texto);
-  while (t.length() < 16) t += ' ';
-  lcd.setCursor(0, linha);
-  lcd.print(t);
+// Escreve uma das duas linhas do visor, centralizada: linha 0 (em cima, letra
+// menor) ou linha 1 (embaixo, letra maior, para o nome do remedio). Se o texto
+// nao couber, a letra diminui. So redesenha quando o texto muda.
+void escreverLinha(int linha, const String& conteudo) {
+  if (conteudo == linhaMostrada[linha]) return;
+  linhaMostrada[linha] = conteudo;
+
+  int topo = (linha == 0) ? 0 : 34;
+  int altura = (linha == 0) ? 34 : 42;
+  tela.fillRect(0, topo, VISOR_LARGURA, altura, cor565(corFundo));
+
+  const uint8_t* fontes[3] = {u8g2_font_helvB24_tf, u8g2_font_helvB18_tf, u8g2_font_helvB14_tf};
+  int primeira = (linha == 0) ? 1 : 0;
+  for (int f = primeira; f < 3; f++) {
+    fonteVisor(fontes[f]);
+    if (texto.getUTF8Width(conteudo.c_str()) <= VISOR_LARGURA - 8 || f == 2) break;
+  }
+  // Ainda grande demais na menor letra: corta o final e poe "..."
+  String mostrar = conteudo;
+  while (texto.getUTF8Width(mostrar.c_str()) > VISOR_LARGURA - 8 && mostrar.length() > 4) {
+    if (mostrar.endsWith("...")) mostrar.remove(mostrar.length() - 3);
+    int fim = mostrar.length() - 1;
+    while (fim > 0 && ((uint8_t)mostrar[fim] & 0xC0) == 0x80) fim--; // nao parte letras acentuadas
+    mostrar.remove(fim);
+    mostrar.trim();
+    mostrar += "...";
+  }
+  int largura = texto.getUTF8Width(mostrar.c_str());
+  int base = topo + (altura + texto.getFontAscent()) / 2;
+  texto.setForegroundColor(cor565(corLinha[linha]));
+  texto.drawUTF8((VISOR_LARGURA - largura) / 2, base, mostrar.c_str());
+}
+
+// Tela de espera: hora grande a esquerda e caixa colorida com a situacao a
+// direita. So redesenha a parte que mudou.
+void desenharTelaEspera(const char* hora, const char* situacao1, const char* situacao2, uint32_t corCaixa) {
+  static String horaMostrada, situacaoMostrada;
+  String situacao = String(situacao1) + "|" + situacao2;
+  if (!telaEsperaDesenhada) {
+    tela.fillScreen(cor565(COR_PRETO));
+    horaMostrada = "";
+    situacaoMostrada = "";
+    telaEsperaDesenhada = true;
+  }
+  if (horaMostrada != hora) {
+    horaMostrada = hora;
+    tela.fillRect(0, 0, 142, VISOR_ALTURA, cor565(COR_PRETO));
+    fonteVisor(u8g2_font_logisoso46_tn);
+    texto.setForegroundColor(cor565(COR_BRANCO));
+    texto.drawUTF8(4, 61, hora);
+  }
+  if (situacaoMostrada != situacao) {
+    situacaoMostrada = situacao;
+    tela.fillRect(142, 0, VISOR_LARGURA - 142, VISOR_ALTURA, cor565(COR_PRETO));
+    tela.fillRoundRect(144, 6, 136, 64, 10, cor565(corCaixa));
+    fonteVisor(u8g2_font_helvB18_tf);
+    texto.setForegroundColor(cor565(COR_BRANCO));
+    texto.drawUTF8(212 - texto.getUTF8Width(situacao1) / 2, 33, situacao1);
+    texto.drawUTF8(212 - texto.getUTF8Width(situacao2) / 2, 59, situacao2);
+  }
 }
 
 String formatarHorario(int hora, int minuto) {
@@ -872,9 +987,9 @@ void handleConectar() {
 
   String senha = server.arg("senha");
 
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Testando rede...");
+  temaVisor(COR_AZUL_ESCURO);
+  limparVisor();
+  escreverLinha(0, "Testando rede...");
 
   WiFi.begin(ssid.c_str(), senha.c_str());
   unsigned long inicio = millis();
@@ -993,11 +1108,10 @@ void iniciarModoConfig() {
 
   dnsServer.start(DNS_PORT, "*", apIP);
 
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Conecte no Wi-Fi");
-  lcd.setCursor(0, 1);
-  lcd.print("ZeloPlus-Config");
+  temaVisor(COR_AZUL_ESCURO);
+  limparVisor();
+  escreverLinha(0, "Conecte no Wi-Fi");
+  escreverLinha(1, "ZeloPlus-Config");
 
   server.on("/", handleInicio);
   server.on("/conectar", HTTP_POST, handleConectar);
@@ -1507,13 +1621,14 @@ void iniciarAbastecimento(int c, ModoAbastecimento modo) {
   modoAbastecimento = modo;
 
   String titulo;
-  if (modo == ABAST_REPOR) titulo = "Repor compart." + String(c + 1);
-  else if (modo == ABAST_ESVAZIAR) titulo = "Esvaziar comp." + String(c + 1);
-  else titulo = "Abast. compart." + String(c + 1);
+  if (modo == ABAST_REPOR) titulo = "Repor compartimento " + String(c + 1);
+  else if (modo == ABAST_ESVAZIAR) titulo = "Esvaziar compartimento " + String(c + 1);
+  else titulo = "Abastecer compartimento " + String(c + 1);
 
-  lcd.clear();
-  escreverLinhaLCD(0, titulo);
-  escreverLinhaLCD(1, modo == ABAST_ESVAZIAR ? String("Retire tudo") : textoLCD(medicamentos[c].nome, 16, true));
+  temaVisor(COR_VISOR_COMPARTIMENTO[c]);
+  limparVisor();
+  escreverLinha(0, titulo);
+  escreverLinha(1, modo == ABAST_ESVAZIAR ? String("Retire tudo") : textoVisor(medicamentos[c].nome, 22, true));
   abrirCompartimento(c);
   mascaraAberta = (uint8_t)(1 << c);
   estadoAtual = ABASTECENDO;
@@ -1802,8 +1917,9 @@ void handleLerCaixa() {
   }
 
   if (estadoAtual == AGUARDANDO) {
-    lcd.clear();
-    escreverLinhaLCD(0, "Lendo a caixa...");
+    temaVisor(COR_AZUL_ESCURO);
+    limparVisor();
+    escreverLinha(0, "Lendo a caixa...");
   }
 
   CorpoPedidoIA corpo(PEDIDO_IA_INICIO, fotoRecebida, fotoTamanho, PEDIDO_IA_FIM);
@@ -1823,7 +1939,7 @@ void handleLerCaixa() {
     http.end();
   }
   descartarFoto();
-  if (estadoAtual == AGUARDANDO) lcd.clear();
+  if (estadoAtual == AGUARDANDO) limparVisor();
   Serial.print("IA (leitura da caixa): HTTP ");
   Serial.println(codigo);
 
@@ -2053,9 +2169,12 @@ void handleSalvar() {
 
 // ---------- ALARME ----------
 
-void mostrarAlarmeLCD() {
-  lcd.clear();
-  escreverLinhaLCD(0, "Hora do remedio!");
+// Tela do alarme: fundo na cor do compartimento do remedio mostrado, com o
+// numero do compartimento em cima e o nome do remedio embaixo.
+void mostrarAlarme(int c) {
+  temaVisor(COR_VISOR_COMPARTIMENTO[c]);
+  limparVisor();
+  escreverLinha(0, "Hora do remédio! (C" + String(c + 1) + ")");
 }
 
 void iniciarAlarme(uint8_t mascara, const String& horario) {
@@ -2077,7 +2196,12 @@ void iniciarAlarme(uint8_t mascara, const String& horario) {
   Serial.print(horario);
   Serial.print(": ");
   Serial.println(nomesDose);
-  mostrarAlarmeLCD();
+  for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
+    if (temBit(mascara, c)) {
+      mostrarAlarme(c);
+      break;
+    }
+  }
 }
 
 void desligarLedBuzzer() {
@@ -2096,9 +2220,10 @@ void abrirParaPaciente() {
   desligarLedBuzzer();
   dosePendente = false;
 
-  lcd.clear();
-  escreverLinhaLCD(0, "Retire: " + listaCompartimentos(doseMascara));
-  escreverLinhaLCD(1, "Abrindo...");
+  temaVisor(COR_PRETO, COR_BRANCO, COR_AMARELO);
+  limparVisor();
+  escreverLinha(0, "Retire: " + listaCompartimentos(doseMascara));
+  escreverLinha(1, "Abrindo...");
   abrirCompartimentos(doseMascara);
 
   mascaraAberta = doseMascara;
@@ -2140,51 +2265,55 @@ void verificarHorarios() {
   }
 }
 
-void atualizarLCDRelogio() {
+void atualizarTelaEspera() {
   static unsigned long ultimaAtualizacao = 0;
   if (millis() - ultimaAtualizacao < 1000) return;
   ultimaAtualizacao = millis();
 
   // Hora desconhecida (sem internet e sem DS3231): os alarmes nao disparam.
-  // O LCD pede o acerto e o LED pisca, para ninguem achar que esta tudo normal.
+  // O visor pede o acerto e o LED pisca, para ninguem achar que esta tudo normal.
   static bool avisoHoraAtivo = false;
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo, 10)) {
+    if (!avisoHoraAtivo || telaEsperaDesenhada) {
+      temaVisor(COR_LARANJA);
+      limparVisor();
+    }
     avisoHoraAtivo = true;
-    escreverLinhaLCD(0, "Acerte a hora");
-    escreverLinhaLCD(1, "pelo celular");
+    escreverLinha(0, "Acerte a hora");
+    escreverLinha(1, "pelo celular");
     digitalWrite(LED_PIN, digitalRead(LED_PIN) == HIGH ? LOW : HIGH);
     return;
   }
   if (avisoHoraAtivo) {
     avisoHoraAtivo = false;
     digitalWrite(LED_PIN, LOW);
+    telaEsperaDesenhada = false;
   }
 
-  // Linha 1: hora e minuto, centralizados.
+  // Hora grande a esquerda; a direita, a situacao das doses numa caixa colorida.
   char horaBuffer[6];
   strftime(horaBuffer, sizeof(horaBuffer), "%H:%M", &timeinfo);
-  escreverLinhaLCD(0, String("     ") + horaBuffer);
 
   int ativos = totalMedicamentosAtivos();
   if (dosePendente) {
-    escreverLinhaLCD(1, "Dose pendente!");
+    desenharTelaEspera(horaBuffer, "Dose", "pendente!", COR_VERMELHO);
   } else if (ativos > 0) {
-    escreverLinhaLCD(1, "Medicação em dia");
+    desenharTelaEspera(horaBuffer, "Medicação", "em dia", COR_VERDE);
   } else {
-    escreverLinhaLCD(1, "Sem remédio");
+    desenharTelaEspera(horaBuffer, "Sem", "remédio", COR_CINZA);
   }
 }
 
-// Linha 2 do LCD enquanto a porta esta aberta: "Aguarde..." durante a trava e
-// depois a contagem para o fechamento automatico.
-void mostrarContagemLCD(unsigned long abertoEm, unsigned long tempoTotal) {
+// Linha de baixo do visor enquanto a porta esta aberta: "Aguarde..." durante a
+// trava e depois a contagem para o fechamento automatico.
+void mostrarContagem(unsigned long abertoEm, unsigned long tempoTotal) {
   unsigned long decorrido = millis() - abertoEm;
   if (decorrido < TRAVA_BOTAO) {
-    escreverLinhaLCD(1, "Aguarde...");
+    escreverLinha(1, "Aguarde...");
   } else {
     unsigned long restante = (tempoTotal - decorrido) / 1000;
-    escreverLinhaLCD(1, "Fecha em: " + String(restante) + "s");
+    escreverLinha(1, "Fecha em: " + String(restante) + "s");
   }
 }
 
@@ -2219,7 +2348,7 @@ void iniciarRelogioRTC() {
 }
 
 // Depois de cada acerto pela internet, grava a hora certa no DS3231. Roda no
-// loop() para nao disputar os fios do I2C com o LCD.
+// loop(), junto com as demais tarefas do programa.
 void gravarHoraNoRTC() {
   if (!ntpSincronizou) return;
   ntpSincronizou = false;
@@ -2253,12 +2382,12 @@ void sairModoLocal() {
   Serial.print("Rede salva conectada. Acesse: http://");
   Serial.println(WiFi.localIP());
   if (estadoAtual == AGUARDANDO) {
-    lcd.clear();
-    lcd.print("IP do sistema:");
-    lcd.setCursor(0, 1);
-    lcd.print(WiFi.localIP());
+    temaVisor(COR_AZUL_ESCURO);
+    limparVisor();
+    escreverLinha(0, "Endereço da página:");
+    escreverLinha(1, WiFi.localIP().toString());
     delay(5000);
-    lcd.clear();
+    limparVisor();
   }
 }
 
@@ -2338,24 +2467,24 @@ void iniciarModoNormal() {
   sntp_set_time_sync_notification_cb(aoSincronizarNTP);
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
-  lcd.clear();
+  temaVisor(COR_AZUL_ESCURO);
+  limparVisor();
   if (modoLocal) {
     // Visor: nome e senha da rede propria, depois o endereco da pagina.
-    escreverLinhaLCD(0, "Rede " + nomeRedeLocal);
-    escreverLinhaLCD(1, nomeRedeLocal == NOME_REDE_LOCAL ? "senha " + String(SENHA_REDE_LOCAL) : "sem senha");
+    escreverLinha(0, "Rede " + nomeRedeLocal);
+    escreverLinha(1, nomeRedeLocal == NOME_REDE_LOCAL ? "senha " + String(SENHA_REDE_LOCAL) : "sem senha");
     delay(4000);
-    escreverLinhaLCD(0, "Pagina:");
-    escreverLinhaLCD(1, "192.168.4.1");
+    escreverLinha(0, "Endereço da página:");
+    escreverLinha(1, "192.168.4.1");
     Serial.println("Sem internet: rede " + nomeRedeLocal + ", acesse http://192.168.4.1");
   } else {
-    lcd.print("IP do sistema:");
-    lcd.setCursor(0, 1);
-    lcd.print(WiFi.localIP());
+    escreverLinha(0, "Endereço da página:");
+    escreverLinha(1, WiFi.localIP().toString());
     Serial.print("Acesse: http://");
     Serial.println(WiFi.localIP());
   }
   delay(6000);
-  lcd.clear();
+  limparVisor();
 
   server.on("/", handleRoot);
   server.on("/salvar", HTTP_POST, handleSalvar);
@@ -2392,11 +2521,9 @@ void setup() {
     servos[c].write(ANGULO_FECHADO[c]);
   }
 
-  lcd.init();
-  lcd.backlight();
-  lcd.createChar(LCD_CEDILHA, DESENHO_CEDILHA);
-  lcd.createChar(LCD_A_TIL, DESENHO_A_TIL);
-  lcd.print("Iniciando...");
+  iniciarVisor();
+  escreverLinha(0, "Zelo+");
+  escreverLinha(1, "Iniciando...");
 
   iniciarRelogioRTC();
 
@@ -2420,8 +2547,9 @@ void setup() {
   }
 
   if (ssidSalvo != "") {
-    lcd.clear();
-    lcd.print("Conectando...");
+    limparVisor();
+    escreverLinha(0, "Zelo+");
+    escreverLinha(1, "Conectando...");
     WiFi.begin(ssidSalvo.c_str(), senhaSalva.c_str());
 
     unsigned long inicio = millis();
@@ -2477,7 +2605,7 @@ void loop() {
         }
         break;
       }
-      atualizarLCDRelogio();
+      atualizarTelaEspera();
       break;
 
     case TOCANDO: {
@@ -2490,8 +2618,9 @@ void loop() {
 
       if (decorrido >= TEMPO_ALERTA_FINAL) {
         desligarLedBuzzer();
-        lcd.clear();
-        escreverLinhaLCD(0, "Avisando familia");
+        temaVisor(COR_VERMELHO);
+        limparVisor();
+        escreverLinha(0, "Avisando a família");
         atualizarDose(DOSE_SEM_ACESSO, decorrido);
         alertarSemAcesso();
         nivelAvisoEnviado = 2;
@@ -2500,19 +2629,20 @@ void loop() {
         // Os registros continuam ligados a dose para virar "com atraso" se o
         // paciente ainda aparecer.
         dosePendente = true;
-        lcd.clear();
+        limparVisor();
         estadoAtual = AGUARDANDO;
         break;
       }
 
       if (decorrido >= TEMPO_PRIMEIRO_AVISO && nivelAvisoEnviado == 0) {
         desligarLedBuzzer();
-        escreverLinhaLCD(1, "Avisando cuidad.");
+        escreverLinha(1, "Avisando o cuidador");
         avisarPrimeiroAtraso();
         nivelAvisoEnviado = 1;
       }
 
-      // Linha 2: nome e compartimento de cada remedio da dose, alternando a cada 2 s.
+      // Nome e compartimento de cada remedio da dose, alternando a cada 2 s; o
+      // fundo do visor fica na cor do compartimento mostrado.
       static unsigned long ultimaTrocaNome = 0;
       static int nomeMostrado = -1;
       if (millis() - ultimaTrocaNome >= 2000 || nomeMostrado < 0 || !temBit(doseMascara, nomeMostrado)) {
@@ -2520,11 +2650,9 @@ void loop() {
         for (int passo = 1; passo <= NUM_COMPARTIMENTOS; passo++) {
           int c = (nomeMostrado + passo + NUM_COMPARTIMENTOS) % NUM_COMPARTIMENTOS;
           if (!temBit(doseMascara, c)) continue;
+          if (c != nomeMostrado) mostrarAlarme(c);
           nomeMostrado = c;
-          String sufixo = " (C" + String(c + 1) + ")";
-          String nomeCurto = textoLCD(medicamentos[c].nome, 16 - sufixo.length(), true);
-          nomeCurto.trim();
-          escreverLinhaLCD(1, nomeCurto + sufixo);
+          escreverLinha(1, textoVisor(medicamentos[c].nome, 40, true));
           break;
         }
       }
@@ -2552,20 +2680,21 @@ void loop() {
                     (millis() - portaAbertaEm >= TEMPO_PORTA_ABERTA);
 
       if (fechar) {
-        lcd.clear();
-        escreverLinhaLCD(0, "Fechando porta..");
+        temaVisor(COR_PRETO);
+        limparVisor();
+        escreverLinha(0, "Fechando a porta...");
         fecharCompartimentos(mascaraAberta);
         mascaraAberta = 0;
 
-        lcd.clear();
+        limparVisor();
         estadoAtual = AGUARDANDO;
         break;
       }
 
       if (millis() - ultimaAtualizacaoContagem >= 500) {
         ultimaAtualizacaoContagem = millis();
-        escreverLinhaLCD(0, "Retire: " + listaCompartimentos(mascaraAberta));
-        mostrarContagemLCD(portaAbertaEm, TEMPO_PORTA_ABERTA);
+        escreverLinha(0, "Retire: " + listaCompartimentos(mascaraAberta));
+        mostrarContagem(portaAbertaEm, TEMPO_PORTA_ABERTA);
       }
       break;
     }
@@ -2578,28 +2707,29 @@ void loop() {
                     (millis() - abastecimentoAbertoEm >= TEMPO_ABASTECIMENTO);
 
       if (fechar) {
-        lcd.clear();
-        escreverLinhaLCD(0, "Fechando...");
+        temaVisor(COR_PRETO);
+        limparVisor();
+        escreverLinha(0, "Fechando a porta...");
         fecharCompartimentos(mascaraAberta);
         mascaraAberta = 0;
         compartimentoAbastecendo = -1;
 
-        lcd.clear();
+        limparVisor();
         estadoAtual = AGUARDANDO; // o proximo da fila (se houver) abre pelo loop()
         break;
       }
 
-      // Linha 2 alterna entre o nome do remedio e a contagem, a cada 2 s,
+      // A linha de baixo alterna entre o nome do remedio e a contagem, a cada 2 s,
       // depois da trava.
       if (millis() - ultimaAtualizacaoAbastecimento >= 1000) {
         ultimaAtualizacaoAbastecimento = millis();
         unsigned long decorrido = millis() - abastecimentoAbertoEm;
         bool mostrarNome = !travaLiberada || (decorrido / 2000) % 2 == 0;
         if (mostrarNome) {
-          escreverLinhaLCD(1, modoAbastecimento == ABAST_ESVAZIAR ? String("Retire tudo")
-                                                                  : textoLCD(medicamentos[compartimentoAbastecendo].nome, 16, true));
+          escreverLinha(1, modoAbastecimento == ABAST_ESVAZIAR ? String("Retire tudo")
+                                                               : textoVisor(medicamentos[compartimentoAbastecendo].nome, 22, true));
         } else {
-          mostrarContagemLCD(abastecimentoAbertoEm, TEMPO_ABASTECIMENTO);
+          mostrarContagem(abastecimentoAbertoEm, TEMPO_ABASTECIMENTO);
         }
       }
       break;
