@@ -1032,7 +1032,7 @@ um compartimento de cada vez.
 ## Passo 9 — Movendo as portas (servos)
 
 **O que faz:** abre e fecha as portas **devagar e em velocidade constante**. Cada
-movimento dura 7 s, em passos de 2°.
+movimento dura 7 s, em passos de 3°.
 
 ```cpp
 // Duracao de cada movimento de porta (abrir ou fechar), em milissegundos.
@@ -1041,8 +1041,8 @@ const unsigned long TEMPO_MOVIMENTO_PORTA = 7000;
 
 // Tamanho de cada passo do movimento, em graus. Passos de fracao de grau nao
 // vencem o atrito da porta: o servo fica zumbindo parado e depois salta de uma
-// vez. Com 2 graus por passo ele sempre responde ao comando.
-const int GRAUS_POR_PASSO = 2;
+// vez. Com 3 graus por passo ele sempre responde ao comando.
+const int GRAUS_POR_PASSO = 3;
 
 // Largura do pulso do servo em 0 e em 180 graus (padrao do SG90/MG90).
 const int PULSO_0_GRAU = 544;
@@ -1069,19 +1069,19 @@ void moverPorta(int c, int de, int para) {
 }
 ```
 
-- **Passos:** 90° ÷ 2° = **45 passos** por movimento, com 7.000 ms ÷ 45 ≈ **155 ms**
+- **Passos:** 90° ÷ 3° = **30 passos** por movimento, com 7.000 ms ÷ 30 ≈ **233 ms**
   entre um passo e o seguinte. A velocidade fica em cerca de 13° por segundo.
-- **Por que passos de 2°:** o servo só reage quando a diferença entre a posição
+- **Por que passos de 3°:** o servo só reage quando a diferença entre a posição
   pedida e a atual vence a sua zona morta e o atrito da porta. Com avanços de fração
-  de grau, o motor fica parado zumbindo e depois salta de uma vez. Com 2° por passo,
+  de grau, o motor fica parado zumbindo e depois salta de uma vez. Com 3° por passo,
   cada comando produz um movimento real e a porta abre de forma gradual.
 - **Resolução do sinal:** o servo entende a posição pela largura do pulso, de 544 µs
   (0°) a 2.400 µs (180°), cerca de 10 µs por grau. Com 16 bits (`RESOLUCAO_SERVO`),
   o ESP32 ajusta o pulso em frações de microssegundo, e todos os passos ficam com o
   mesmo tamanho. A resolução precisa ser definida antes do `attach` (Passo 3).
 - **Ajuste:** `TEMPO_MOVIMENTO_PORTA` muda a velocidade (ex.: 9000 para 9 s, mais
-  lento; 5000 para 5 s, mais rápido). `GRAUS_POR_PASSO` muda o tamanho do passo: 1
-  deixa o movimento mais contínuo, se o servo e a porta responderem bem; 3 garante a
+  lento; 5000 para 5 s, mais rápido). `GRAUS_POR_PASSO` muda o tamanho do passo: 2
+  deixa o movimento mais contínuo, se o servo e a porta responderem bem; 4 garante a
   resposta numa porta mais dura.
 
 ```cpp

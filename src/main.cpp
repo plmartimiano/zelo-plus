@@ -193,8 +193,8 @@ const unsigned long TEMPO_MOVIMENTO_PORTA = 7000;
 
 // Tamanho de cada passo do movimento, em graus. Passos de fracao de grau nao
 // vencem o atrito da porta: o servo fica zumbindo parado e depois salta de uma
-// vez. Com 2 graus por passo ele sempre responde ao comando.
-const int GRAUS_POR_PASSO = 2;
+// vez. Com 3 graus por passo ele sempre responde ao comando.
+const int GRAUS_POR_PASSO = 3;
 
 // Largura do pulso do servo em 0 e em 180 graus (padrao do SG90/MG90).
 const int PULSO_0_GRAU = 544;
