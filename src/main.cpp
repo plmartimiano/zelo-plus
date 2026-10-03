@@ -43,10 +43,13 @@ const char* NOME_COR[NUM_COMPARTIMENTOS] = {"azul", "verde", "roxo"};
 #define TELA_DC 16
 #define TELA_RST 17
 #define TELA_BL 25
-#define CANAL_BRILHO 0
 Adafruit_ST7789 tela(TELA_CS, TELA_DC, TELA_RST);
 U8G2_FOR_ADAFRUIT_GFX texto;
 Servo servos[NUM_COMPARTIMENTOS];
+// Sinal de brilho da tela. Fica com a biblioteca dos servos, que escolhe um canal
+// e um temporizador livres: os servos usam 50 Hz e a luz de fundo 5.000 Hz, e os
+// dois nao podem dividir o mesmo temporizador do ESP32.
+ESP32PWM luzVisor;
 WebServer server(80);
 DNSServer dnsServer;
 Preferences preferences;
@@ -186,7 +189,7 @@ int totalMedicamentosAtivos() {
 
 // Duracao de cada movimento de porta (abrir ou fechar), em milissegundos.
 // Aumente para deixar as portas mais lentas.
-const unsigned long TEMPO_MOVIMENTO_PORTA = 5000;
+const unsigned long TEMPO_MOVIMENTO_PORTA = 5500;
 
 // Largura do pulso do servo em 0 e em 180 graus (padrao do SG90/MG90).
 const int PULSO_0_GRAU = 544;
@@ -276,7 +279,7 @@ uint16_t cor565(uint32_t rgb) {
 
 // Brilho de 0 a 100 %. O pino BL acende em nivel baixo: 100 % = pino em 0.
 void brilhoVisor(int porcento) {
-  ledcWrite(CANAL_BRILHO, (100 - porcento) * 255 / 100);
+  luzVisor.write((100 - porcento) * 255 / 100);
 }
 
 // Troca a fonte mantendo o texto transparente (a biblioteca volta a pintar o
@@ -302,8 +305,7 @@ void limparVisor() {
 }
 
 void iniciarVisor() {
-  ledcSetup(CANAL_BRILHO, 5000, 8);
-  ledcAttachPin(TELA_BL, CANAL_BRILHO);
+  luzVisor.attachPin(TELA_BL, 5000, 8);
   brilhoVisor(100);
   tela.init(VISOR_ALTURA, VISOR_LARGURA); // o painel e "em pe": 76 x 284
   tela.setRotation(1);                    // deitado: 284 x 76

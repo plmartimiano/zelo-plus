@@ -1031,12 +1031,12 @@ um compartimento de cada vez.
 ## Passo 9 — Movendo as portas (servos)
 
 **O que faz:** abre e fecha as portas **devagar e sem trancos**. Cada movimento dura
-5 s: a porta começa lenta, acelera no meio e freia ao chegar.
+5,5 s: a porta começa lenta, acelera no meio e freia ao chegar.
 
 ```cpp
 // Duracao de cada movimento de porta (abrir ou fechar), em milissegundos.
 // Aumente para deixar as portas mais lentas.
-const unsigned long TEMPO_MOVIMENTO_PORTA = 5000;
+const unsigned long TEMPO_MOVIMENTO_PORTA = 5500;
 
 // Largura do pulso do servo em 0 e em 180 graus (padrao do SG90/MG90).
 const int PULSO_0_GRAU = 544;
@@ -1058,11 +1058,11 @@ void moverPorta(int c, float de, float para) {
 }
 ```
 
-- **Passos:** 5.000 ms ÷ 20 ms = **250 posições** por movimento. O servo recebe uma
+- **Passos:** 5.500 ms ÷ 20 ms = **275 posições** por movimento. O servo recebe uma
   nova posição a cada pulso do seu sinal (a cada 20 ms).
 - **Curva suave:** `(1 − cos(t·π)) / 2` vai de 0 a 1 com início e fim lentos. Na
-  abertura, a porta está em ~9° após 1 s, em 45° na metade do tempo e chega a 90°
-  aos 5 s. A velocidade máxima, no meio do curso, fica em cerca de 28° por segundo.
+  abertura, a porta está em ~7° após 1 s, em 45° na metade do tempo e chega a 90°
+  aos 5,5 s. A velocidade máxima, no meio do curso, fica em cerca de 26° por segundo.
   Isso evita o impacto da tampa no fim do curso e reduz o pico de corrente na partida
   do motor.
 - **Posição em microssegundos:** o servo entende a posição pela largura do pulso, de
