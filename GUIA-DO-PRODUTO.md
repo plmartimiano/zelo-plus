@@ -115,7 +115,7 @@ porta movida por um servo motor.
 |---|---|---|
 | ESP32 DevKit (30 pinos) | 1 | O "cérebro". Tem Wi-Fi embutido. |
 | Servo motor SG90 | 3 | Um por compartimento (porta). |
-| LCD 16x2 com módulo I2C (PCF8574, endereço `0x27`) | 1 | Mostra relógio e mensagens. |
+| Tela TFT 2,25" colorida (ST7789P3, 76 × 284 pontos, ligação SPI) | 1 | Mostra relógio, nome do remédio e avisos, com cores por situação. |
 | Buzzer **ativo** | 1 | Apita sozinho quando recebe energia. |
 | LED + resistor 220–330 Ω | 1 | Pisca junto com o buzzer. |
 | Botão (push-button) | 1 | O paciente aperta para abrir/fechar. |
@@ -133,8 +133,11 @@ porta movida por um servo motor.
 | Servo compartimento 1 (sinal) | GPIO 13 | +5 V e GND na **fonte externa** |
 | Servo compartimento 2 (sinal) | GPIO 14 | +5 V e GND na **fonte externa** |
 | Servo compartimento 3 (sinal) | GPIO 27 | +5 V e GND na **fonte externa** |
-| LCD — SDA / SCL | GPIO 21 / GPIO 22 | VCC → 3V3, GND → GND |
-| Relógio DS3231 — SDA / SCL *(próxima etapa)* | GPIO 21 / GPIO 22 | em paralelo com o LCD; VCC → 3V3, GND → GND (desenho na [E3](#e3-a-solução-fonte-5-v3-a--módulo-ups--bateria-18650)) |
+| Tela TFT — SCL / SDA | GPIO 18 / GPIO 23 | relógio e dados do SPI |
+| Tela TFT — RST / DC | GPIO 17 (TX2) / GPIO 16 (RX2) | reinício da tela / dado ou comando |
+| Tela TFT — CS / BL | GPIO 26 / GPIO 25 | seleção da tela / luz de fundo |
+| Tela TFT — VCC / GND | 3V3 / GND | **nunca no 5 V** |
+| Relógio DS3231 — SDA / SCL *(próxima etapa)* | GPIO 21 / GPIO 22 | único no I2C; VCC → 3V3, GND → GND (desenho na [E3](#e3-a-solução-fonte-5-v3-a--módulo-ups--bateria-18650)) |
 | Botão | GPIO 5 | outra perna → GND (sem resistor) |
 | LED | GPIO 4 | via resistor; perna curta → GND |
 | Buzzer (+) | GPIO 15 | (−) → GND |
@@ -145,6 +148,13 @@ momento em que começa a girar. Se ele for ligado no 3V3 do ESP32, a tensão cai
 placa reinicia. Por isso os servos usam uma fonte de 5 V própria, e o **GND da fonte
 é ligado ao GND do ESP32**: sem essa referência comum, o sinal do pino não é
 entendido pelo servo.
+
+**Ligação da tela TFT.** O módulo tem 8 pinos: GND, VCC, SCL, SDA, RST, DC, CS e BL.
+Apesar dos nomes, **SCL e SDA da tela são do SPI** (relógio e dados), não do I2C: vão
+nos GPIO 18 e 23, e não nos GPIO 21 e 22. Na placa, os GPIO 17 e 16 aparecem impressos
+como **TX2** e **RX2**. O VCC vai no **3V3**: a tela trabalha com 3,3 V e pode ser
+danificada no 5 V. O pino BL acende a luz de fundo; o ESP32 controla o brilho por ele.
+O GPIO 19 fica reservado ao SPI, mesmo sem fio, e não deve ser usado para outra peça.
 
 **Por que o GPIO 12 não foi usado?** Ele é um pino de "configuração de
 inicialização" do ESP32; se estiver com algo ligado na hora de ligar a placa, ela
@@ -1672,10 +1682,10 @@ religar, ele só volta a saber a hora quando a internet responde. Se a energia v
 com o roteador ainda desligado, os alarmes não tocariam. O DS3231 tem **bateria
 própria** (LIR2032) e continua contando o tempo com o dispenser desligado.
 
-**Ligação:** no mesmo barramento I2C do LCD, em paralelo — SDA → GPIO 21, SCL → GPIO 22,
-VCC → 3V3, GND → GND (diagrama na [E3](#e3-a-solução-fonte-5-v3-a--módulo-ups--bateria-18650);
-detalhes do módulo na [E9](#e9-módulo-de-relógio-ds3231)). O LCD usa o endereço `0x27` e
-o relógio `0x68`, por isso os dois dividem os mesmos fios sem conflito.
+**Ligação:** no barramento I2C do ESP32 — SDA → GPIO 21, SCL → GPIO 22, VCC → 3V3,
+GND → GND (diagrama na [E3](#e3-a-solução-fonte-5-v3-a--módulo-ups--bateria-18650);
+detalhes do módulo na [E9](#e9-módulo-de-relógio-ds3231)). O relógio, no endereço `0x68`,
+é a única peça nesses fios: a tela usa o SPI, em outros pinos.
 
 **1. As variáveis do relógio**
 
@@ -2012,12 +2022,12 @@ acesso", LCD `Dose pendente!`, e o botão ainda abre os dois compartimentos depo
 | `TEMPO_PORTA_ABERTA` / `TEMPO_ABASTECIMENTO` | 3 min | 3 min |
 | Nova tentativa de Wi-Fi (sem internet) | 30 s | 30 s |
 
-**Endereços I2C** (mesmos fios: GPIO 21 = SDA, GPIO 22 = SCL)
+**Barramentos de comunicação**
 
-| Peça | Endereço |
-|---|---|
-| LCD 16x2 (módulo PCF8574) | `0x27` |
-| Relógio DS3231 *(próxima etapa)* | `0x68` |
+| Peça | Barramento | Pinos do ESP32 |
+|---|---|---|
+| Tela TFT 2,25" (ST7789P3) | SPI | GPIO 18 (SCL), 23 (SDA), 17 (RST), 16 (DC), 26 (CS), 25 (BL) |
+| Relógio DS3231 *(próxima etapa)* | I2C, endereço `0x68` | GPIO 21 (SDA), 22 (SCL) |
 
 **Memória (Preferences)**
 
@@ -2087,7 +2097,7 @@ Esta é a **única montagem recomendada** para o uso autônomo do Zelo+:
 
 <figure markdown="1">
 ![Montagem autônoma: fonte 5 V/3 A, módulo UPS LX-2BUPS e bateria 18650](docs/ligacoes-autonomo.png)
-<figcaption><b>Diagrama de ligações da montagem autônoma</b> (fonte 5 V/3 A, módulo UPS LX-2BUPS, bateria 18650 e relógio DS3231). Versão vetorial: <code>docs/ligacoes-autonomo.svg</code>.</figcaption>
+<figcaption><b>Diagrama de ligações da montagem autônoma</b> (fonte 5 V/3 A, módulo UPS LX-2BUPS, bateria 18650, tela TFT e relógio DS3231). Versão vetorial: <code>docs/ligacoes-autonomo.svg</code>.</figcaption>
 </figure>
 
 **Como funciona:** o **LX-2BUPS** é um módulo **UPS** (fonte de alimentação
@@ -2178,9 +2188,10 @@ ligado a elas se identifica, por meio de um **resistor de 5,1 kΩ no pino CC**. 
    fios de sinal continuam nos GPIO 13, 14 e 27.
 7. **ESP32:** trilho de +5 V → pino **VIN**; trilho de GND → pino **GND** do ESP32.
    **Não ligue o cabo USB do ESP32** — a energia entra só pelo VIN.
-8. **Resto da montagem** (LCD, botão, LED, buzzer): igual à bancada.
-9. **Ligar:** fonte na tomada. O LCD deve mostrar "Iniciando...", depois o IP, depois o
-   relógio.
+8. **Resto da montagem** (tela TFT, botão, LED, buzzer): igual à bancada. A tela
+   continua no **3V3** do ESP32, nunca no trilho de 5 V.
+9. **Ligar:** fonte na tomada. A tela deve mostrar "Iniciando...", depois o endereço
+   da página, depois o relógio.
 
 ## E6. Teste de falta de energia
 
@@ -2266,21 +2277,20 @@ Ela continua contando o tempo por anos, mesmo com o dispenser desligado.
 | Característica | Valor |
 |---|---|
 | Precisão | ±2 ppm (cerca de 1 minuto por ano) |
-| Comunicação | I2C, endereço `0x68` (não conflita com o LCD, que usa `0x27`) |
+| Comunicação | I2C, endereço `0x68` (única peça no I2C; a tela usa o SPI) |
 | Alimentação | 3,3 V (pino 3V3 do ESP32) |
 | Bateria | LIR2032 (recarregável) — ver aviso abaixo |
 | Preço aproximado | R$ 26 a R$ 31 (ver [F4](#f4-relógio-sem-internet-próxima-etapa)) |
 
-**Ligação:** no **mesmo barramento I2C do LCD**, em paralelo: os fios SDA e SCL do
-DS3231 se juntam aos do LCD (ponto ● no diagrama da seção E3), e o VCC sai do mesmo fio
-de 3V3.
+**Ligação:** nos pinos I2C do ESP32 (GPIO 21 e 22), que ficam só para o relógio. O VCC
+sai do mesmo 3V3 que alimenta a tela (etiqueta **3V3** no diagrama da seção E3).
 
 | DS3231 | ESP32 |
 |---|---|
 | VCC | 3V3 |
 | GND | GND |
-| SDA | GPIO 21 (junto com o SDA do LCD) |
-| SCL | GPIO 22 (junto com o SCL do LCD) |
+| SDA | GPIO 21 |
+| SCL | GPIO 22 |
 
 > Muitos módulos DS3231 vêm com um circuito que tenta **recarregar** a bateria. Com
 > uma **CR2032 comum (não recarregável)**, isso pode estragar a bateria. Use uma
