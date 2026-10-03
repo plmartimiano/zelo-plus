@@ -5,7 +5,8 @@
 // Ligacao (SPI):
 //   GND -> GND      VCC -> 3V3
 //   SCL -> GPIO 18  SDA -> GPIO 23   (relogio e dados do SPI, nao e I2C)
-//   RST -> GPIO 17  DC  -> GPIO 16   CS -> GPIO 26   BL -> GPIO 25 (luz de fundo)
+//   RST -> GPIO 17  DC  -> GPIO 16   CS -> GPIO 26   BL -> GPIO 25 (luz de fundo,
+//   acende em nivel baixo)
 //
 // O que o teste mostra, em sequencia:
 //   1. Tela inteira VERMELHA, VERDE e AZUL (confere as cores).
@@ -32,8 +33,10 @@ U8G2_FOR_ADAFRUIT_GFX texto;
 
 uint16_t PRETO, BRANCO, VERDE, VERMELHO, AZUL, ROXO, AMARELO;
 
+// Neste modulo a luz de fundo acende com o BL em nivel BAIXO (GND): o
+// transistor do modulo inverte o sinal. Por isso 100 % de brilho = pino em 0.
 void brilho(int porcento) {
-  ledcWrite(CANAL_BRILHO, porcento * 255 / 100);
+  ledcWrite(CANAL_BRILHO, (100 - porcento) * 255 / 100);
 }
 
 void escreverCentro(const char* s, int cx, int y) {
