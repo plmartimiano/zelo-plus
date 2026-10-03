@@ -311,6 +311,23 @@ void limparVisor() {
   telaEsperaDesenhada = false;
 }
 
+// Confere, na partida, se a luz de fundo da tela ficou num temporizador
+// diferente do dos servos. No ESP32, os canais de PWM andam em pares (0-1, 2-3,
+// ...), e cada par divide o mesmo temporizador e a mesma frequencia: servo
+// (50 Hz) e luz de fundo (5.000 Hz) no mesmo par fariam o servo parar.
+void conferirCanaisPWM(const int canalServo[]) {
+  int canalLuz = luzVisor.getChannel();
+  Serial.printf("PWM: servos C1, C2, C3 nos canais %d, %d, %d (50 Hz); luz da tela no canal %d (5 kHz)\n",
+                canalServo[0], canalServo[1], canalServo[2], canalLuz);
+  for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
+    if (canalServo[c] < 0) {
+      Serial.printf("ERRO: o servo do compartimento %d nao conseguiu canal de PWM\n", c + 1);
+    } else if (canalServo[c] / 2 == canalLuz / 2) {
+      Serial.printf("ERRO: o servo do compartimento %d divide o temporizador com a luz da tela\n", c + 1);
+    }
+  }
+}
+
 void iniciarVisor() {
   luzVisor.attachPin(TELA_BL, 5000, 8);
   brilhoVisor(100);
@@ -2550,13 +2567,15 @@ void setup() {
   digitalWrite(BUZZER_PIN, LOW);
   digitalWrite(LED_PIN, LOW);
 
+  int canalServo[NUM_COMPARTIMENTOS];
   for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
     servos[c].setTimerWidth(RESOLUCAO_SERVO);  // precisa vir antes do attach
-    servos[c].attach(PINOS_SERVO[c], PULSO_0_GRAU, PULSO_180_GRAUS);
+    canalServo[c] = servos[c].attach(PINOS_SERVO[c], PULSO_0_GRAU, PULSO_180_GRAUS);
     servos[c].write(ANGULO_FECHADO[c]);
   }
 
   iniciarVisor();
+  conferirCanaisPWM(canalServo);
   escreverLinha(0, "Zelo+");
   escreverLinha(1, "Iniciando...");
 
