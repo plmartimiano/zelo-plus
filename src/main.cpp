@@ -186,16 +186,23 @@ int totalMedicamentosAtivos() {
 
 // Duracao de cada movimento de porta (abrir ou fechar), em milissegundos.
 // Aumente para deixar as portas mais lentas.
-const unsigned long TEMPO_MOVIMENTO_PORTA = 2500;
+const unsigned long TEMPO_MOVIMENTO_PORTA = 5000;
+
+// Largura do pulso do servo em 0 e em 180 graus (padrao do SG90/MG90).
+const int PULSO_0_GRAU = 544;
+const int PULSO_180_GRAUS = 2400;
 
 // Move a porta devagar e sem trancos: comeca lento, acelera no meio e freia no
 // fim (curva de cosseno). Um passo a cada 20 ms, o intervalo do sinal do servo.
-void moverPorta(int c, int de, int para) {
+// A posicao vai em microssegundos (cerca de 10 por grau), e nao em graus
+// inteiros, para que os passos pequenos do movimento lento nao virem trancos.
+void moverPorta(int c, float de, float para) {
   const int passos = TEMPO_MOVIMENTO_PORTA / 20;
   for (int i = 1; i <= passos; i++) {
     float t = (float)i / passos;          // 0 -> 1 ao longo do movimento
     float suave = (1 - cos(t * PI)) / 2;  // 0 -> 1, lento no inicio e no fim
-    servos[c].write(de + (int)round((para - de) * suave));
+    float angulo = de + (para - de) * suave;
+    servos[c].writeMicroseconds(PULSO_0_GRAU + (int)round(angulo * (PULSO_180_GRAUS - PULSO_0_GRAU) / 180.0));
     delay(20);
   }
 }
@@ -2535,7 +2542,7 @@ void setup() {
   digitalWrite(LED_PIN, LOW);
 
   for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
-    servos[c].attach(PINOS_SERVO[c]);
+    servos[c].attach(PINOS_SERVO[c], PULSO_0_GRAU, PULSO_180_GRAUS);
     servos[c].write(ANGULO_FECHADO[c]);
   }
 
