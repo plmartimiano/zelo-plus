@@ -191,11 +191,6 @@ int totalMedicamentosAtivos() {
 // Aumente para deixar as portas mais lentas.
 const unsigned long TEMPO_MOVIMENTO_PORTA = 7000;
 
-// Tamanho de cada passo do movimento, em graus. Passos de fracao de grau nao
-// vencem o atrito da porta: o servo fica zumbindo parado e depois salta de uma
-// vez. Com 3 graus por passo ele sempre responde ao comando.
-const int GRAUS_POR_PASSO = 3;
-
 // Largura do pulso do servo em 0 e em 180 graus (padrao do SG90/MG90).
 const int PULSO_0_GRAU = 544;
 const int PULSO_180_GRAUS = 2400;
@@ -204,19 +199,21 @@ const int PULSO_180_GRAUS = 2400;
 // padrao, 10 bits, so tem cerca de 20 us, quase 2 graus).
 const int RESOLUCAO_SERVO = 16;
 
-int pulsoDoAngulo(int angulo) {
-  return PULSO_0_GRAU + (long)angulo * (PULSO_180_GRAUS - PULSO_0_GRAU) / 180;
+int pulsoDoAngulo(float angulo) {
+  return PULSO_0_GRAU + (int)round(angulo * (PULSO_180_GRAUS - PULSO_0_GRAU) / 180.0);
 }
 
-// Move a porta em velocidade constante, um passo de GRAUS_POR_PASSO por vez,
-// com uma pausa igual entre os passos para completar TEMPO_MOVIMENTO_PORTA.
+// Move a porta devagar e sem trancos: comeca lento, acelera no meio e freia no
+// fim (curva de cosseno). Um passo a cada 20 ms, o intervalo do sinal do servo.
+// Exige os servos em 5 V: com tensao baixa eles nao tem forca para os avancos
+// pequenos, param zumbindo e depois saltam.
 void moverPorta(int c, int de, int para) {
-  int passos = max(1, abs(para - de) / GRAUS_POR_PASSO);
-  unsigned long pausa = TEMPO_MOVIMENTO_PORTA / passos;
+  const int passos = TEMPO_MOVIMENTO_PORTA / 20;
   for (int i = 1; i <= passos; i++) {
-    int angulo = de + (para - de) * i / passos;
-    servos[c].writeMicroseconds(pulsoDoAngulo(angulo));
-    delay(pausa);
+    float t = (float)i / passos;          // 0 -> 1 ao longo do movimento
+    float suave = (1 - cos(t * PI)) / 2;  // 0 -> 1, lento no inicio e no fim
+    servos[c].writeMicroseconds(pulsoDoAngulo(de + (para - de) * suave));
+    delay(20);
   }
 }
 
