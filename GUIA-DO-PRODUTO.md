@@ -501,6 +501,7 @@ liga o LCD, **lê a memória** e tenta conectar no Wi-Fi.
   digitalWrite(LED_PIN, LOW);
 
   for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
+    servos[c].setTimerWidth(RESOLUCAO_SERVO);  // precisa vir antes do attach
     servos[c].attach(PINOS_SERVO[c], PULSO_0_GRAU, PULSO_180_GRAUS);
     servos[c].write(ANGULO_FECHADO[c]);
   }
@@ -1030,47 +1031,58 @@ um compartimento de cada vez.
 
 ## Passo 9 — Movendo as portas (servos)
 
-**O que faz:** abre e fecha as portas **devagar e sem trancos**. Cada movimento dura
-7 s: a porta começa lenta, acelera no meio e freia ao chegar.
+**O que faz:** abre e fecha as portas **devagar e em velocidade constante**. Cada
+movimento dura 7 s, em passos de 2°.
 
 ```cpp
 // Duracao de cada movimento de porta (abrir ou fechar), em milissegundos.
 // Aumente para deixar as portas mais lentas.
 const unsigned long TEMPO_MOVIMENTO_PORTA = 7000;
 
+// Tamanho de cada passo do movimento, em graus. Passos de fracao de grau nao
+// vencem o atrito da porta: o servo fica zumbindo parado e depois salta de uma
+// vez. Com 2 graus por passo ele sempre responde ao comando.
+const int GRAUS_POR_PASSO = 2;
+
 // Largura do pulso do servo em 0 e em 180 graus (padrao do SG90/MG90).
 const int PULSO_0_GRAU = 544;
 const int PULSO_180_GRAUS = 2400;
 
-// Move a porta devagar e sem trancos: comeca lento, acelera no meio e freia no
-// fim (curva de cosseno). Um passo a cada 20 ms, o intervalo do sinal do servo.
-// A posicao vai em microssegundos (cerca de 10 por grau), e nao em graus
-// inteiros, para que os passos pequenos do movimento lento nao virem trancos.
-void moverPorta(int c, float de, float para) {
-  const int passos = TEMPO_MOVIMENTO_PORTA / 20;
+// Resolucao do sinal dos servos: 16 bits dao cerca de 0,3 us por unidade (o
+// padrao, 10 bits, so tem cerca de 20 us, quase 2 graus).
+const int RESOLUCAO_SERVO = 16;
+
+int pulsoDoAngulo(int angulo) {
+  return PULSO_0_GRAU + (long)angulo * (PULSO_180_GRAUS - PULSO_0_GRAU) / 180;
+}
+
+// Move a porta em velocidade constante, um passo de GRAUS_POR_PASSO por vez,
+// com uma pausa igual entre os passos para completar TEMPO_MOVIMENTO_PORTA.
+void moverPorta(int c, int de, int para) {
+  int passos = max(1, abs(para - de) / GRAUS_POR_PASSO);
+  unsigned long pausa = TEMPO_MOVIMENTO_PORTA / passos;
   for (int i = 1; i <= passos; i++) {
-    float t = (float)i / passos;          // 0 -> 1 ao longo do movimento
-    float suave = (1 - cos(t * PI)) / 2;  // 0 -> 1, lento no inicio e no fim
-    float angulo = de + (para - de) * suave;
-    servos[c].writeMicroseconds(PULSO_0_GRAU + (int)round(angulo * (PULSO_180_GRAUS - PULSO_0_GRAU) / 180.0));
-    delay(20);
+    int angulo = de + (para - de) * i / passos;
+    servos[c].writeMicroseconds(pulsoDoAngulo(angulo));
+    delay(pausa);
   }
 }
 ```
 
-- **Passos:** 7.000 ms ÷ 20 ms = **350 posições** por movimento. O servo recebe uma
-  nova posição a cada pulso do seu sinal (a cada 20 ms).
-- **Curva suave:** `(1 − cos(t·π)) / 2` vai de 0 a 1 com início e fim lentos. Na
-  abertura, a porta está em ~4° após 1 s, em 45° na metade do tempo e chega a 90°
-  aos 7 s. A velocidade máxima, no meio do curso, fica em cerca de 20° por segundo.
-  Isso evita o impacto da tampa no fim do curso e reduz o pico de corrente na partida
-  do motor.
-- **Posição em microssegundos:** o servo entende a posição pela largura do pulso, de
-  544 µs (0°) a 2.400 µs (180°), cerca de 10 µs por grau. Com graus inteiros, o
-  movimento lento avançaria aos saltos de 1°; em microssegundos, cada passo é uma
-  fração de grau e a porta desliza sem tremer.
-- **Ajuste:** para mudar a velocidade, basta alterar `TEMPO_MOVIMENTO_PORTA`
-  (ex.: 9000 para 9 s, mais lento; 5000 para 5 s, mais rápido).
+- **Passos:** 90° ÷ 2° = **45 passos** por movimento, com 7.000 ms ÷ 45 ≈ **155 ms**
+  entre um passo e o seguinte. A velocidade fica em cerca de 13° por segundo.
+- **Por que passos de 2°:** o servo só reage quando a diferença entre a posição
+  pedida e a atual vence a sua zona morta e o atrito da porta. Com avanços de fração
+  de grau, o motor fica parado zumbindo e depois salta de uma vez. Com 2° por passo,
+  cada comando produz um movimento real e a porta abre de forma gradual.
+- **Resolução do sinal:** o servo entende a posição pela largura do pulso, de 544 µs
+  (0°) a 2.400 µs (180°), cerca de 10 µs por grau. Com 16 bits (`RESOLUCAO_SERVO`),
+  o ESP32 ajusta o pulso em frações de microssegundo, e todos os passos ficam com o
+  mesmo tamanho. A resolução precisa ser definida antes do `attach` (Passo 3).
+- **Ajuste:** `TEMPO_MOVIMENTO_PORTA` muda a velocidade (ex.: 9000 para 9 s, mais
+  lento; 5000 para 5 s, mais rápido). `GRAUS_POR_PASSO` muda o tamanho do passo: 1
+  deixa o movimento mais contínuo, se o servo e a porta responderem bem; 3 garante a
+  resposta numa porta mais dura.
 
 ```cpp
 void abrirCompartimento(int c) {
