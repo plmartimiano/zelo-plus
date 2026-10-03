@@ -514,6 +514,7 @@ liga o LCD, **lê a memória** e tenta conectar no Wi-Fi.
     servos[c].setTimerWidth(RESOLUCAO_SERVO);  // precisa vir antes do attach
     servos[c].attach(PINOS_SERVO[c], PULSO_0_GRAU, PULSO_180_GRAUS);
     servos[c].write(ANGULO_FECHADO[c]);
+    delay(500);
   }
 ```
 
@@ -521,7 +522,10 @@ liga o LCD, **lê a memória** e tenta conectar no Wi-Fi.
 - `INPUT_PULLUP`: o pino fica "puxado" para 3,3 V por um resistor **interno**. Quando
   o botão é apertado, ele liga o pino ao GND e a leitura vira `LOW`. Por isso o botão
   não precisa de resistor externo, e "apertado" é `digitalRead(BUTTON_PIN) == LOW`.
-- O `for` percorre os 3 servos, liga cada um no seu pino e fecha a porta.
+- O `for` percorre os 3 servos, liga cada um no seu pino e fecha a porta, **um de cada
+  vez**, com meio segundo de intervalo. Ao receber o primeiro sinal, o servo corre para a
+  posição fechada e puxa um pico de corrente; os três juntos, na mesma fonte de 5 V do
+  ESP32, derrubariam a tensão e a placa reiniciaria.
 
 Em seguida liga o LCD e **procura o relógio DS3231** (se ele não estiver instalado, o
 programa só anota isso e segue — detalhes no [Passo 19](#passo-19--relógio-ds3231-próxima-etapa)):

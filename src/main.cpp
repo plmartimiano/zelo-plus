@@ -2567,17 +2567,21 @@ void setup() {
   digitalWrite(BUZZER_PIN, LOW);
   digitalWrite(LED_PIN, LOW);
 
+  iniciarVisor();
+  escreverLinha(0, "Zelo+");
+  escreverLinha(1, "Iniciando...");
+
+  // Liga os servos um de cada vez: ao receber o primeiro sinal, cada um corre
+  // para a posicao fechada e puxa um pico de corrente. Com tudo na mesma fonte
+  // de 5 V, os tres juntos derrubam a tensao do ESP32, que reinicia em ciclo.
   int canalServo[NUM_COMPARTIMENTOS];
   for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
     servos[c].setTimerWidth(RESOLUCAO_SERVO);  // precisa vir antes do attach
     canalServo[c] = servos[c].attach(PINOS_SERVO[c], PULSO_0_GRAU, PULSO_180_GRAUS);
     servos[c].write(ANGULO_FECHADO[c]);
+    delay(500);
   }
-
-  iniciarVisor();
   conferirCanaisPWM(canalServo);
-  escreverLinha(0, "Zelo+");
-  escreverLinha(1, "Iniciando...");
 
   iniciarRelogioRTC();
 
