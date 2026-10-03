@@ -189,7 +189,7 @@ int totalMedicamentosAtivos() {
 
 // Duracao de cada movimento de porta (abrir ou fechar), em milissegundos.
 // Aumente para deixar as portas mais lentas.
-const unsigned long TEMPO_MOVIMENTO_PORTA = 5500;
+const unsigned long TEMPO_MOVIMENTO_PORTA = 7000;
 
 // Largura do pulso do servo em 0 e em 180 graus (padrao do SG90/MG90).
 const int PULSO_0_GRAU = 544;
