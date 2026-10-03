@@ -39,6 +39,13 @@ void brilho(int porcento) {
   ledcWrite(CANAL_BRILHO, (100 - porcento) * 255 / 100);
 }
 
+// Troca a fonte mantendo o texto transparente: a biblioteca volta a pintar o
+// fundo das letras a cada setFont, o que criava "caixinhas" atras do texto.
+void fonte(const uint8_t* f) {
+  texto.setFont(f);
+  texto.setFontMode(1);
+}
+
 void escreverCentro(const char* s, int cx, int y) {
   int largura = texto.getUTF8Width(s);
   texto.drawUTF8(cx - largura / 2, y, s);
@@ -52,7 +59,7 @@ void horaExemplo(char* saida) {
 
 void telaCor(uint16_t cor, const char* nome) {
   tela.fillScreen(cor);
-  texto.setFont(u8g2_font_helvB24_tf);
+  fonte(u8g2_font_helvB24_tf);
   texto.setForegroundColor(BRANCO);
   escreverCentro(nome, LARGURA / 2, 50);
   Serial.printf("Cor: %s\n", nome);
@@ -63,11 +70,11 @@ void telaEspera(const char* linha1, const char* linha2, uint16_t corCaixa) {
   char hora[6];
   horaExemplo(hora);
   tela.fillScreen(PRETO);
-  texto.setFont(u8g2_font_logisoso50_tn);
+  fonte(u8g2_font_logisoso50_tn);
   texto.setForegroundColor(BRANCO);
   texto.drawUTF8(6, 63, hora);
   tela.fillRoundRect(150, 6, 128, 64, 10, corCaixa);
-  texto.setFont(u8g2_font_helvB18_tf);
+  fonte(u8g2_font_helvB18_tf);
   escreverCentro(linha1, 214, 33);
   escreverCentro(linha2, 214, 59);
   Serial.printf("Espera: %s %s %s\n", hora, linha1, linha2);
@@ -76,19 +83,19 @@ void telaEspera(const char* linha1, const char* linha2, uint16_t corCaixa) {
 void telaAlarme() {
   tela.fillScreen(AZUL);
   texto.setForegroundColor(BRANCO);
-  texto.setFont(u8g2_font_helvB18_tf);
+  fonte(u8g2_font_helvB18_tf);
   escreverCentro("Hora do remédio!", LARGURA / 2, 28);
-  texto.setFont(u8g2_font_helvB24_tf);
+  fonte(u8g2_font_helvB24_tf);
   escreverCentro("LOSARTANA (C1)", LARGURA / 2, 64);
   Serial.println("Alarme");
 }
 
 void telaRetirada() {
   tela.fillScreen(PRETO);
-  texto.setFont(u8g2_font_helvB24_tf);
+  fonte(u8g2_font_helvB24_tf);
   texto.setForegroundColor(BRANCO);
   escreverCentro("Retire: C1 C2", LARGURA / 2, 32);
-  texto.setFont(u8g2_font_helvB18_tf);
+  fonte(u8g2_font_helvB18_tf);
   texto.setForegroundColor(AMARELO);
   escreverCentro("Fecha em: 170s", LARGURA / 2, 64);
   Serial.println("Retirada");
@@ -97,7 +104,7 @@ void telaRetirada() {
 void telaAcentos(int porcentoBrilho) {
   tela.fillScreen(PRETO);
   brilho(porcentoBrilho);
-  texto.setFont(u8g2_font_helvB18_tf);
+  fonte(u8g2_font_helvB18_tf);
   texto.setForegroundColor(BRANCO);
   escreverCentro("Medicação ç ã é ô í ú", LARGURA / 2, 30);
   char linha[24];
@@ -117,8 +124,8 @@ void setup() {
 
   tela.init(ALTURA, LARGURA);  // a tela e "em pe": 76 de largura por 284 de altura
   tela.setRotation(1);         // deitada: 284 x 76
+  tela.invertDisplay(false);   // este painel mostra as cores certas sem inversao
   texto.begin(tela);
-  texto.setFontMode(1);        // texto sem fundo, sobre a cor ja pintada
 
   PRETO = tela.color565(0, 0, 0);
   BRANCO = tela.color565(255, 255, 255);
