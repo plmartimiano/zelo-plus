@@ -1943,12 +1943,30 @@ void handleLerCaixa() {
   Serial.print("IA (leitura da caixa): HTTP ");
   Serial.println(codigo);
 
+  // Em caso de erro, o Google explica o motivo em error.message; ele aparece na
+  // pagina e no Serial Monitor para facilitar o diagnostico.
+  String motivo = "";
+  if (codigo != 200 && codigo > 0) {
+    JsonDocument erro;
+    JsonDocument filtroErro;
+    filtroErro["error"]["message"] = true;
+    filtroErro["error"]["status"] = true;
+    if (!deserializeJson(erro, resposta, DeserializationOption::Filter(filtroErro))) {
+      motivo = erro["error"]["message"] | "";
+      String situacao = erro["error"]["status"] | "";
+      if (situacao != "") motivo = situacao + ": " + motivo;
+    }
+    if (motivo.length() > 220) motivo = motivo.substring(0, 220) + "...";
+    Serial.println("IA (leitura da caixa): " + motivo);
+  }
+  String detalhe = motivo != "" ? " Resposta do Google (" + String(codigo) + "): " + motivo : "";
+
   if (codigo == 400 && resposta.indexOf("API_KEY_INVALID") >= 0) {
-    responderLeitura("Chave da IA recusada. Confira a chave no quadro Leitura da caixa por foto.");
+    responderLeitura("Chave da IA recusada: o Google não reconheceu a chave. Confira se foi copiada inteira." + detalhe);
     return;
   }
   if (codigo == 401 || codigo == 403) {
-    responderLeitura("Chave da IA recusada. Confira a chave no quadro Leitura da caixa por foto.");
+    responderLeitura("Chave da IA recusada: a chave existe, mas não tem permissão para usar o Gemini." + detalhe);
     return;
   }
   if (codigo == 404) {
@@ -1964,7 +1982,7 @@ void handleLerCaixa() {
     return;
   }
   if (codigo != 200) {
-    responderLeitura("Não foi possível falar com o serviço de IA (código " + String(codigo) + "). Tente de novo.");
+    responderLeitura("Não foi possível falar com o serviço de IA (código " + String(codigo) + "). Tente de novo." + detalhe);
     return;
   }
 
