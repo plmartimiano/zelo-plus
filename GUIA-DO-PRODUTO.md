@@ -101,7 +101,7 @@ porta movida por um servo motor.
 
 <figure markdown="1">
 ![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
-<figcaption><b>Imagem de referência</b> — conceito visual do produto final (ilustrativo), com o botão à esquerda, o LCD no centro e a luz de alerta à direita.</figcaption>
+<figcaption><b>Imagem de referência</b> — conceito visual do produto final (ilustrativo), com o botão à esquerda, a tela no centro e a luz de alerta à direita.</figcaption>
 </figure>
 
 <figure markdown="1">
@@ -289,7 +289,7 @@ familiaridade com tecnologia:
 
 O gabinete do Zelo+ mede **210 × 130 × 100 mm** (comprimento × profundidade × altura).
 Ele tem três compartimentos iguais na frente, uma área técnica na parte de trás (servos)
-e uma faixa de eletrônica na base, onde ficam o LCD, o botão e a luz de alerta.
+e uma faixa de eletrônica na base, onde ficam a tela, o botão e a luz de alerta.
 Os componentes citados nesta parte são explicados em detalhe nas Partes
 [C](#parte-c--o-código-passo-a-passo) (programa) e [E](#parte-e--uso-autônomo-sem-o-laptop)
 (energia autônoma e relógio).
@@ -311,7 +311,7 @@ As vistas também estão em escala no arquivo vetorial
 | Largura (vista superior) | 3 + **65,7** + 3,45 + **65,7** + 3,45 + **65,7** + 3 | **210** ✓ |
 | Profundidade | 3 + **75,7** (compartimento) + 2 + **46,3** (área técnica) + 3 | **130** ✓ |
 | Altura | 2,5 (fundo) + 42,5 (eletrônica) + 2,5 (piso) + **50,5** (compartimento) + 2 (tampa) | **100** ✓ |
-| Frente | 27 + **18** (botão) + 27 + **66** (janela do LCD) + 16 + **40** (acrílico) + 16 | **210** ✓ |
+| Frente | 27 + **18** (botão) + 31,5 + **57** (janela da tela) + 20,5 + **40** (acrílico) + 16 | **210** ✓ |
 
 | Elemento | Medida (mm) |
 |---|---|
@@ -321,9 +321,10 @@ As vistas também estão em escala no arquivo vetorial
 | Divisórias entre compartimentos | 2 no corpo, **3,45 no topo** (apoio das tampas) |
 | Profundidade útil do compartimento | 50,5 (≈ 251 cm³ cada) |
 | Tampa da área técnica (**removível**, 4 parafusos M3) | 203,3 × 45,6 × 2 |
-| Botão / janela do LCD / acrílico | 18 × 18 / 66 × 18 / 40 × 18, centros a **22,5** da base |
-| Centros horizontais (botão / LCD / acrílico) | 36 / **105** / 174 |
-| Placa do LCD (atrás do painel) | 80 × 36 × ~25 (com módulo I2C) |
+| Botão / janela da tela / acrílico | 18 × 18 / 57 × 17 / 40 × 18, centros a **22,5** da base |
+| Centros horizontais (botão / tela / acrílico) | 36 / **105** / 174 |
+| Placa da tela TFT (atrás do painel) | 73 × 21 × ~20 (com os conectores dos fios) |
+| Área visível da tela | 55,2 × 14,8 (2,25" de diagonal, 284 × 76 pontos) |
 | Recorte do USB-C (parede traseira) | 14,2 × 5,4, centro a ~15 da base |
 
 ## B2. Imagens do produto
@@ -337,11 +338,11 @@ As vistas também estão em escala no arquivo vetorial
 
 - **Altura de 100 mm:**
   - A proporção fica **210 : 130 : 100** (≈ 2,1 : 1,3 : 1), com a altura em ~48 % da largura: perfil de caixa de mesa, estável e sem cara de "bloco".
-  - A faixa preta de 45 mm acomoda a placa do LCD (36 mm) com ~3 mm de margem acima e abaixo.
+  - A faixa preta de 45 mm acomoda a placa da tela (21 mm) com 12 mm de margem acima e abaixo.
   - Cada compartimento fica com **50,5 mm de profundidade útil** (~251 cm³), cerca de 8 vezes o volume de um mês de comprimidos (60 unidades ≈ 30 cm³). É raso o bastante para os dedos alcançarem o fundo.
   - Opcional: um fundo em rampa de 10–15° para a frente deixa os comprimidos mais perto da mão.
 - **Frente simétrica:**
-  - A janela do LCD fica no **eixo central (105 mm)**, alinhada com o logotipo.
+  - A janela da tela fica no **eixo central (105 mm)**, alinhada com o logotipo. Ela mede 57 × 17 mm: a área visível (55,2 × 14,8 mm) com cerca de 1 mm de folga de cada lado, para a borda da imagem não ficar escondida atrás do painel.
   - O botão (centro em 36 mm) e o acrílico (centro em 174 mm) ficam cada um no meio do seu lado, **à mesma distância do centro (69 mm)**. Assim os três elementos ficam equilibrados, mesmo com larguras diferentes.
 - **Folga das tampas:** para a tampa de 65 × 75 mm ter 0,35 mm de folga de cada lado, a abertura precisa medir 65,7 × 75,7 mm. Por isso as divisórias têm 3,45 mm no topo, onde as tampas se apoiam.
 - **Manutenção:** a tampa da área técnica é **removível** (4 parafusos M3), com acesso aos servos, à bateria e ao USB do ESP32 para atualizar o programa (E10).
@@ -351,8 +352,8 @@ As vistas também estão em escala no arquivo vetorial
 
 | Componente | Local no gabinete |
 |---|---|
-| LCD 16x2 + módulo I2C | Faixa preta, atrás da janela central (placa 80 × 36, ~25 de profundidade) |
-| Botão e LED (atrás do acrílico) | Faixa preta, nas laterais do LCD |
+| Tela TFT 2,25" | Faixa preta, atrás da janela central (placa 73 × 21, ~20 de profundidade com os conectores) |
+| Botão e LED (atrás do acrílico) | Faixa preta, nas laterais da tela |
 | ESP32 e relógio DS3231 | Faixa de eletrônica, sob a área técnica |
 | Módulo UPS LX-2BUPS com as baterias 18650 (90 × 42 × 33) | Faixa de eletrônica, deitado sob os compartimentos |
 | 3 servos SG90 | Área técnica (46,3 mm de fundo), no alto, junto às dobradiças das tampas |
@@ -2372,7 +2373,7 @@ bateria, Parte E). As ilustrações são desenhos simplificados para identificar
 |---|:---:|---|---|
 | **Placa ESP32 DevKit V1 — 30 pinos** · 1 un.<br>ESP32-WROOM-32 · chip ESP32-D0WD-V3 · USB CP2102 | <img src="docs/componentes/esp32.svg" width="110" alt="esp32"> | O "cérebro": roda o programa, cria a página web, conecta no Wi-Fi e manda os avisos. | R$ 54,90 |
 | **Micro servo SG90 9 g** · 3 un.<br>TowerPro SG90 · 180° · 1,6 kgf·cm · 4,8–6 V | <img src="docs/componentes/servo.svg" width="110" alt="servo"> | Abre e fecha a porta de cada compartimento (um servo por compartimento). | R$ 13,33–16,90 cada<br>**R$ 40–51** (3 un.) |
-| **Display LCD 16x2 com módulo I2C** · 1 un.<br>HD44780 + PCF8574 · endereço 0x27 · fundo azul | <img src="docs/componentes/lcd.svg" width="110" alt="lcd"> | Mostra o relógio, o nome do remédio e os avisos (abrindo, fechando, dose pendente). | R$ 24,90 |
+| **Tela TFT 2,25" colorida (IPS)** · 1 un.<br>ST7789P3 · 76 × 284 pontos · SPI · 8 pinos · 3,3 V | <img src="docs/componentes/tft.svg" width="110" alt="tft"> | Mostra o relógio, o nome do remédio e os avisos (abrindo, fechando, dose pendente), com cores por situação. | R$ 21,93–23,84 **\*** |
 | **Buzzer ativo 5 V** · 1 un.<br>12 mm · "auto-oscilante" · 3,5–5 V | <img src="docs/componentes/buzzer.svg" width="110" alt="buzzer"> | Apita no horário do remédio (alarme sonoro). | R$ 2,50 |
 | **LED difuso 5 mm vermelho** · 1 un. | <img src="docs/componentes/led.svg" width="110" alt="led"> | Pisca junto com o buzzer (alarme visual). | R$ 0,15 |
 | **Resistor 220 Ω, ¼ W** · pacote com 10<br>faixas: vermelho-vermelho-marrom-dourado | <img src="docs/componentes/resistor220.svg" width="110" alt="resistor220"> | Limita a corrente do LED para ele não queimar (usa 1; sobram reservas). | R$ 0,90 (10 un.) |
@@ -2394,7 +2395,7 @@ bateria, Parte E). As ilustrações são desenhos simplificados para identificar
 | Componente e códigos | Ilustração | Função | Preço de referência |
 |---|:---:|---|---|
 | **Placa perfurada ilhada 7×9 cm** · 1 un.<br>fenolite ou fibra de vidro | <img src="docs/componentes/placa.svg" width="110" alt="placa"> | Base firme, soldada, para os trilhos de +5 V e GND (mais durável que protoboard). | R$ 3,90–12,50 |
-| **Jumpers macho/fêmea 20 cm** · 1 kit (40 un.) | <img src="docs/componentes/jumpers.svg" width="110" alt="jumpers"> | Ligações entre o ESP32, o LCD, os servos e a placa. | R$ 8,90 |
+| **Jumpers macho/fêmea 20 cm** · 1 kit (40 un.) | <img src="docs/componentes/jumpers.svg" width="110" alt="jumpers"> | Ligações entre o ESP32, a tela, os servos e a placa. | R$ 8,90 |
 | **Fio flexível 22 AWG** · vermelho e preto, ~2 m de cada | <img src="docs/componentes/fio22awg.svg" width="110" alt="fio22awg"> | Ligações de energia: saída do módulo UPS → VIN e servos. | R$ 1,20–3 por metro<br>**R$ 5–12** (4 m) |
 | **Tubo termo-retrátil** · 1 kit sortido | <img src="docs/componentes/termo.svg" width="110" alt="termo"> | Isola as emendas soldadas (evita curto-circuito). | R$ 16,88–43 |
 | **Cabo USB-A → micro-USB (dados)** · 1 un. | <img src="docs/componentes/cabo_microusb.svg" width="110" alt="cabo_microusb"> | Gravar e atualizar o programa pelo laptop. | a partir de R$ 11,69 |
@@ -2427,10 +2428,10 @@ emprestadas ou já existir em casa ou no laboratório da escola. Mesmo assim, s�
 
 | Grupo | Faixa de preço |
 |---|---|
-| F1. Eletrônica do dispenser | R$ 134 – 147 |
+| F1. Eletrônica do dispenser | R$ 131 – 146 |
 | F2. Energia autônoma *(com a bateria)* | R$ 126 – 161 |
 | F3. Montagem e ligações | R$ 46 – 96 |
-| **Total para montar o dispenser** | **≈ R$ 306 – 404** |
+| **Total para montar o dispenser** | **≈ R$ 303 – 403** |
 | F4. Relógio sem internet (próxima etapa, à parte) | + R$ 38 – 60 |
 
 **Não inclui:** ferramentas (F5), frete e a estrutura física do dispenser (caixa, portas e
@@ -2493,7 +2494,7 @@ cada parte:
 | Divisória da área técnica | 204 × 50,5 × 2,0 | 20,6 cm³ |
 | 3 tampas móveis | 3 × 65 × 75 × 2,0 | 29,2 cm³ |
 | Tampa da área técnica | 203,3 × 45,6 × 2,0 | 18,5 cm³ |
-| Detalhes (dobradiças, fixações, moldura do LCD, logotipo) | + 12 % | 47,5 cm³ |
+| Detalhes (dobradiças, fixações, moldura da tela, logotipo) | + 12 % | 47,5 cm³ |
 | **Total** | | **≈ 443 cm³** |
 
 | Material | Densidade | Massa da peça pronta |
@@ -2535,7 +2536,7 @@ para o Brasil em 2026):
 | Molde | Peça | Investimento estimado |
 |---|---|---|
 | 1 | Corpo azul (compartimentos, divisórias, área técnica) | R$ 75–130 mil |
-| 2 | Base preta (recortes do LCD, botão, acrílico e USB-C) | R$ 50–90 mil |
+| 2 | Base preta (recortes da tela, botão, acrílico e USB-C) | R$ 50–90 mil |
 | 3 | Molde "família": 3 tampas móveis + tampa técnica | R$ 40–75 mil |
 | — | Projeto do molde (DFM) e ajustes de teste | R$ 15–30 mil |
 | | **Total em aço** | **R$ 180–325 mil** |
@@ -2591,7 +2592,7 @@ R$ 9,29 (G1). A fonte é comprada no Brasil, porque precisa da certificação do
 |---|---|---|
 | ESP32 DevKit V1 | 2,50–3,50 | 23,22–32,51 |
 | 3 servos SG90 | 2,10–3,00 | 19,50–27,86 |
-| LCD 16x2 + I2C | 1,50–2,20 | 13,93–20,43 |
+| Tela TFT 2,25" (ST7789P3) | 1,36–1,50 | 12,63–13,94 |
 | Buzzer, LED, resistor e botão | 0,20–0,35 | 1,86–3,25 |
 | Módulo UPS LX-2BUPS | 3,00–5,00 | 27,87–46,45 |
 | Bateria 18650 | 1,50–2,50 | 13,93–23,22 |
@@ -2600,7 +2601,7 @@ R$ 9,29 (G1). A fonte é comprada no Brasil, porque precisa da certificação do
 | Placa, fios e termo-retrátil | 0,80–1,50 | 7,43–13,93 |
 | Relógio DS3231 + LIR2032 | 0,90–1,50 | 8,36–13,93 |
 | Fonte 5 V/3 A USB-C (Inmetro, compra nacional) | — | 15,00–22,00 |
-| **Total** | | **R$ 133,89–208,69** |
+| **Total** | | **R$ 132,59–202,20** |
 
 **Cenário 2 — placa de circuito própria** (ESP32, carregador, USB-C, relógio, buzzer,
 botão e LED numa única placa, montada pela fábrica)
@@ -2609,35 +2610,35 @@ botão e LED numa única placa, montada pela fábrica)
 |---|---|
 | Módulo ESP32-WROOM-32E | 18,58–24,15 |
 | Placa + montagem automática (circuito de carga e UPS, USB-C, relógio, buzzer, botão, LED) | 27,86–51,08 |
-| LCD 16x2 + I2C | 12,07–17,65 |
+| Tela TFT 2,25" (ST7789P3) | 12,63–13,94 |
 | 3 servos SG90 | 19,50–27,86 |
 | Bateria 18650 + suporte | 14,86–25,08 |
 | Cabos internos | 2,79–5,57 |
 | Fonte 5 V/3 A USB-C (Inmetro) | 15,00–22,00 |
-| **Total** | **R$ 110,67–173,39** |
+| **Total** | **R$ 111,23–169,68** |
 
 As peças custam praticamente o mesmo nos dois cenários. O ganho da placa própria está na
 **montagem** (de ~55 para ~20 min por unidade), na **confiabilidade** (sem fios soltos) e
 no **tamanho**.
 
-Protótipo (Parte F, varejo) × produção (atacado): **R$ 306–404 → R$ 134–209** (cenário 1)
-ou **R$ 111–173** (cenário 2), cerca de **50 a 60 % menos**.
+Protótipo (Parte F, varejo) × produção (atacado): **R$ 303–403 → R$ 133–202** (cenário 1)
+ou **R$ 111–170** (cenário 2), cerca de **50 a 60 % menos**.
 
 ## G6. Custo por unidade em três escalas
 
 | Item | Lote piloto — 100 un. | Pequena série — 1.000 un. | Série — 10.000 un. |
 |---|---|---|---|
 | Arranjo | módulos + impressão 3D | placa própria + impressão 3D | placa própria + injeção (aço) |
-| Componentes | R$ 161–250 ¹ | R$ 111–173 | R$ 111–173 |
+| Componentes | R$ 159–243 ¹ | R$ 111–170 | R$ 111–170 |
 | Gabinete | R$ 100–157 | R$ 100–157 | R$ 14–21 |
-| Ferragens (parafusos, pinos das portas, pés, visor do LCD) | R$ 5–9 | R$ 5–9 | R$ 5–9 |
+| Ferragens (parafusos, pinos das portas, pés, visor da tela) | R$ 5–9 | R$ 5–9 | R$ 5–9 |
 | Montagem e teste | 55 min → R$ 18 | 20 min → R$ 7 | 20 min → R$ 7 |
 | Embalagem e manual | R$ 8–14 | R$ 6–12 | R$ 6–12 |
 | Projeto da placa (R$ 5–20 mil) amortizado | — | R$ 5–20 | R$ 0,50–2 |
 | Moldes de aço (R$ 180–325 mil) amortizados | — | — | R$ 18–33 |
-| **Custo de fabricação** | **R$ 292–448** | **R$ 234–378** | **R$ 161–257** |
+| **Custo de fabricação** | **R$ 290–441** | **R$ 234–375** | **R$ 161–254** |
 | Homologação Anatel (R$ 10–30 mil) amortizada | R$ 100–300 | R$ 10–30 | R$ 1–3 |
-| **Custo total por unidade** | **R$ 392–748** | **R$ 244–408** | **R$ 162–260** |
+| **Custo total por unidade** | **R$ 390–741** | **R$ 244–405** | **R$ 162–257** |
 
 ¹ Componentes do cenário 1 com acréscimo de 20 % por comprar lotes pequenos.
 
@@ -2668,11 +2669,11 @@ assistência técnica e lucro.
 
 | Escala | Custo total por unidade | Preço de venda estimado (× 2,5 a × 4) |
 |---|---|---|
-| Lote piloto (100) | R$ 392–748 | R$ 980–2.990 |
-| Pequena série (1.000) | R$ 244–408 | R$ 610–1.630 |
-| Série (10.000) | R$ 162–260 | **R$ 400–1.040** |
+| Lote piloto (100) | R$ 390–741 | R$ 980–2.960 |
+| Pequena série (1.000) | R$ 244–405 | R$ 610–1.620 |
+| Série (10.000) | R$ 162–257 | **R$ 400–1.030** |
 
-**Síntese:** em série, o Zelo+ ficaria na faixa de **R$ 400 a R$ 1.040**
+**Síntese:** em série, o Zelo+ ficaria na faixa de **R$ 400 a R$ 1.030**
 para o consumidor. O **custo de entrada** (moldes, placa própria e homologação) fica
 entre **R$ 195 mil e R$ 375 mil**, e só se paga com volumes a partir de alguns milhares
 de unidades. Antes disso, o caminho viável é o **lote piloto em impressão 3D**, que exige
@@ -2922,7 +2923,7 @@ o bastante para rodar no ESP32.
 
 Fontes consultadas para os preços, as especificações dos componentes, os parâmetros
 de custo utilizados nas Partes F e G, a documentação do serviço de IA usado no Passo 20
-e as bases oficiais e normas citadas na Parte H (consulta em setembro de 2026).
+e as bases oficiais e normas citadas na Parte H (consulta em setembro e outubro de 2026).
 
 <div class="referencias" markdown="1">
 
@@ -2932,7 +2933,7 @@ AGÊNCIA NACIONAL DE VIGILÂNCIA SANITÁRIA (ANVISA). **Bulário eletrônico**. 
 
 AGÊNCIA NACIONAL DE VIGILÂNCIA SANITÁRIA (ANVISA). Câmara de Regulação do Mercado de Medicamentos (CMED). **Listas de preços de medicamentos**. Brasília, DF: Anvisa, 2026b. Disponível em: <https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos>. Acesso em: 29 set. 2026.
 
-AMAZON.COM.BR. **Display LCD 16x2 com módulo I2C PCF8574**. Disponível em: <https://www.amazon.com.br/Display-PCF8574-Endere%C3%A7o-Controlador-80x35mm/dp/B0H346LHKM>. Acesso em: 27 set. 2026.
+ALIBABA.COM. **2.25inch 76x284 ST7789 SPI TFT LCD display screen**. Disponível em: <https://www.alibaba.com/product-detail/2-25inch-76x284-ST7789-SPI-TFT_1601541631656.html>. Acesso em: 6 out. 2026.
 
 AMAZON.COM.BR. **Placa breakout USB tipo C fêmea, 6 pinos**. Disponível em: <https://www.amazon.com.br/naughtystarts-pe%C3%A7as-breakout-conector-direito/dp/B0B19TP2MX>. Acesso em: 27 set. 2026.
 
@@ -2946,13 +2947,13 @@ CHEN HSONG BRASIL. **Custo da hora-homem-máquina para operadores de injetoras**
 
 CURTO CIRCUITO. **Servo motor 9 g SG90**. Disponível em: <https://curtocircuito.com.br/servo-motor-9g-sg90.html>. Acesso em: 27 set. 2026.
 
+EBAY. **2.25 inch TFT LCD display screen module ST7789 76 × 284 full view SPI screen**. Disponível em: <https://www.ebay.com/itm/316958165706>. Acesso em: 6 out. 2026.
+
 ELETROGATE. **Jumpers macho-fêmea, 40 unidades de 20 cm**. Disponível em: <https://www.eletrogate.com/jumpers-macho-femea-40-unidades-de-20-cm>. Acesso em: 27 set. 2026.
 
 ELETROGATE. **LED difuso 5 mm vermelho**. Disponível em: <https://www.eletrogate.com/led-difuso-5mm-vermelho>. Acesso em: 27 set. 2026.
 
 ELETROGATE. **Módulo WiFi ESP32 Bluetooth, 30 pinos**. Disponível em: <https://www.eletrogate.com/modulo-wifi-esp32-bluetooth-30-pinos>. Acesso em: 27 set. 2026.
-
-ELETROGATE. **Módulo serial I2C para display LCD**. Disponível em: <https://www.eletrogate.com/modulo-serial-i2c-para-display-lcd-para-arduino>. Acesso em: 27 set. 2026.
 
 ELETROGATE. **Resistor 220 Ω, 1/4 W, 10 unidades**. Disponível em: <https://www.eletrogate.com/resistor-220r-1-4w-10-unidades>. Acesso em: 27 set. 2026.
 
