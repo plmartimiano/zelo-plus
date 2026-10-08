@@ -16,6 +16,7 @@
 
 ## Sumário
 
+- [Missão, visão e valores](#missão-visão-e-valores)
 - [Parte A — Entendendo o projeto](#parte-a--entendendo-o-projeto)
   - [A1. O que é o Zelo+](#a1-o-que-é-o-zelo)
   - [A2. Materiais e ligações](#a2-materiais-e-ligações)
@@ -88,6 +89,15 @@
   - [H6. Etapas de implantação](#h6-etapas-de-implantação)
   - [H7. Modelo próprio de IA (etapa futura)](#h7-modelo-próprio-de-ia-etapa-futura)
 - [Referências](#referências)
+
+---
+
+# Missão, visão e valores
+
+<figure markdown="1">
+![Missão, visão e valores do Zelo+](docs/missao-visao-valores.jpg)
+<figcaption><b>Missão, visão e valores do Zelo+.</b></figcaption>
+</figure>
 
 ---
 
