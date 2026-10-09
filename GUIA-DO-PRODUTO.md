@@ -17,6 +17,7 @@
 ## Sumário
 
 - [Missão, visão e valores](#missão-visão-e-valores)
+- [Sumário executivo](#sumário-executivo)
 - [Parte A — Entendendo o projeto](#parte-a--entendendo-o-projeto)
   - [A1. O que é o Zelo+](#a1-o-que-é-o-zelo)
   - [A2. Materiais e ligações](#a2-materiais-e-ligações)
@@ -98,6 +99,90 @@
 ![Missão, visão e valores do Zelo+](docs/missao-visao-valores.jpg)
 <figcaption><b>Missão, visão e valores do Zelo+.</b></figcaption>
 </figure>
+
+---
+
+# Sumário executivo
+
+> O Zelo+ é um dispenser automático de medicamentos para idosos, com aviso ao cuidador
+> pelo celular. Este sumário apresenta o problema tratado, o valor pretendido, a forma de
+> entrega em ciclos curtos, os indicadores de sucesso, os riscos e os próximos marcos.
+> O escopo detalhado é refinado a cada ciclo, com base no retorno de pacientes e
+> cuidadores.
+
+## Problema e necessidade
+
+| Quem sofre | Dor |
+|---|---|
+| **Paciente idoso** | Uso de vários medicamentos em horários diferentes, com risco de esquecer doses, tomar em dobro ou confundir os remédios. |
+| **Cuidador e família** | Falta de informação confiável sobre o que foi tomado e quando; o acompanhamento depende da memória do paciente ou de visitas. |
+| **Profissional de saúde** | Ausência de dados objetivos de adesão ao tratamento na hora da consulta. |
+
+**Oportunidade:** um dispositivo de mesa, simples para o paciente, que organiza as doses,
+avisa no horário e mantém a família informada, a um custo compatível com o uso doméstico.
+
+## Visão do produto e objetivos de valor
+
+**Visão:** ser referência em tecnologia para o cuidado e o gerenciamento de medicamentos
+na terceira idade.
+
+| Objetivo de valor | Como o Zelo+ entrega hoje |
+|---|---|
+| **Dose certa, na hora certa** | Três compartimentos com porta motorizada; no horário, alarme sonoro, luz e mensagem colorida na tela; um botão abre somente o compartimento da dose. |
+| **Família informada** | Aviso pelo Telegram quando a dose não é retirada (primeiro aviso aos 6 min e alerta final aos 12 min). |
+| **Configuração sem técnico** | Página no celular para cadastrar remédios, horários e familiares, com abastecimento guiado e leitura da caixa do remédio por foto. |
+| **Funciona mesmo sem internet** | Rede própria do dispenser quando o Wi-Fi da casa falha, novas tentativas automáticas e bateria para faltas de energia. |
+| **Informação para a consulta** | Histórico de doses e taxa de adesão por medicamento, com exportação em planilha. |
+
+## Abordagem e incrementos
+
+A entrega é feita em **ciclos quinzenais**, cada um com um incremento utilizável e
+validado em bancada ou com usuários, em vez de fases longas e sequenciais.
+
+| Incremento | Valor entregue | Situação |
+|---|---|---|
+| **1. Núcleo do dispenser** | Alarmes, portas, botão, tela, página no celular, avisos pelo Telegram, histórico e adesão | Concluído (protótipo funcional) |
+| **2. Robustez** | Montagem autônoma (fonte e bateria), relógio DS3231 para manter a hora sem internet, tempos definitivos de uso | Próximo ciclo |
+| **3. IA — 1ª etapa** | Cadastro por foto ou código de barras, conferência na reposição e relatório de adesão (H3.1, H3.2, H3.6) | Leitura por foto já integrada; demais itens planejados |
+| **4. IA — 2ª etapa** | Cadastro pela receita e assistente do cuidador no Telegram (H3.4, H3.7) | Planejado |
+| **5. Acessibilidade** | Voz para o paciente (H3.11) | Planejado, depende de componente |
+| **6. Modelo próprio de IA** | Leitura de embalagens sem serviço de terceiros (H7) | Horizonte de cerca de 12 meses |
+
+## Indicadores de sucesso
+
+| Indicador | Como medir | Meta proposta |
+|---|---|---|
+| **Adesão ao tratamento** | Doses tomadas ÷ doses previstas (histórico do próprio dispenser) | ≥ 90 % nos usuários do lote piloto |
+| **Doses no horário** | Doses retiradas antes do primeiro aviso ÷ doses tomadas | Crescente a cada ciclo |
+| **Tempo de reação da família** | Intervalo entre o alerta no Telegram e a retirada da dose | Redução a cada ciclo |
+| **Facilidade de uso** | Tempo para cadastrar um remédio e taxa de tarefas concluídas sem ajuda | Cadastro em até 3 min |
+| **Satisfação** | NPS de cuidadores e pacientes ao fim de cada ciclo de teste | NPS ≥ 50 |
+| **Confiabilidade** | Falhas de porta, reinícios e horas sem hora certa por mês | Zero falha que impeça a dose |
+| **Viabilidade** | Custo de fabricação por unidade (Parte G) | R$ 161–254 em série |
+
+## Principais riscos e premissas
+
+| Risco ou premissa | Estratégia de adaptação |
+|---|---|
+| **Enquadramento como dispositivo médico (Anvisa)** | Consulta regulatória antes da venda; funções de IA apenas informativas, sem bloquear ou alterar a prescrição. |
+| **Proteção de dados de saúde (LGPD)** | Consentimento, envio mínimo de dados, chaves somente no serviço e opção de exclusão. |
+| **Dependência de internet e de serviços de terceiros** | A rotina de doses funciona sem conexão; a IA é complementar e terá alternativa própria (H7). |
+| **Falta de energia ou de hora certa** | Bateria com módulo UPS e relógio DS3231; aviso "Acerte a hora" e ajuste pelo celular. |
+| **Durabilidade mecânica** | Ensaios de ciclo de abertura; troca do SG90 pelo MG90S (engrenagem de metal) se necessário. |
+| **Custo e câmbio** | Faixas de custo revisadas a cada ciclo; produção em lote piloto por impressão 3D antes de investir em moldes. |
+| **Premissa de uso** | Paciente com autonomia para apertar um botão e cuidador com celular e Telegram; validada no lote piloto. |
+
+## Próximos passos
+
+| Marco | Entregas |
+|---|---|
+| **Próximo ciclo** | Montagem autônoma com fonte e bateria, relógio DS3231, tempos definitivos e ensaio completo da validação de pré-requisitos (E1). |
+| **Release de validação** | Lote piloto de cerca de 100 unidades em impressão 3D, testes com famílias e coleta dos indicadores acima. |
+| **Ciclos seguintes** | Etapas de IA conforme o retorno dos usuários, consulta regulatória e homologação na Anatel antes da comercialização. |
+
+**Investimento de referência:** cerca de R$ 303–403 para montar um protótipo (Parte F);
+custo de R$ 162–257 por unidade em série, com preço de venda estimado de R$ 400 a
+R$ 1.030 (Parte G).
 
 ---
 
