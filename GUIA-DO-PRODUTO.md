@@ -29,7 +29,7 @@
   - [B2. Imagens do produto](#b2-imagens-do-produto)
   - [B3. Critérios de projeto](#b3-critérios-de-projeto)
   - [B4. Onde fica cada componente](#b4-onde-fica-cada-componente)
-  - [B5. Liberação manual de emergência](#b5-liberação-manual-de-emergência)
+  - [B5. Abertura de emergência sem energia](#b5-abertura-de-emergência-sem-energia)
 - [Parte C — O código, passo a passo](#parte-c--o-código-passo-a-passo)
   - [Passo 1 — Bibliotecas e pinos](#passo-1--bibliotecas-e-pinos)
   - [Passo 2 — Estruturas de dados](#passo-2--estruturas-de-dados)
@@ -418,13 +418,12 @@ As vistas também estão em escala no arquivo vetorial
 | Tampa móvel (3, iguais) | 65 × 75 × 2 (folga de 0,35 por lado) |
 | Divisórias entre compartimentos | 2 no corpo, **3,45 no topo** (apoio das tampas) |
 | Profundidade útil do compartimento | 50,5 (≈ 251 cm³ cada) |
-| Tampa da área técnica (**removível**, 4 parafusos M3) | 203,3 × 45,6 × 2 |
+| Tampa da área técnica (**abre sem ferramenta**: 4 ímãs e trava de moeda) | 203,3 × 45,6 × 2 |
 | Botão / janela da tela / acrílico | 18 × 18 / 57 × 17 / 40 × 18, centros a **22,5** da base |
 | Centros horizontais (botão / tela / acrílico) | 36 / **105** / 174 |
 | Placa da tela TFT (atrás do painel) | 73 × 21 × ~20 (com os conectores dos fios) |
 | Área visível da tela | 55,2 × 14,8 (2,25" de diagonal, 284 × 76 pontos) |
 | Recorte do USB-C (parede traseira) | 14,2 × 5,4, centro a ~15 da base |
-| Furos de liberação de emergência (tampa técnica) | 3 × Ø 2,5, no centro de cada compartimento, a 7 da dobradiça |
 
 ## B2. Imagens do produto
 
@@ -444,9 +443,9 @@ As vistas também estão em escala no arquivo vetorial
   - A janela da tela fica no **eixo central (105 mm)**, alinhada com o logotipo. Ela mede 57 × 17 mm: a área visível (55,2 × 14,8 mm) com cerca de 1 mm de folga de cada lado, para a borda da imagem não ficar escondida atrás do painel.
   - O botão (centro em 36 mm) e o acrílico (centro em 174 mm) ficam cada um no meio do seu lado, **à mesma distância do centro (69 mm)**. Assim os três elementos ficam equilibrados, mesmo com larguras diferentes.
 - **Folga das tampas:** para a tampa de 65 × 75 mm ter 0,35 mm de folga de cada lado, a abertura precisa medir 65,7 × 75,7 mm. Por isso as divisórias têm 3,45 mm no topo, onde as tampas se apoiam.
-- **Manutenção:** a tampa da área técnica é **removível** (4 parafusos M3), com acesso aos servos, à bateria e ao USB do ESP32 para atualizar o programa (E10).
+- **Manutenção:** a tampa da área técnica abre **sem ferramenta** (4 ímãs e trava de moeda), com acesso aos servos, à bateria e ao USB do ESP32 para atualizar o programa (E10).
 - **Energia:** o conector USB-C de painel fica na **parede traseira**, dentro da faixa de eletrônica.
-- **Emergência:** cada tampa pode ser solta do servo por um furo na tampa técnica, sem energia (B5).
+- **Emergência:** sem energia, cada tampa de compartimento se solta do servo pelo pino com argola, acessível pela tampa técnica (B5).
 
 ## B4. Onde fica cada componente
 
@@ -459,44 +458,47 @@ As vistas também estão em escala no arquivo vetorial
 | 3 servos SG90 | Área técnica (46,3 mm de fundo), no alto, junto às dobradiças das tampas |
 | Conector USB-C de painel | Parede traseira, ~15 mm acima da base |
 | Capacitor 1000 µF | Junto aos servos, na área técnica |
-| Pinos de liberação com mola (3) | No braço de cada servo, logo abaixo do furo de 2,5 mm da tampa técnica (B5) |
+| Pinos com argola (3) | Na ligação entre o braço de cada servo e a alavanca da tampa do compartimento (B5) |
+| Ímãs e trava de moeda | Cantos e borda da tampa técnica (B5) |
 
-## B5. Liberação manual de emergência
+## B5. Abertura de emergência sem energia
 
 **Objetivo:** abrir qualquer compartimento **sem energia nenhuma** (sem rede e com a
 bateria descarregada), sem forçar o servo. Parado, o SG90 segura a tampa pelas
 engrenagens de plástico; abrir a tampa à força quebraria essas engrenagens.
 
 <figure markdown="1">
-![Liberação manual de emergência](docs/liberacao-emergencia.png)
-<figcaption><b>Liberação manual de emergência</b> — à esquerda, uso normal com o pino engatado; à direita, o pino empurrado por um clipe solta a tampa, que abre com a mão (corte lateral esquemático, sem escala).</figcaption>
+![Abertura de emergência sem energia](docs/liberacao-emergencia.png)
+<figcaption><b>Abertura de emergência sem energia</b> — destravar a tampa técnica com uma moeda, tirar o pino com argola que liga o servo à tampa do compartimento e abrir com a mão (esquemático, sem escala).</figcaption>
 </figure>
 
-**Mecanismo:**
+**Solução:** a tampa da área técnica abre **sem ferramenta**, e cada servo se liga à
+tampa do seu compartimento por um **pino com argola**, que se tira com os dedos.
 
-| Peça | Função |
+| Elemento | Descrição |
 |---|---|
-| **Alavanca da tampa** | Prolongamento da tampa depois da dobradiça, já dentro da área técnica, com um furo de 3,2 mm na ponta. |
-| **Braço do servo em garfo** | Envolve a ponta da alavanca. É ele que empurra a alavanca e abre a tampa no uso normal. |
-| **Pino com mola** | Pino de aço de 3 mm que atravessa o garfo e o furo da alavanca, mantido no lugar por uma mola pequena de compressão. A ponta de cima é chanfrada. |
-| **Furo na tampa técnica** | Furo de 2,5 mm logo acima de cada pino (3 furos, a 7 mm da dobradiça, no centro de cada compartimento). |
+| **Ímãs de fixação** | 4 ímãs de neodímio de 6 × 2 mm, colados em rebaixos nos cantos da tampa técnica e do gabinete. Mantêm a tampa fechada no dia a dia, sem parafusos. |
+| **Trava de moeda** | Trava de 1/4 de volta com fenda, acionada com uma moeda. Impede que a tampa seja aberta por curiosidade ou por acidente. |
+| **Rebaixo para o dedo** | Rebaixo na borda da tampa técnica para levantá-la depois de destravada. |
+| **Pino com argola (3)** | Liga o braço de cada servo à alavanca da tampa do compartimento. Braço e alavanca ficam **lado a lado**, em planos diferentes: sem o pino, um não bloqueia o movimento do outro. |
 
-**Funcionamento:**
+**Procedimento:**
 
-- **Uso normal:** o pino liga o braço do servo à alavanca, e o servo abre e fecha a tampa.
-- **Emergência:** um clipe de papel (ou uma chave fina) entra pelo furo e empurra o
-  pino para baixo. A alavanca se solta do braço do servo e a tampa abre com a mão.
-- **Volta ao normal:** ao fechar a tampa com a mão, a ponta chanfrada do pino desliza
-  na alavanca e o pino volta a engatar sozinho, empurrado pela mola. Ao religar o
-  dispenser, o servo já está na posição de porta fechada.
+1. Girar a trava 1/4 de volta com uma moeda e levantar a tampa técnica pelo rebaixo.
+2. Puxar pela argola o pino do compartimento desejado.
+3. Levantar a tampa do compartimento com a mão.
+4. **Para remontar:** fechar a tampa do compartimento, alinhar o furo da alavanca com o
+   do braço do servo (que, parado, permanece na posição de porta fechada), recolocar o
+   pino e fechar a tampa técnica, girando a trava de volta.
 
 **Critérios de projeto:**
 
-- O furo é pequeno e fica na tampa técnica, longe da frente: o paciente não abre por
-  engano, e o controle das doses se mantém. O procedimento é do cuidador.
-- O mecanismo não usa energia nem depende do programa.
-- As peças (alavanca, garfo e guia do pino) são impressas junto com o gabinete; o pino de
-  aço e a mola são itens de ferragem.
+- A trava de moeda mantém o controle das doses: o paciente não abre a área técnica por
+  engano, e o procedimento fica com o cuidador.
+- O sistema não usa energia nem depende do programa, e não tem peças de precisão.
+- Se a energia voltar com um pino fora, o servo se move sem a tampa, sem dano; basta
+  recolocar o pino.
+- A tampa técnica sem parafusos também facilita a manutenção e a troca da bateria.
 
 ---
 
@@ -2620,10 +2622,10 @@ do mais simples ao mais extremo:
 |---|---|---|
 | **Sem o celular ou sem a página**, com o dispenser ligado | Segurar o botão por 10 s fora do horário de dose, escolher o compartimento com toques curtos e confirmar com toque longo. | [Passo 21](#passo-21--modo-do-cuidador-abrir-pelo-botão-sem-o-celular) |
 | **Sem energia da rua e com a bateria descarregada** | Ligar um **power bank** de celular (5 V, 2 A ou mais) na entrada USB-C do dispenser. Ele religa na hora e as portas voltam a funcionar normalmente. | Entrada USB-C da parede traseira |
-| **Sem energia nenhuma** | Empurrar o pino pelo furo da tampa técnica com um clipe; a tampa do compartimento abre com a mão. Ao fechar a tampa, o pino volta a engatar. | [B5](#b5-liberação-manual-de-emergência) |
+| **Sem energia nenhuma** | Abrir a tampa técnica com uma moeda (trava de 1/4 de volta), tirar o pino com argola do compartimento e abrir a tampa com a mão. Depois, fechar a tampa, recolocar o pino e travar a tampa técnica. | [B5](#b5-abertura-de-emergência-sem-energia) |
 
 > O power bank é o caminho preferido quando não há energia: mantém o registro das doses,
-> o alarme e os avisos. A liberação manual não registra a abertura, porque o dispenser
+> o alarme e os avisos. A abertura pela tampa técnica não fica registrada, porque o dispenser
 > está desligado.
 
 ---
@@ -2903,7 +2905,7 @@ ou **R$ 111–170** (cenário 2), cerca de **50 a 60 % menos**.
 | Arranjo | módulos + impressão 3D | placa própria + impressão 3D | placa própria + injeção (aço) |
 | Componentes | R$ 159–243 ¹ | R$ 111–170 | R$ 111–170 |
 | Gabinete | R$ 100–157 | R$ 100–157 | R$ 14–21 |
-| Ferragens (parafusos, pinos das portas, pés, visor da tela) | R$ 5–9 | R$ 5–9 | R$ 5–9 |
+| Ferragens (parafusos, pinos das portas, ímãs e pinos com argola, pés, visor da tela) | R$ 5–9 | R$ 5–9 | R$ 5–9 |
 | Montagem e teste | 55 min → R$ 18 | 20 min → R$ 7 | 20 min → R$ 7 |
 | Embalagem e manual | R$ 8–14 | R$ 6–12 | R$ 6–12 |
 | Projeto da placa (R$ 5–20 mil) amortizado | — | R$ 5–20 | R$ 0,50–2 |
