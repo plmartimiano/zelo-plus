@@ -140,7 +140,7 @@ const unsigned long TEMPO_PRIMEIRO_AVISO = 6UL * 60UL * 1000UL;
 const unsigned long TEMPO_ALERTA_FINAL = 12UL * 60UL * 1000UL;
 #endif
 
-enum Estado { AGUARDANDO, TOCANDO, PORTA_ABERTA_ESTADO, ABASTECENDO };
+enum Estado { AGUARDANDO, TOCANDO, PORTA_ABERTA_ESTADO, ABASTECENDO, MODO_CUIDADOR };
 Estado estadoAtual = AGUARDANDO;
 
 // Motivo da abertura no estado ABASTECENDO (so muda o texto do visor).
@@ -162,6 +162,18 @@ String nomesDose = "";
 unsigned long alarmeIniciadoEm = 0;
 int nivelAvisoEnviado = 0;   // 0 = nenhum, 1 = cuidador avisado, 2 = todos alertados
 bool dosePendente = false;   // alarme terminou sem acesso; botao ainda abre os compartimentos
+
+// Modo do cuidador: abre qualquer compartimento pelo botao, sem o celular.
+// Entra segurando o botao por TEMPO_ENTRAR_CUIDADOR fora do horario de dose;
+// toque curto passa para a proxima opcao, toque longo confirma.
+const unsigned long TEMPO_ENTRAR_CUIDADOR = 10000;
+const unsigned long TEMPO_CONFIRMAR_OPCAO = 1500;
+const unsigned long TEMPO_SAIR_CUIDADOR = 30000; // sem uso, volta sozinho
+unsigned long botaoApertadoEm = 0;   // 0 = botao solto
+bool aguardandoSoltarBotao = false;  // ignora o toque que acabou de entrar no modo
+bool avisoSegurarMostrado = false;   // visor ja mostra "Segure mais N s"
+int opcaoCuidador = 0;               // 0..2 = compartimento, 3 = sair
+unsigned long ultimaAcaoCuidador = 0;
 
 // Horarios que chegaram enquanto o dispenser estava ocupado: tocam assim que
 // ele voltar a ficar livre.
@@ -707,7 +719,8 @@ enum StatusDose : uint8_t {
   DOSE_PENDENTE = 0,    // alarme tocando (ou placa reiniciou antes de concluir)
   DOSE_NO_HORARIO = 1,  // acesso antes do primeiro aviso ao cuidador
   DOSE_ATRASADA = 2,    // acesso depois do primeiro aviso (inclusive apos o alerta final)
-  DOSE_SEM_ACESSO = 3   // alerta final enviado e ninguem acessou
+  DOSE_SEM_ACESSO = 3,  // alerta final enviado e ninguem acessou
+  DOSE_ABERTURA_MANUAL = 4 // aberto pelo cuidador no botao (modo do cuidador); fora da adesao
 };
 
 struct RegistroDose {
@@ -815,6 +828,7 @@ const char* textoStatusDose(uint8_t status, bool emAndamento) {
     case DOSE_NO_HORARIO: return "Tomada no horario";
     case DOSE_ATRASADA: return "Tomada com atraso";
     case DOSE_SEM_ACESSO: return "Sem acesso";
+    case DOSE_ABERTURA_MANUAL: return "Abertura manual (botao)";
     default: return emAndamento ? "Tocando agora" : "Sem acesso";
   }
 }
@@ -824,6 +838,7 @@ const char* corStatusDose(uint8_t status, bool emAndamento) {
     case DOSE_NO_HORARIO: return "#16a34a";
     case DOSE_ATRASADA: return "#d97706";
     case DOSE_PENDENTE: return emAndamento ? "#2563eb" : "#dc2626";
+    case DOSE_ABERTURA_MANUAL: return "#4b5563";
     default: return "#dc2626";
   }
 }
@@ -879,6 +894,7 @@ String htmlHistorico() {
     int idx = indiceHistorico(k);
     const RegistroDose& r = historico[idx];
     if (r.inicio < limite || registroEmAndamento(idx)) continue;
+    if (r.status == DOSE_ABERTURA_MANUAL) continue; // nao e dose: fica fora da adesao
     bool tomada = (r.status == DOSE_NO_HORARIO || r.status == DOSE_ATRASADA);
     if (r.status == DOSE_NO_HORARIO) noHorario++;
     else if (r.status == DOSE_ATRASADA) atrasadas++;
@@ -2284,6 +2300,130 @@ void abrirParaPaciente() {
   avisarAcessoAposAviso();
 }
 
+// ---------- MODO DO CUIDADOR (botao) ----------
+
+void mostrarOpcaoCuidador() {
+  temaVisor(COR_AZUL_ESCURO);
+  limparVisor();
+  escreverLinha(0, "Modo do cuidador");
+  if (opcaoCuidador >= NUM_COMPARTIMENTOS) {
+    escreverLinha(1, "Sair");
+  } else {
+    String nome = medicamentos[opcaoCuidador].nome;
+    escreverLinha(1, "Abrir C" + String(opcaoCuidador + 1) + (nome != "" ? "? " + textoVisor(nome, 22, true) : String("?")));
+  }
+}
+
+void entrarModoCuidador() {
+  opcaoCuidador = 0;
+  aguardandoSoltarBotao = true;
+  ultimaAcaoCuidador = millis();
+  estadoAtual = MODO_CUIDADOR;
+  mostrarOpcaoCuidador();
+  Serial.println("Modo do cuidador: ativado pelo botao");
+}
+
+void sairModoCuidador() {
+  botaoApertadoEm = 0;
+  temaVisor(COR_PRETO);
+  limparVisor();
+  estadoAtual = AGUARDANDO;
+}
+
+// Abre o compartimento escolhido, registra no historico e avisa o cuidador.
+void abrirPeloCuidador(int c) {
+  int idx = registrarInicioDose(c);
+  historico[idx].status = DOSE_ABERTURA_MANUAL;
+  salvarHistorico();
+
+  temaVisor(COR_VISOR_COMPARTIMENTO[c]);
+  limparVisor();
+  escreverLinha(0, "Abertura manual C" + String(c + 1));
+  escreverLinha(1, "Abrindo...");
+  abrirCompartimento(c);
+
+  mascaraAberta = (uint8_t)(1 << c);
+  estadoAtual = PORTA_ABERTA_ESTADO;
+  portaAbertaEm = millis();
+
+  String nome = medicamentos[c].nome;
+  enviarParaCuidador("Zelo+: compartimento " + String(c + 1) + (nome != "" ? " (" + nome + ")" : String("")) +
+                     " aberto pelo botão do dispenser (modo do cuidador)" +
+                     (horarioAgora() != "" ? " às " + horarioAgora() : String("")) + ".");
+}
+
+// Segurar o botao fora do horario de dose: depois de 2 s o visor avisa e, aos
+// 10 s, entra no modo do cuidador. Devolve true enquanto o botao esta seguro
+// (o loop nao redesenha a tela de espera nesse tempo).
+bool acompanharBotaoEspera() {
+  bool apertado = (digitalRead(BUTTON_PIN) == LOW);
+  if (!apertado) {
+    if (botaoApertadoEm != 0) {
+      botaoApertadoEm = 0;
+      if (avisoSegurarMostrado) {
+        avisoSegurarMostrado = false;
+        temaVisor(COR_PRETO);
+        limparVisor(); // volta para a tela de espera
+      }
+    }
+    return false;
+  }
+  if (botaoApertadoEm == 0) botaoApertadoEm = millis();
+  unsigned long segurado = millis() - botaoApertadoEm;
+  if (segurado >= TEMPO_ENTRAR_CUIDADOR) {
+    botaoApertadoEm = 0;
+    avisoSegurarMostrado = false;
+    entrarModoCuidador();
+    return true;
+  }
+  if (segurado >= 2000) {
+    if (!avisoSegurarMostrado) {
+      avisoSegurarMostrado = true;
+      temaVisor(COR_AZUL_ESCURO);
+      limparVisor();
+      escreverLinha(0, "Modo do cuidador");
+    }
+    unsigned long faltam = (TEMPO_ENTRAR_CUIDADOR - segurado + 999) / 1000;
+    escreverLinha(1, "Segure mais " + String(faltam) + " s"); // so redesenha quando muda
+    return true;
+  }
+  return false;
+}
+
+// Dentro do modo: toque curto = proxima opcao; toque longo = confirma.
+void atenderModoCuidador() {
+  bool apertado = (digitalRead(BUTTON_PIN) == LOW);
+  if (aguardandoSoltarBotao) {
+    if (!apertado) aguardandoSoltarBotao = false;
+    ultimaAcaoCuidador = millis();
+    return;
+  }
+  if (apertado) {
+    if (botaoApertadoEm == 0) botaoApertadoEm = millis();
+    ultimaAcaoCuidador = millis();
+    if (millis() - botaoApertadoEm >= TEMPO_CONFIRMAR_OPCAO) {
+      escreverLinha(0, "Solte para confirmar");
+    }
+    return;
+  }
+  if (botaoApertadoEm != 0) {
+    unsigned long duracao = millis() - botaoApertadoEm;
+    botaoApertadoEm = 0;
+    ultimaAcaoCuidador = millis();
+    if (duracao < 50) return; // ruido do contato
+    if (duracao < TEMPO_CONFIRMAR_OPCAO) {
+      opcaoCuidador = (opcaoCuidador + 1) % (NUM_COMPARTIMENTOS + 1);
+      mostrarOpcaoCuidador();
+    } else if (opcaoCuidador >= NUM_COMPARTIMENTOS) {
+      sairModoCuidador();
+    } else {
+      abrirPeloCuidador(opcaoCuidador);
+    }
+    return;
+  }
+  if (millis() - ultimaAcaoCuidador >= TEMPO_SAIR_CUIDADOR) sairModoCuidador();
+}
+
 // Confere a cada segundo se chegou o horario de algum medicamento. Funciona em
 // qualquer estado: se o dispenser estiver ocupado, o horario fica em espera e
 // toca assim que ele ficar livre.
@@ -2663,6 +2803,7 @@ void loop() {
         }
         break;
       }
+      if (!dosePendente && acompanharBotaoEspera()) break;
       atualizarTelaEspera();
       break;
 
@@ -2756,6 +2897,10 @@ void loop() {
       }
       break;
     }
+
+    case MODO_CUIDADOR:
+      atenderModoCuidador();
+      break;
 
     case ABASTECENDO: {
       static unsigned long ultimaAtualizacaoAbastecimento = 0;
