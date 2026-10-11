@@ -30,6 +30,7 @@
   - [B3. Critérios de projeto](#b3-critérios-de-projeto)
   - [B4. Onde fica cada componente](#b4-onde-fica-cada-componente)
   - [B5. Abertura de emergência sem energia](#b5-abertura-de-emergência-sem-energia)
+  - [B6. Modelo 3D do gabinete e impressão](#b6-modelo-3d-do-gabinete-e-impressão)
 - [Parte C — O código, passo a passo](#parte-c--o-código-passo-a-passo)
   - [Passo 1 — Bibliotecas e pinos](#passo-1--bibliotecas-e-pinos)
   - [Passo 2 — Estruturas de dados](#passo-2--estruturas-de-dados)
@@ -424,7 +425,9 @@ As vistas também estão em escala no arquivo vetorial
 | Centros horizontais (botão / tela / acrílico) | 36 / **105** / 174 |
 | Placa da tela TFT (atrás do painel) | 73 × 21 × ~20 (com os conectores dos fios) |
 | Área visível da tela | 55,2 × 14,8 (2,25" de diagonal, 284 × 76 pontos) |
-| Recorte do USB-C (parede traseira) | 14,2 × 5,4, centro a ~15 da base |
+| Recorte do USB-C (parede lateral direita) | 14,2 × 5,4, centro a 55 da frente e 15 da base |
+| Furos de som do buzzer (parede lateral esquerda) | 9 × Ø 2,4 (3 × 3, passo 4), centro a 100 da frente e 20 da base |
+| Fundo removível | 203,4 × 123,4 × 2,5, preso por 4 parafusos M3 |
 
 ## B2. Imagens do produto
 
@@ -445,8 +448,8 @@ As vistas também estão em escala no arquivo vetorial
   - O botão (centro em 36 mm) e o acrílico (centro em 174 mm) ficam cada um no meio do seu lado, **à mesma distância do centro (69 mm)**. Assim os três elementos ficam equilibrados, mesmo com larguras diferentes.
 - **Folga das tampas:** para a tampa de 65 mm de largura ter 0,35 mm de folga de cada lado, a abertura precisa medir 65,7 mm. Por isso as divisórias têm 3,45 mm no topo, onde as tampas se apoiam.
 - **Dobradiça atrás da divisória:** o eixo fica 13,8 mm atrás da divisória do compartimento. Assim a alavanca do acionamento gira sem tocar a divisória quando a tampa abre a 90° (B5). Por isso a tampa mede 93,6 mm: cobre o compartimento, a divisória e a faixa da dobradiça.
-- **Manutenção:** a tampa da área técnica abre **sem ferramenta** (4 ímãs e trava de moeda), com acesso aos servos, à bateria e ao USB do ESP32 para atualizar o programa (E10).
-- **Energia:** o conector USB-C de painel fica na **parede traseira**, dentro da faixa de eletrônica.
+- **Manutenção:** a tampa da área técnica abre **sem ferramenta** (ímãs e trava de moeda), com acesso aos servos e aos pinos das tampas. O **fundo removível** (4 parafusos M3) dá acesso à protoboard, ao ESP32 com o USB para atualizar o programa (E10), ao módulo UPS e à bateria.
+- **Energia e som:** o conector USB-C de painel fica na **parede lateral direita**, ao lado do módulo UPS; os furos de som do buzzer ficam na **parede lateral esquerda**.
 - **Emergência:** sem energia, cada tampa de compartimento se solta do servo pelo pino com argola, acessível pela tampa técnica (B5).
 
 ## B4. Onde fica cada componente
@@ -455,11 +458,13 @@ As vistas também estão em escala no arquivo vetorial
 |---|---|
 | Tela TFT 2,25" | Faixa preta, atrás da janela central (placa 73 × 21, ~20 de profundidade com os conectores) |
 | Botão e LED (atrás do acrílico) | Faixa preta, nas laterais da tela |
-| ESP32 e relógio DS3231 | Faixa de eletrônica, sob a área técnica |
-| Módulo UPS LX-2BUPS com as baterias 18650 (90 × 42 × 33) | Faixa de eletrônica, deitado sob os compartimentos |
+| ESP32 na protoboard de 400 pontos | Berço da protoboard no fundo removível, sob os compartimentos (B6) |
+| Relógio DS3231 | Berço próprio no fundo, sob a área técnica |
+| Módulo UPS LX-2BUPS com as baterias 18650 (90 × 42 × 33) | Berço próprio no fundo, junto à lateral direita, com furos de ventilação embaixo |
 | 3 servos SG90 | Área técnica, com o eixo paralelo ao da dobradiça, a 98,5 mm da frente e 73 mm da base (B5) |
-| Conector USB-C de painel | Parede traseira, ~15 mm acima da base |
-| Capacitor 1000 µF | Junto aos servos, na área técnica |
+| Conector USB-C de painel | Parede lateral direita, 15 mm acima da base, apoiado numa prateleira interna |
+| Buzzer | Alojamento na parede lateral esquerda, atrás dos furos de som |
+| Capacitor 1000 µF | Berço próprio no fundo, sob a área técnica |
 | Pinos com argola (3) | Na ligação entre o braço de cada servo e a alavanca da tampa do compartimento (B5) |
 | Ímãs e trava de moeda | Cantos e borda da tampa técnica (B5) |
 
@@ -479,7 +484,7 @@ tampa do seu compartimento por um **pino com argola**, que se tira com os dedos.
 
 | Elemento | Descrição |
 |---|---|
-| **Ímãs de fixação** | 4 ímãs de neodímio de 6 × 2 mm, colados em rebaixos nos cantos da tampa técnica e do gabinete. Mantêm a tampa fechada no dia a dia, sem parafusos. |
+| **Ímãs de fixação** | 4 pares de ímãs de neodímio de 6 × 2 mm, colados em rebaixos nos cantos da tampa técnica e nos apoios do gabinete. Mantêm a tampa fechada no dia a dia, sem parafusos. |
 | **Trava de moeda** | Trava de 1/4 de volta com fenda, acionada com uma moeda. Impede que a tampa seja aberta por curiosidade ou por acidente. |
 | **Rebaixo para o dedo** | Rebaixo na borda da tampa técnica para levantá-la depois de destravada. |
 | **Pino com argola (3)** | Liga o braço de cada servo à alavanca da tampa do compartimento. Braço e alavanca ficam **lado a lado**, em planos diferentes: sem o pino, um não bloqueia o movimento do outro. |
@@ -537,6 +542,61 @@ passa a 1,5 mm da divisória com a tampa aberta, e o braço não toca a tampa t�
 - Se a energia voltar com um pino fora, o servo se move sem a tampa, sem dano; basta
   recolocar o pino.
 - A tampa técnica sem parafusos também facilita a manutenção e a troca da bateria.
+
+## B6. Modelo 3D do gabinete e impressão
+
+O gabinete foi modelado em 3D com todos os suportes dos componentes do protótipo (com
+protoboard). O modelo é gerado pelo programa [`cad/gabinete.py`](cad/gabinete.py), que
+também confere, por computador, se alguma peça ou componente se encosta em outro, com a
+tampa fechada e durante a abertura de 0° a 90° ([`cad/conferir_movimento.py`](cad/conferir_movimento.py)).
+Nas duas conferências não houve nenhuma colisão.
+
+<figure markdown="1">
+![Modelo 3D do gabinete](docs/gabinete-3d.png)
+<figcaption><b>Modelo 3D do gabinete</b> — à esquerda, fechado; à direita, vista de trás sem o corpo e sem as tampas, com os servos, a bandeja, o fundo e os componentes.</figcaption>
+</figure>
+
+**Peças para imprimir** (arquivos em `cad/gabinete/` e `cad/`):
+
+| Peça | Qtd | Tamanho (mm) | Impressão | O que tem |
+|---|---|---|---|---|
+| **Corpo** (`corpo.stl`) | 1 | 210 × 130 × 100 | PLA, 20 % de preenchimento, 3 paredes; em pé, com suporte só sob os ressaltos internos e as colunas do fundo | Paredes; janelas da tela, do botão e do acrílico; berço do botão; suporte do LED; trilhos da tela; alojamento e furos de som do buzzer (lateral esquerda); recorte e prateleira do USB-C (lateral direita); apoios da bandeja, das tampas e da tampa técnica; rebaixos dos ímãs; colunas dos parafusos do fundo |
+| **Bandeja** (`bandeja.stl`) | 1 | 203,4 × 104,7 × 56,5 | PLA, 20 %; com o piso na mesa, sem suporte | Piso e divisórias dos compartimentos; divisória da área técnica; 3 placas dos servos (janela para o corpo do SG90 e 2 furos para M2); olhais das dobradiças |
+| **Fundo** (`fundo.stl`) | 1 | 203,4 × 123,4 × 8,5 | PLA, 20 %; deitado | Berços da protoboard (83 × 55), do módulo UPS (90 × 42) e do relógio (38 × 22); berço do capacitor; ventilação sob o UPS; rebaixos dos pés; furos dos 4 parafusos |
+| **Tampa do compartimento** (`tampa-compartimento.stl`) | 3 | 65 × 93,7 × 5 | PLA, 100 %; com a face de cima na mesa e suporte só nas articulações | Placa da tampa, recortes dos olhais e 2 articulações |
+| **Tampa técnica** (`tampa-tecnica.stl`) | 1 | 203,3 × 29,2 × 2 | PLA, 100 %; deitada | Rebaixos dos ímãs, furo da trava e rebaixo para o dedo |
+| **Trava de moeda** (`trava-botao.stl` e `trava-lingueta.stl`) | 1 + 1 | 10 × 10 × 8,2 e 6 × 14 × 1,8 | PETG, 100 % | Botão com fenda para a moeda e lingueta encaixada no eixo quadrado |
+| **Alavanca, braço do servo e pino com argola** | 3 de cada | ver B5 | PETG, 100 % | Acionamento das tampas (B5) |
+
+**Ferragens e itens comprados:**
+
+| Item | Qtd | Uso |
+|---|---|---|
+| Parafuso M3 × 8 autoatarraxante | 4 | Fundo |
+| Parafuso M2 × 6 autoatarraxante | 12 | Abas dos servos (6) e braço do servo (6) |
+| Filamento de 1,75 mm (pedaços de 9 mm) | 6 | Pinos das dobradiças, colados com uma gota de cola |
+| Ímã de neodímio 6 × 2 mm | 8 | Tampa técnica (4) e apoios do corpo (4) |
+| Pé de borracha adesivo de 10 mm | 4 | Fundo |
+| Protoboard de 400 pontos (83 × 55 mm) | 1 | ESP32 e ligações, no berço do fundo |
+| Placa de acrílico translúcido 42 × 20 × 2 mm | 1 | Janela do LED, colada no rebaixo |
+
+**Ordem de montagem:**
+
+1. **Corpo:** colar o acrílico no rebaixo da janela; encaixar a tela nos trilhos, com os
+   pinos do lado do botão; colar o botão no berço, o LED no suporte, o buzzer no
+   alojamento e o conector USB-C na prateleira (cola quente).
+2. **Fundo:** colar a protoboard (fita dupla face que vem nela), o módulo UPS e o relógio
+   nos berços; encaixar o capacitor; fazer as ligações (A2 e E3).
+3. **Bandeja:** encaixar o corpo de cada servo na janela da sua placa e parafusar as abas; montar os
+   braços e as alavancas (B5); descer a bandeja pelo topo do corpo até apoiar no ressalto
+   a 45 mm da base, passando os fios dos servos para baixo.
+4. **Tampas:** colar as alavancas sob as tampas; encaixar as articulações entre os olhais
+   e passar os pinos de filamento; ligar braço e alavanca com o pino com argola.
+5. **Fechamento:** fechar o fundo com os 4 parafusos; colar os ímãs; montar a trava de
+   moeda na tampa técnica (botão por cima, lingueta por baixo).
+
+O volume das peças modeladas é de cerca de 437 cm³, próximo da estimativa da G2
+(443 cm³), usada no cálculo de custo do gabinete.
 
 ---
 
@@ -2644,12 +2704,14 @@ sai do mesmo 3V3 que alimenta a tela (etiqueta **3V3** no diagrama da seção E3
 
 A montagem autônoma não impede atualizações:
 
-1. **Desconecte a saída do módulo UPS do VIN** do ESP32 (solte o fio do VIN ou use um borne
+1. Vire o dispenser e **solte os 4 parafusos do fundo**: a protoboard e o ESP32 ficam à
+   vista (B6).
+2. **Desconecte a saída do módulo UPS do VIN** do ESP32 (solte o fio do VIN ou use um borne
    que se possa abrir). **Nunca ligue o USB e o VIN ao mesmo tempo.**
-2. Ligue o **USB do ESP32 no laptop** e grave a versão nova (Build → Upload), como na
+3. Ligue o **USB do ESP32 no laptop** e grave a versão nova (Build → Upload), como na
    bancada.
-3. Tire o USB, **religue o fio do VIN** e o dispenser volta a funcionar pela fonte e pela
-   bateria.
+4. Tire o USB, **religue o fio do VIN** e recoloque o fundo. O dispenser volta a funcionar
+   pela fonte e pela bateria.
 
 ## E11. Procedimento de emergência
 
@@ -2659,7 +2721,7 @@ do mais simples ao mais extremo:
 | Situação | O que fazer | Onde está |
 |---|---|---|
 | **Sem o celular ou sem a página**, com o dispenser ligado | Segurar o botão por 10 s fora do horário de dose, escolher o compartimento com toques curtos e confirmar com toque longo. | [Passo 21](#passo-21--modo-do-cuidador-abrir-pelo-botão-sem-o-celular) |
-| **Sem energia da rua e com a bateria descarregada** | Ligar um **power bank** de celular (5 V, 2 A ou mais) na entrada USB-C do dispenser. Ele religa na hora e as portas voltam a funcionar normalmente. | Entrada USB-C da parede traseira |
+| **Sem energia da rua e com a bateria descarregada** | Ligar um **power bank** de celular (5 V, 2 A ou mais) na entrada USB-C do dispenser. Ele religa na hora e as portas voltam a funcionar normalmente. | Entrada USB-C da parede lateral direita |
 | **Sem energia nenhuma** | Abrir a tampa técnica com uma moeda (trava de 1/4 de volta), tirar o pino com argola do compartimento e abrir a tampa com a mão. Depois, fechar a tampa, recolocar o pino e travar a tampa técnica. | [B5](#b5-abertura-de-emergência-sem-energia) |
 
 > O power bank é o caminho preferido quando não há energia: mantém o registro das doses,
