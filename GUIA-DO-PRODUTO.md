@@ -29,6 +29,7 @@
   - [B2. Imagens do produto](#b2-imagens-do-produto)
   - [B3. Critérios de projeto](#b3-critérios-de-projeto)
   - [B4. Onde fica cada componente](#b4-onde-fica-cada-componente)
+  - [B5. Liberação manual de emergência](#b5-liberação-manual-de-emergência)
 - [Parte C — O código, passo a passo](#parte-c--o-código-passo-a-passo)
   - [Passo 1 — Bibliotecas e pinos](#passo-1--bibliotecas-e-pinos)
   - [Passo 2 — Estruturas de dados](#passo-2--estruturas-de-dados)
@@ -50,6 +51,7 @@
   - [Passo 18 — Modo de teste](#passo-18--modo-de-teste)
   - [Passo 19 — Relógio DS3231 (próxima etapa)](#passo-19--relógio-ds3231-próxima-etapa)
   - [Passo 20 — Leitura da caixa do remédio por foto (IA)](#passo-20--leitura-da-caixa-do-remédio-por-foto-ia)
+  - [Passo 21 — Modo do cuidador: abrir pelo botão, sem o celular](#passo-21--modo-do-cuidador-abrir-pelo-botão-sem-o-celular)
 - [Parte D — Juntando tudo](#parte-d--juntando-tudo)
   - [D1. Linha do tempo de uma dose](#d1-linha-do-tempo-de-uma-dose)
   - [D2. Referência rápida](#d2-referência-rápida)
@@ -64,6 +66,7 @@
   - [E8. Falta de energia e de internet](#e8-falta-de-energia-e-de-internet)
   - [E9. Módulo de relógio DS3231](#e9-módulo-de-relógio-ds3231)
   - [E10. Atualizar o programa depois de montado](#e10-atualizar-o-programa-depois-de-montado)
+  - [E11. Procedimento de emergência](#e11-procedimento-de-emergência)
 - [Parte F — Lista completa de componentes, com preços](#parte-f--lista-completa-de-componentes-com-preços)
   - [F1. Eletrônica do dispenser](#f1-eletrônica-do-dispenser)
   - [F2. Energia autônoma](#f2-energia-autônoma)
@@ -167,7 +170,7 @@ validado em bancada ou com usuários, em vez de fases longas e sequenciais.
 | **Enquadramento como dispositivo médico (Anvisa)** | Consulta regulatória antes da venda; funções de IA apenas informativas, sem bloquear ou alterar a prescrição. |
 | **Proteção de dados de saúde (LGPD)** | Consentimento, envio mínimo de dados, chaves somente no serviço e opção de exclusão. |
 | **Dependência de internet e de serviços de terceiros** | A rotina de doses funciona sem conexão; a IA é complementar e terá alternativa própria (H7). |
-| **Falta de energia ou de hora certa** | Bateria com módulo UPS e relógio DS3231; aviso "Acerte a hora" e ajuste pelo celular. |
+| **Falta de energia ou de hora certa** | Bateria com módulo UPS e relógio DS3231; aviso "Acerte a hora" e ajuste pelo celular; power bank na entrada USB-C e liberação manual das portas, sem energia (E11). |
 | **Durabilidade mecânica** | Ensaios de ciclo de abertura; troca do SG90 pelo MG90S (engrenagem de metal) se necessário. |
 | **Custo e câmbio** | Faixas de custo revisadas a cada ciclo; produção em lote piloto por impressão 3D antes de investir em moldes. |
 | **Premissa de uso** | Paciente com autonomia para apertar um botão e cuidador com celular e Telegram; validada no lote piloto. |
@@ -421,6 +424,7 @@ As vistas também estão em escala no arquivo vetorial
 | Placa da tela TFT (atrás do painel) | 73 × 21 × ~20 (com os conectores dos fios) |
 | Área visível da tela | 55,2 × 14,8 (2,25" de diagonal, 284 × 76 pontos) |
 | Recorte do USB-C (parede traseira) | 14,2 × 5,4, centro a ~15 da base |
+| Furos de liberação de emergência (tampa técnica) | 3 × Ø 2,5, no centro de cada compartimento, a 7 da dobradiça |
 
 ## B2. Imagens do produto
 
@@ -442,6 +446,7 @@ As vistas também estão em escala no arquivo vetorial
 - **Folga das tampas:** para a tampa de 65 × 75 mm ter 0,35 mm de folga de cada lado, a abertura precisa medir 65,7 × 75,7 mm. Por isso as divisórias têm 3,45 mm no topo, onde as tampas se apoiam.
 - **Manutenção:** a tampa da área técnica é **removível** (4 parafusos M3), com acesso aos servos, à bateria e ao USB do ESP32 para atualizar o programa (E10).
 - **Energia:** o conector USB-C de painel fica na **parede traseira**, dentro da faixa de eletrônica.
+- **Emergência:** cada tampa pode ser solta do servo por um furo na tampa técnica, sem energia (B5).
 
 ## B4. Onde fica cada componente
 
@@ -454,6 +459,44 @@ As vistas também estão em escala no arquivo vetorial
 | 3 servos SG90 | Área técnica (46,3 mm de fundo), no alto, junto às dobradiças das tampas |
 | Conector USB-C de painel | Parede traseira, ~15 mm acima da base |
 | Capacitor 1000 µF | Junto aos servos, na área técnica |
+| Pinos de liberação com mola (3) | No braço de cada servo, logo abaixo do furo de 2,5 mm da tampa técnica (B5) |
+
+## B5. Liberação manual de emergência
+
+**Objetivo:** abrir qualquer compartimento **sem energia nenhuma** (sem rede e com a
+bateria descarregada), sem forçar o servo. Parado, o SG90 segura a tampa pelas
+engrenagens de plástico; abrir a tampa à força quebraria essas engrenagens.
+
+<figure markdown="1">
+![Liberação manual de emergência](docs/liberacao-emergencia.png)
+<figcaption><b>Liberação manual de emergência</b> — à esquerda, uso normal com o pino engatado; à direita, o pino empurrado por um clipe solta a tampa, que abre com a mão (corte lateral esquemático, sem escala).</figcaption>
+</figure>
+
+**Mecanismo:**
+
+| Peça | Função |
+|---|---|
+| **Alavanca da tampa** | Prolongamento da tampa depois da dobradiça, já dentro da área técnica, com um furo de 3,2 mm na ponta. |
+| **Braço do servo em garfo** | Envolve a ponta da alavanca. É ele que empurra a alavanca e abre a tampa no uso normal. |
+| **Pino com mola** | Pino de aço de 3 mm que atravessa o garfo e o furo da alavanca, mantido no lugar por uma mola pequena de compressão. A ponta de cima é chanfrada. |
+| **Furo na tampa técnica** | Furo de 2,5 mm logo acima de cada pino (3 furos, a 7 mm da dobradiça, no centro de cada compartimento). |
+
+**Funcionamento:**
+
+- **Uso normal:** o pino liga o braço do servo à alavanca, e o servo abre e fecha a tampa.
+- **Emergência:** um clipe de papel (ou uma chave fina) entra pelo furo e empurra o
+  pino para baixo. A alavanca se solta do braço do servo e a tampa abre com a mão.
+- **Volta ao normal:** ao fechar a tampa com a mão, a ponta chanfrada do pino desliza
+  na alavanca e o pino volta a engatar sozinho, empurrado pela mola. Ao religar o
+  dispenser, o servo já está na posição de porta fechada.
+
+**Critérios de projeto:**
+
+- O furo é pequeno e fica na tampa técnica, longe da frente: o paciente não abre por
+  engano, e o controle das doses se mantém. O procedimento é do cuidador.
+- O mecanismo não usa energia nem depende do programa.
+- As peças (alavanca, garfo e guia do pino) são impressas junto com o gabinete; o pino de
+  aço e a mola são itens de ferragem.
 
 ---
 
@@ -2087,6 +2130,122 @@ dessa forma, ou um modelo próprio (H7) evitam essa limitação.
 | Chave não cadastrada | Aviso para cadastrar a chave, sem abrir a câmera |
 | Dispenser sem internet | Mensagem de falta de internet |
 
+## Passo 21 — Modo do cuidador: abrir pelo botão, sem o celular
+
+**O que faz:** permite ao cuidador abrir **qualquer compartimento** usando apenas o
+botão do dispenser, sem a página no celular. Serve para retirar um remédio fora do
+horário, repor um compartimento ou resolver uma situação de emergência com o celular
+indisponível.
+
+**Como usar:**
+
+1. Fora do horário de dose, **segure o botão por 10 segundos**. Depois de 2 s, a tela
+   mostra `Modo do cuidador` / `Segure mais N s`; soltar antes cancela.
+2. A tela mostra `Abrir C1?` com o nome do remédio. **Toque curto** passa para a
+   próxima opção: C1, C2, C3 e `Sair`.
+3. **Toque longo** (1,5 s, até a tela mostrar `Solte para confirmar`) abre o
+   compartimento escolhido. A porta fecha com o botão, depois da trava de 7 s, ou
+   sozinha em 3 minutos, como na retirada normal.
+4. Sem nenhum toque por 30 s, o dispenser sai do modo e volta à tela de espera.
+
+**Constantes e variáveis:**
+
+```cpp
+// Modo do cuidador: abre qualquer compartimento pelo botao, sem o celular.
+// Entra segurando o botao por TEMPO_ENTRAR_CUIDADOR fora do horario de dose;
+// toque curto passa para a proxima opcao, toque longo confirma.
+const unsigned long TEMPO_ENTRAR_CUIDADOR = 10000;
+const unsigned long TEMPO_CONFIRMAR_OPCAO = 1500;
+const unsigned long TEMPO_SAIR_CUIDADOR = 30000; // sem uso, volta sozinho
+unsigned long botaoApertadoEm = 0;   // 0 = botao solto
+bool aguardandoSoltarBotao = false;  // ignora o toque que acabou de entrar no modo
+bool avisoSegurarMostrado = false;   // visor ja mostra "Segure mais N s"
+```
+
+**Escolha e confirmação:**
+
+```cpp
+// Dentro do modo: toque curto = proxima opcao; toque longo = confirma.
+void atenderModoCuidador() {
+  bool apertado = (digitalRead(BUTTON_PIN) == LOW);
+  if (aguardandoSoltarBotao) {
+    if (!apertado) aguardandoSoltarBotao = false;
+    ultimaAcaoCuidador = millis();
+    return;
+  }
+  if (apertado) {
+    if (botaoApertadoEm == 0) botaoApertadoEm = millis();
+    ultimaAcaoCuidador = millis();
+    if (millis() - botaoApertadoEm >= TEMPO_CONFIRMAR_OPCAO) {
+      escreverLinha(0, "Solte para confirmar");
+    }
+    return;
+  }
+  if (botaoApertadoEm != 0) {
+    unsigned long duracao = millis() - botaoApertadoEm;
+    botaoApertadoEm = 0;
+    ultimaAcaoCuidador = millis();
+    if (duracao < 50) return; // ruido do contato
+    if (duracao < TEMPO_CONFIRMAR_OPCAO) {
+      opcaoCuidador = (opcaoCuidador + 1) % (NUM_COMPARTIMENTOS + 1);
+      mostrarOpcaoCuidador();
+    } else if (opcaoCuidador >= NUM_COMPARTIMENTOS) {
+      sairModoCuidador();
+    } else {
+      abrirPeloCuidador(opcaoCuidador);
+    }
+    return;
+  }
+  if (millis() - ultimaAcaoCuidador >= TEMPO_SAIR_CUIDADOR) sairModoCuidador();
+}
+```
+
+**Abertura:**
+
+```cpp
+// Abre o compartimento escolhido, registra no historico e avisa o cuidador.
+void abrirPeloCuidador(int c) {
+  int idx = registrarInicioDose(c);
+  historico[idx].status = DOSE_ABERTURA_MANUAL;
+  salvarHistorico();
+
+  temaVisor(COR_VISOR_COMPARTIMENTO[c]);
+  limparVisor();
+  escreverLinha(0, "Abertura manual C" + String(c + 1));
+  escreverLinha(1, "Abrindo...");
+  abrirCompartimento(c);
+
+  mascaraAberta = (uint8_t)(1 << c);
+  estadoAtual = PORTA_ABERTA_ESTADO;
+  portaAbertaEm = millis();
+
+  String nome = medicamentos[c].nome;
+  enviarParaCuidador("Zelo+: compartimento " + String(c + 1) + (nome != "" ? " (" + nome + ")" : String("")) +
+                     " aberto pelo botão do dispenser (modo do cuidador)" +
+                     (horarioAgora() != "" ? " às " + horarioAgora() : String("")) + ".");
+}
+```
+
+- **Segurança:** os 10 s de botão pressionado e a sequência de toques evitam a entrada
+  por acidente. Durante o alarme ou com dose pendente, o botão continua abrindo apenas
+  os compartimentos da dose, como antes.
+- **Registro:** cada abertura entra no histórico como `Abertura manual (botao)`, em
+  cinza. Ela **não entra no cálculo da adesão**, porque não é uma dose prevista.
+- **Aviso:** com internet, o cuidador recebe no Telegram a mensagem com o compartimento,
+  o remédio e o horário da abertura.
+
+**Ensaios:**
+
+| Ensaio | Resultado esperado |
+|---|---|
+| Segurar o botão por 5 s e soltar | Tela mostra a contagem e volta para a tela de espera |
+| Segurar o botão por 10 s | Tela azul `Modo do cuidador` / `Abrir C1?` |
+| Toques curtos | Opções em sequência: C1, C2, C3, `Sair` |
+| Toque longo em C2 | Porta 2 abre; histórico com `Abertura manual (botao)`; aviso no Telegram |
+| Toque longo em `Sair` | Volta para a tela de espera |
+| 30 s sem tocar | Volta sozinho para a tela de espera |
+| Segurar o botão durante o alarme | Abre só a dose (o modo do cuidador não é acionado) |
+
 # Parte D — Juntando tudo
 
 ## D1. Linha do tempo de uma dose
@@ -2121,6 +2280,9 @@ acesso", LCD `Dose pendente!`, e o botão ainda abre os dois compartimentos depo
 | `TRAVA_BOTAO` | 7 s | 7 s |
 | `TEMPO_PORTA_ABERTA` / `TEMPO_ABASTECIMENTO` | 3 min | 3 min |
 | Nova tentativa de Wi-Fi (sem internet) | 30 s | 30 s |
+| `TEMPO_ENTRAR_CUIDADOR` (segurar o botão) | 10 s | 10 s |
+| `TEMPO_CONFIRMAR_OPCAO` (toque longo) | 1,5 s | 1,5 s |
+| `TEMPO_SAIR_CUIDADOR` (sem uso) | 30 s | 30 s |
 
 **Barramentos de comunicação**
 
@@ -2448,6 +2610,21 @@ A montagem autônoma não impede atualizações:
    bancada.
 3. Tire o USB, **religue o fio do VIN** e o dispenser volta a funcionar pela fonte e pela
    bateria.
+
+## E11. Procedimento de emergência
+
+Três caminhos para abrir os compartimentos quando a forma habitual não está disponível,
+do mais simples ao mais extremo:
+
+| Situação | O que fazer | Onde está |
+|---|---|---|
+| **Sem o celular ou sem a página**, com o dispenser ligado | Segurar o botão por 10 s fora do horário de dose, escolher o compartimento com toques curtos e confirmar com toque longo. | [Passo 21](#passo-21--modo-do-cuidador-abrir-pelo-botão-sem-o-celular) |
+| **Sem energia da rua e com a bateria descarregada** | Ligar um **power bank** de celular (5 V, 2 A ou mais) na entrada USB-C do dispenser. Ele religa na hora e as portas voltam a funcionar normalmente. | Entrada USB-C da parede traseira |
+| **Sem energia nenhuma** | Empurrar o pino pelo furo da tampa técnica com um clipe; a tampa do compartimento abre com a mão. Ao fechar a tampa, o pino volta a engatar. | [B5](#b5-liberação-manual-de-emergência) |
+
+> O power bank é o caminho preferido quando não há energia: mantém o registro das doses,
+> o alarme e os avisos. A liberação manual não registra a abertura, porque o dispenser
+> está desligado.
 
 ---
 
