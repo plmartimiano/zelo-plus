@@ -415,10 +415,11 @@ As vistas também estão em escala no arquivo vetorial
 |---|---|
 | Faixa preta (eletrônica) / faixa azul (compartimentos) | 45 / 55 |
 | Abertura de cada compartimento | 65,7 × 75,7 |
-| Tampa móvel (3, iguais) | 65 × 75 × 2 (folga de 0,35 por lado) |
+| Tampa móvel (3, iguais) | 65 × 93,6 × 2 (folga de 0,35 por lado na largura) |
+| Eixo das dobradiças das tampas | 94,5 da frente e 1 abaixo do topo (13,8 atrás da divisória) |
 | Divisórias entre compartimentos | 2 no corpo, **3,45 no topo** (apoio das tampas) |
 | Profundidade útil do compartimento | 50,5 (≈ 251 cm³ cada) |
-| Tampa da área técnica (**abre sem ferramenta**: 4 ímãs e trava de moeda) | 203,3 × 45,6 × 2 |
+| Tampa da área técnica (**abre sem ferramenta**: 4 ímãs e trava de moeda) | 203,3 × 29,2 × 2 |
 | Botão / janela da tela / acrílico | 18 × 18 / 57 × 17 / 40 × 18, centros a **22,5** da base |
 | Centros horizontais (botão / tela / acrílico) | 36 / **105** / 174 |
 | Placa da tela TFT (atrás do painel) | 73 × 21 × ~20 (com os conectores dos fios) |
@@ -442,7 +443,8 @@ As vistas também estão em escala no arquivo vetorial
 - **Frente simétrica:**
   - A janela da tela fica no **eixo central (105 mm)**, alinhada com o logotipo. Ela mede 57 × 17 mm: a área visível (55,2 × 14,8 mm) com cerca de 1 mm de folga de cada lado, para a borda da imagem não ficar escondida atrás do painel.
   - O botão (centro em 36 mm) e o acrílico (centro em 174 mm) ficam cada um no meio do seu lado, **à mesma distância do centro (69 mm)**. Assim os três elementos ficam equilibrados, mesmo com larguras diferentes.
-- **Folga das tampas:** para a tampa de 65 × 75 mm ter 0,35 mm de folga de cada lado, a abertura precisa medir 65,7 × 75,7 mm. Por isso as divisórias têm 3,45 mm no topo, onde as tampas se apoiam.
+- **Folga das tampas:** para a tampa de 65 mm de largura ter 0,35 mm de folga de cada lado, a abertura precisa medir 65,7 mm. Por isso as divisórias têm 3,45 mm no topo, onde as tampas se apoiam.
+- **Dobradiça atrás da divisória:** o eixo fica 13,8 mm atrás da divisória do compartimento. Assim a alavanca do acionamento gira sem tocar a divisória quando a tampa abre a 90° (B5). Por isso a tampa mede 93,6 mm: cobre o compartimento, a divisória e a faixa da dobradiça.
 - **Manutenção:** a tampa da área técnica abre **sem ferramenta** (4 ímãs e trava de moeda), com acesso aos servos, à bateria e ao USB do ESP32 para atualizar o programa (E10).
 - **Energia:** o conector USB-C de painel fica na **parede traseira**, dentro da faixa de eletrônica.
 - **Emergência:** sem energia, cada tampa de compartimento se solta do servo pelo pino com argola, acessível pela tampa técnica (B5).
@@ -455,7 +457,7 @@ As vistas também estão em escala no arquivo vetorial
 | Botão e LED (atrás do acrílico) | Faixa preta, nas laterais da tela |
 | ESP32 e relógio DS3231 | Faixa de eletrônica, sob a área técnica |
 | Módulo UPS LX-2BUPS com as baterias 18650 (90 × 42 × 33) | Faixa de eletrônica, deitado sob os compartimentos |
-| 3 servos SG90 | Área técnica (46,3 mm de fundo), no alto, junto às dobradiças das tampas |
+| 3 servos SG90 | Área técnica, com o eixo paralelo ao da dobradiça, a 98,5 mm da frente e 73 mm da base (B5) |
 | Conector USB-C de painel | Parede traseira, ~15 mm acima da base |
 | Capacitor 1000 µF | Junto aos servos, na área técnica |
 | Pinos com argola (3) | Na ligação entre o braço de cada servo e a alavanca da tampa do compartimento (B5) |
@@ -481,6 +483,42 @@ tampa do seu compartimento por um **pino com argola**, que se tira com os dedos.
 | **Trava de moeda** | Trava de 1/4 de volta com fenda, acionada com uma moeda. Impede que a tampa seja aberta por curiosidade ou por acidente. |
 | **Rebaixo para o dedo** | Rebaixo na borda da tampa técnica para levantá-la depois de destravada. |
 | **Pino com argola (3)** | Liga o braço de cada servo à alavanca da tampa do compartimento. Braço e alavanca ficam **lado a lado**, em planos diferentes: sem o pino, um não bloqueia o movimento do outro. |
+
+**Peças do acionamento (impressão 3D):** o braço do servo e a tampa do compartimento
+se ligam por um **pino que desliza num rasgo** da alavanca da tampa. O conjunto foi
+dimensionado para o gabinete impresso: o servo trabalha com um curso curto, a alavanca
+passa a 1,5 mm da divisória com a tampa aberta, e o braço não toca a tampa técnica.
+
+<figure markdown="1">
+![Acionamento da tampa](docs/acionamento-tampa.png)
+<figcaption><b>Acionamento da tampa</b> — braço do servo, pino com argola e alavanca nas posições fechada, meio curso e aberta (corte lateral, escala 7:1).</figcaption>
+</figure>
+
+<figure markdown="1">
+![Peças do acionamento](docs/pecas-acionamento.png)
+<figcaption><b>Peças do acionamento</b> — alavanca da tampa, braço do servo e pino com argola. Arquivos em <code>cad/</code>: STL para impressão e <code>zelo_acionamento.scad</code>, editável no OpenSCAD.</figcaption>
+</figure>
+
+| Posição | Medida (mm, a partir da frente e da base do gabinete) |
+|---|---|
+| Eixo da dobradiça da tampa | Y 94,5 · Z 99 (13,8 atrás da divisória) |
+| Eixo do servo SG90 (paralelo ao da dobradiça) | Y 98,5 · Z 73 |
+| Furo do pino no braço do servo | a 20 do eixo do servo |
+| Rasgo da alavanca | de 6,0 a 12,3 do eixo da dobradiça, a 35° abaixo da horizontal com a tampa fechada |
+| Curso do servo | 47° para a tampa ir de 0° a 90° |
+
+| Peça | Impressão | Montagem |
+|---|---|---|
+| **Alavanca da tampa** | PETG, 100 % de preenchimento, camada de 0,16 mm; deitada sobre a face de colagem | Colada sob a tampa com cianoacrilato, de Y 82,5 a Y 92,7 (a face de colagem termina 1,8 mm à frente do eixo da dobradiça), perto de uma lateral da tampa e alinhada com o braço do servo |
+| **Braço do servo** | PETG, 100 % de preenchimento, camada de 0,16 mm; com o rebaixo para cima | O braço simples original do SG90 encaixa no rebaixo; fixar com 2 parafusos M2 × 6 (ou cola) e o parafuso central do servo |
+| **Pino com argola** | PETG, 100 % de preenchimento, camada de 0,12 mm; deitado, como no arquivo | Entra pelo lado da alavanca, atravessa o rasgo e o furo do braço e trava por pressão na ponta |
+
+- **Ajuste do programa:** no gabinete impresso, o curso do servo é de 47°. Em
+  `src/main.cpp`, `ANGULO_ABERTO` passa a ser `ANGULO_FECHADO` + 47 (ou − 47, conforme o
+  lado em que o servo for montado). O braço deve ser encaixado no eixo do servo com a tampa
+  fechada e o servo na posição `ANGULO_FECHADO`.
+- **Folgas:** o rasgo e o furo do braço têm 3,4 mm para o pino de 3,0 mm. Se a
+  impressora deixar os furos apertados, aumente `FURO` no arquivo `.scad` em 0,1 mm.
 
 **Procedimento:**
 
@@ -2766,9 +2804,9 @@ cada parte:
 | Piso dos compartimentos | 204 × 75,7 × 2,5 | 38,6 cm³ |
 | Divisórias entre compartimentos | 2 × 75,7 × 50,5 × 2,0 + apoio das tampas (2 × 75,7 × 5 × 1,45) | 16,4 cm³ |
 | Divisória da área técnica | 204 × 50,5 × 2,0 | 20,6 cm³ |
-| 3 tampas móveis | 3 × 65 × 75 × 2,0 | 29,2 cm³ |
-| Tampa da área técnica | 203,3 × 45,6 × 2,0 | 18,5 cm³ |
-| Detalhes (dobradiças, fixações, moldura da tela, logotipo) | + 12 % | 47,5 cm³ |
+| 3 tampas móveis | 3 × 65 × 93,6 × 2,0 | 36,5 cm³ |
+| Tampa da área técnica | 203,3 × 29,2 × 2,0 | 11,9 cm³ |
+| Detalhes (dobradiças, acionamento das tampas, fixações, moldura da tela, logotipo) | + 12 % | 46,8 cm³ |
 | **Total** | | **≈ 443 cm³** |
 
 | Material | Densidade | Massa da peça pronta |
