@@ -146,11 +146,60 @@ validado em bancada ou com usuários, em vez de fases longas e sequenciais.
 | Incremento | Valor entregue | Situação |
 |---|---|---|
 | **1. Núcleo do dispenser** | Alarmes, portas, botão, tela, página no celular, avisos pelo Telegram, histórico e adesão | Concluído (protótipo funcional) |
-| **2. Robustez** | Montagem autônoma (fonte e bateria), relógio DS3231 para manter a hora sem internet, tempos definitivos de uso | Próximo ciclo |
+| **2. Robustez** | Montagem autônoma (fonte e bateria), relógio DS3231 para manter a hora sem internet, tempos definitivos de uso | Sprints 1 a 3 (peça piloto em 27/11/2026) |
 | **3. IA — 1ª etapa** | Cadastro por foto ou código de barras, conferência na reposição e relatório de adesão (H3.1, H3.2, H3.6) | Leitura por foto já integrada; demais itens planejados |
 | **4. IA — 2ª etapa** | Cadastro pela receita e assistente do cuidador no Telegram (H3.4, H3.7) | Planejado |
 | **5. Acessibilidade** | Voz para o paciente (H3.11) | Planejado, depende de componente |
 | **6. Modelo próprio de IA** | Leitura de embalagens sem serviço de terceiros (H7) | Horizonte de cerca de 12 meses |
+
+**Produto mínimo viável (MVP):** o incremento 1. Inclui três compartimentos com porta
+motorizada, alarme sonoro e luminoso, abertura somente do compartimento da dose pelo
+botão, página no celular para cadastro, avisos pelo Telegram e histórico de adesão. Ficam
+fora do MVP as etapas de IA (exceto a leitura da caixa por foto, já integrada), a voz para o
+paciente e o modelo próprio de IA.
+
+## Equipe e papéis
+
+| Papel | Integrantes | Responsabilidades |
+|---|---|---|
+| **Product Owner** | David Soares | Visão do produto, priorização do backlog e aceite de cada incremento. |
+| **Scrum Master** | Matheus Barbosa | Condução das cerimônias, remoção de impedimentos e acompanhamento do ritmo das sprints. |
+| **Desenvolvedores** | Cláudio Maciel, Daniel Wolf, João Eivazian, Julia Gardezani e Paulo Martimiano | Hardware, firmware, página no celular, gabinete em impressão 3D, testes e documentação. |
+
+**Partes interessadas:** pacientes idosos, cuidadores e familiares, e profissionais de saúde,
+consultados nas revisões de sprint e no lote piloto.
+
+## Roadmap até a peça piloto
+
+Sprints de duas semanas, com a **peça piloto prevista para a última semana de novembro de
+2026** (23 a 27/11/2026).
+
+| Sprint | Período | Meta da sprint |
+|---|---|---|
+| **Sprint 1** | 19/10 a 30/10/2026 | Robustez: montagem autônoma com fonte e bateria, relógio DS3231 e tempos definitivos de uso. |
+| **Sprint 2** | 02/11 a 13/11/2026 | Gabinete impresso em 3D, acionamento das tampas por alavanca e pino, e montagem integrada. |
+| **Sprint 3** | 16/11 a 27/11/2026 | Ensaio completo, ajustes finais, documentação e **entrega da peça piloto**. |
+| **Após a peça piloto** | A partir de dezembro de 2026 | Lote piloto de cerca de 100 unidades e etapas de IA conforme o retorno dos usuários. |
+
+**Situação atual:** incremento 1 concluído em protótipo funcional; modelo 3D do gabinete,
+manual do usuário e guia do produto elaborados.
+
+## Backlog, cerimônias e definição de pronto
+
+**Priorização do backlog:** método MoSCoW (deve ter, deveria ter, poderia ter, não terá agora),
+com a segurança da dose em primeiro lugar, seguida do valor para o cuidador e do esforço de
+implementação. A priorização é responsabilidade do Product Owner.
+
+| Cerimônia | Quando | Objetivo |
+|---|---|---|
+| **Planejamento da sprint** | Início de cada sprint | Escolher os itens do backlog e definir a meta da sprint. |
+| **Alinhamentos curtos** | Ao longo da sprint | Acompanhar o andamento e tratar impedimentos. |
+| **Revisão da sprint** | Fim de cada sprint | Demonstrar o incremento e coletar o retorno de usuários e partes interessadas. |
+| **Retrospectiva** | Após a revisão | Avaliar o processo da equipe e definir melhorias para a sprint seguinte. |
+
+**Definição de pronto:** um item só é considerado concluído quando está testado em bancada,
+não apresenta falha que impeça a dose, tem código e arquivos no repositório, está
+documentado no guia e foi aceito pelo Product Owner.
 
 ## Indicadores de sucesso
 
@@ -180,7 +229,7 @@ validado em bancada ou com usuários, em vez de fases longas e sequenciais.
 
 | Marco | Entregas |
 |---|---|
-| **Próximo ciclo** | Montagem autônoma com fonte e bateria, relógio DS3231, tempos definitivos e ensaio completo da validação de pré-requisitos (E1). |
+| **Peça piloto (sprints 1 a 3, até 27/11/2026)** | Montagem autônoma com fonte e bateria, relógio DS3231, tempos definitivos, gabinete impresso em 3D e ensaio completo da validação de pré-requisitos (E1). |
 | **Release de validação** | Lote piloto de cerca de 100 unidades em impressão 3D, testes com famílias e coleta dos indicadores acima. |
 | **Ciclos seguintes** | Etapas de IA conforme o retorno dos usuários, consulta regulatória e homologação na Anatel antes da comercialização. |
 
