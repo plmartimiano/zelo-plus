@@ -206,7 +206,7 @@ que funciona. A equipe valida cada incremento em bancada ou com usuários.
 |---|---|---|
 | **1. Núcleo do dispenser** | Alarmes, tampas dos compartimentos, botão, visor, página do dispenser, avisos pelo Telegram, histórico e adesão. | Concluído (protótipo funcional). |
 | **2. Robustez** | Montagem autônoma com fonte e bateria. Relógio DS3231 para manter a hora sem internet. Tempos definitivos de uso. | Sprints 1 a 3 (peça piloto em 27/11/2026). |
-| **3. IA — 1ª etapa** | Cadastro por foto ou por código de barras. Conferência na reposição. Relatório de adesão (H3.1, H3.2, H3.6). | Leitura por foto integrada. Os outros itens estão planejados. |
+| **3. IA — 1ª etapa** | Cadastro por foto ou por código de barras. Conferência na reposição. Relatório de adesão (H3.1, H3.2, H3.6). | Leitura por foto e consulta do código de barras à lista oficial integradas. Os outros itens estão planejados. |
 | **4. IA — 2ª etapa** | Cadastro pela receita. Assistente do cuidador no Telegram (H3.4, H3.7). | Planejado. |
 | **5. Acessibilidade** | Voz para o paciente (H3.11). | Planejado. Depende de um componente novo. |
 | **6. Modelo próprio de IA** | Leitura de embalagens sem serviço de terceiros (H7). | Prazo aproximado de 12 meses. |
@@ -2279,11 +2279,14 @@ A [E9](#e9-módulo-de-relógio-ds3231) mostra as mensagens do Serial Monitor de 
 ## Passo 20 — Leitura da caixa do remédio por foto (IA)
 
 **Função:** no cadastro, o botão **"Foto da caixa do remédio"** abre a câmera do celular. A
-página envia a foto ao dispenser. O dispenser consulta um modelo de inteligência
+página procura na foto o **código de barras** da embalagem (EAN-13). O dispenser consulta
+o código na **lista oficial de medicamentos da CMED/Anvisa**. A lista envia o nome, a
+apresentação, o princípio ativo, o laboratório, a tarja e a quantidade de unidades da
+caixa. Se a página não ler o código, a foto vai para um modelo de inteligência
 artificial com visão (Gemini, do Google). O modelo lê na embalagem o **nome** e a
-**concentração**. Se os dígitos do **código de barras** estiverem visíveis, o modelo lê os
-dígitos também. O cuidador verifica o resultado. Somente depois da confirmação, a página
-preenche o nome. Esta é a primeira funcionalidade da
+**concentração**. O botão **"Digitar o código de barras"** permite digitar os 13 números.
+O cuidador verifica o resultado. Somente depois da confirmação, a página preenche o
+nome. Esta é a primeira funcionalidade da
 [Parte H](#parte-h--evolução-do-produto-funcionalidades-com-inteligência-artificial) (H3.1).
 
 **Motivo:** a digitação do nome do remédio é a etapa do cadastro com mais erros. A
@@ -2298,16 +2301,19 @@ risco e simplifica o uso.
 | Etapa | Local | Ação |
 |---|---|---|
 | 1. Foto | Celular | A câmera abre pelo campo de arquivo da página. Este campo funciona na página local (sem HTTPS). |
-| 2. Redução | Celular | A página reduz a foto para no máximo 900 px e aproximadamente 100 KB (JPEG). A memória da placa é limitada. |
-| 3. Envio | Celular → placa | A foto chega em partes (`receberFoto`). A placa guarda a foto numa única área de memória. |
-| 4. Consulta | Placa → IA | A placa prepara o pedido. Ela converte a foto para base64 durante o envio. |
-| 5. Resposta | IA → placa → celular | O modelo envia um JSON com o nome, a concentração e o código. A placa envia o resultado à página. |
-| 6. Confirmação | Celular | A página mostra o resultado. A página preenche o nome somente se o cuidador confirmar. |
+| 2. Código de barras | Celular | O leitor de códigos do navegador (`BarcodeDetector`) procura o EAN-13 na foto. A foto não sai do celular. |
+| 3. Lista oficial | Celular → placa → base CMED | A placa recebe o código. A placa baixa a parte da lista da CMED que contém o código e envia os dados da apresentação à página. |
+| 4. Redução | Celular | Esta etapa ocorre somente sem código lido ou com código fora da lista. A página reduz a foto para no máximo 900 px e aproximadamente 100 KB (JPEG). A memória da placa é limitada. |
+| 5. Envio | Celular → placa | A foto chega em partes (`receberFoto`). A placa guarda a foto numa única área de memória. |
+| 6. Consulta à IA | Placa → IA | A placa prepara o pedido. Ela converte a foto para base64 durante o envio. |
+| 7. Resposta | IA → placa → celular | O modelo envia um JSON com o nome, a concentração e o código. Se o código estiver na lista oficial, a placa usa os dados da lista. |
+| 8. Confirmação | Celular | A página mostra o resultado e a origem dos dados. A página preenche o nome somente se o cuidador confirmar. |
 
 **1. O botão na página (redução da foto no celular)**
 
 ```cpp
   html += "<button type='button' class='secundario' onclick='tirarFoto(" + String(c) + ")'>&#128247; Foto da caixa do remédio</button>";
+  html += "<button type='button' class='secundario' onclick='digitarCodigo(" + String(c) + ")'>&#128290; Digitar o código de barras</button>";
   html += "<input type='file' accept='image/*' capture='environment' id='foto-" + String(c) + "' style='display:none' onchange='enviarFoto(" + String(c) + ", this)'>";
 ```
 
@@ -2395,12 +2401,104 @@ Se o nome não estiver legível, o campo do nome volta vazio e `legivel` volta f
   }
 ```
 
-A foto do código de barras não é suficiente para preencher o nome. O código identifica o
-produto somente com uma consulta numa base de dados de medicamentos (lista da CMED,
-[H3.1](#h3-funcionalidades-propostas)). Esta consulta é para a etapa seguinte. Por isso, a
-leitura usa o nome impresso na embalagem.
+Antes desta verificação, a placa consulta na lista oficial o código lido pela IA (item 5).
+Se a placa encontrar o código, a resposta usa os dados da lista. A mensagem acima aparece
+somente quando o código não está na lista e o nome não está visível na foto.
 
-**5. A chave da IA**
+**5. Consulta do código de barras na lista oficial (CMED/Anvisa)**
+
+O código de barras EAN-13 da caixa é somente uma **chave de identificação**. Os 13 números
+não descrevem o medicamento. A **lista de preços de medicamentos da CMED** dá o
+significado do código. A Anvisa publica esta lista todo mês, em dados abertos. Para cada
+apresentação registrada, a lista contém os códigos EAN, o registro, o produto, a
+apresentação, a substância, o laboratório, o tipo de produto e a tarja (ANVISA, 2026b).
+
+*Preparação da base.* O programa `tools/cmed_para_json.py` converte a planilha da CMED na
+base do dispenser. A base fica na pasta `dados/cmed/` do repositório do projeto:
+
+```bash
+python3 tools/cmed_para_json.py lista_cmed.xlsx
+```
+
+| Arquivo | Conteúdo |
+|---|---|
+| `000.json` a `999.json` | Partes da base, agrupadas pelos dígitos 10 a 12 do código. Cada parte tem poucos KB. A placa baixa somente a parte do código lido. |
+| `info.json` | Arquivo de origem, data da conversão e totais de apresentações e de códigos. |
+
+Cada código aponta para uma lista com nove campos:
+
+```json
+{"7896004713649":["Losartana Potássica 50 mg","LOSARTANA POTÁSSICA",
+  "50 MG COM REV CT BL AL PLAS PVDC OPC X 30","LOSARTANA POTÁSSICA","EMS S/A",
+  "Tarja Vermelha","1023501230011","Genérico",30]}
+```
+
+| Posição | Campo | Origem |
+|---|---|---|
+| 0 | Nome sugerido para o cadastro | Produto e concentração, com no máximo 40 caracteres (limite do campo da página). |
+| 1 a 7 | Produto, apresentação, substância, laboratório, tarja, registro e tipo de produto | Colunas da lista da CMED. |
+| 8 | Unidades na caixa | Número depois do "X" da apresentação, para comprimidos, cápsulas e drágeas. O valor é 0 nos outros casos. |
+
+O conversor aceita somente códigos com o **dígito verificador** correto.
+
+1. Todo mês, baixe a planilha nova da CMED.
+2. Execute o conversor.
+3. Publique a pasta `dados/cmed/`.
+
+*Consulta na placa.*
+
+```cpp
+int consultarBaseMedicamentos(const String& ean, InfoMedicamento& info) {
+  if (WiFi.status() != WL_CONNECTED) return -1;
+  ...
+  String endereco = String(BASE_MEDICAMENTOS_URL) + ean.substring(9, 12) + ".json";
+  if (!http.begin(cliente, endereco)) return -1;
+  int codigo = http.GET();
+  ...
+  if (codigo == 404) return 0; // parte inexistente: nenhum codigo deste grupo na lista
+  if (codigo != 200) return -1;
+
+  JsonDocument filtro;
+  filtro[ean] = true;
+  JsonDocument doc;
+  if (deserializeJson(doc, resposta, DeserializationOption::Filter(filtro))) return -1;
+```
+
+- `eanValido`: verifica os 13 dígitos e o dígito verificador antes da consulta.
+- `DeserializationOption::Filter`: a placa guarda na memória somente o código procurado.
+  A placa não guarda a parte inteira.
+- Retorno: `1` = código encontrado. `0` = código fora da lista. `-1` = sem internet ou
+  falha na consulta.
+
+A rota `/consultar-codigo` recebe o código da página (lido na foto ou digitado). A rota
+envia os dados da lista. A rota `/ler-caixa` faz a mesma consulta quando a IA lê um
+código na foto.
+
+*Na página.* A função `enviarFoto` usa primeiro o leitor de códigos do navegador:
+
+```cpp
+  html += "      new BarcodeDetector({formats: ['ean_13']}).detect(img).then(function(lidos) {";
+  html += "        if (!lidos.length) { semCodigo(); return; }";
+  html += "        status.textContent = 'Código ' + lidos[0].rawValue + ' lido. Consultando a lista oficial...';";
+  html += "        consultarCodigo(c, lidos[0].rawValue, status, TEM_CHAVE_IA ? semCodigo : null);";
+```
+
+- `BarcodeDetector`: leitor de códigos do navegador. O Chrome para Android tem este
+  leitor. Nos outros navegadores, a foto vai para a IA. O botão "Digitar o código de
+  barras" funciona em todos os navegadores.
+- `semCodigo`: com a chave cadastrada, envia a foto à IA. Sem a chave, pede uma foto nova
+  ou a digitação do código.
+- A confirmação mostra o produto, a apresentação, o princípio ativo, o laboratório, a
+  tarja, as unidades na caixa, o código e o nome sugerido.
+
+A lista oficial **não contém a posologia** (doses e intervalos). A receita médica define
+os horários. O cuidador cadastra os horários. A Parte H usa a posologia normal da bula
+somente como informação de apoio (H3.3 e H3.10).
+
+> **ADVERTÊNCIA:** Compare sempre os dados da lista com a caixa e com a receita antes de
+> confirmar.
+
+**6. A chave da IA**
 
 1. Crie a chave de acesso do Gemini no **Google AI Studio** (aistudio.google.com, opção
    "Get API key"). A chave é gratuita.
@@ -2411,6 +2509,10 @@ mostra a chave. O mesmo quadro contém o nome do modelo.
 
 | Mensagem na página | Significado |
 |---|---|
+| "Código inválido. Confira os 13 números..." | O código digitado não tem 13 números, ou o dígito verificador está incorreto. |
+| "O código ... não está na lista oficial de medicamentos" | O código é válido, mas não está na lista da CMED. Exemplo: suplemento ou produto sem preço regulado. |
+| "Não foi possível consultar a lista oficial agora..." | A consulta teve uma falha temporária. Tente de novo. |
+| "Não foi possível ler o código de barras na foto..." | A página não encontrou o código na foto e a chave da IA não está salva. Tire uma foto nova, mais perto do código, ou digite os números. |
 | "Cadastre antes a chave da IA..." | A chave não está salva. |
 | "Sem internet: a leitura por foto precisa de conexão..." | O dispenser está sem internet. Exemplo: na rede própria. |
 | "Chave da IA recusada..." | A chave é inválida ou foi cancelada. |
@@ -2419,12 +2521,14 @@ mostra a chave. O mesmo quadro contém o nome do modelo.
 | "O serviço de IA está ocupado..." | O serviço tem uma falha temporária. Tente de novo. |
 | "Código de barras lido (...), mas o nome do remédio não aparece na foto." | Fotografe a frente da caixa. |
 
-**Custo de uso:** a leitura usa a **camada gratuita** da API do Gemini. A camada gratuita não
+**Custo de uso:** a consulta à lista oficial não tem custo. A base fica no repositório
+público do projeto. Cada consulta baixa poucos KB. A leitura por IA usa a **camada gratuita** da API do Gemini. A camada gratuita não
 pede cartão de crédito. Ela tem limites de pedidos por minuto e por dia (GOOGLE, 2026b). A
 leitura ocorre somente no cadastro e na troca de remédio, algumas vezes por mês. O uso
 fica muito abaixo dos limites. O custo é zero.
 
-**Privacidade:** o dispenser envia somente a foto da embalagem. O nome do paciente e os
+**Privacidade:** quando o celular lê o código de barras, a foto fica no celular. A placa
+consulta somente os 13 números. Na leitura por IA, o dispenser envia somente a foto da embalagem. O nome do paciente e os
 horários ficam no dispenser (princípio de [H1](#h1-princípios-de-projeto)). Nos termos da
 camada gratuita, o Google pode usar o conteúdo enviado para melhorar os produtos (GOOGLE,
 2026b). Uma versão comercial pode usar a camada paga ou um modelo próprio (H7). A camada
@@ -2439,9 +2543,12 @@ paga não usa o conteúdo desta forma.
 |---|---|
 | Foto da frente da caixa, com boa luz | Nome e concentração corretos. O campo é preenchido somente depois da confirmação. |
 | Toque em "Cancelar" na confirmação | O campo não muda ("Leitura descartada"). |
-| Foto somente do código de barras | Mensagem que pede a foto da frente da caixa e mostra o código lido. |
+| Foto do código de barras de um medicamento da lista | Dados da lista oficial (produto, apresentação, princípio ativo, laboratório, tarja, unidades) e nome sugerido, para confirmação. |
+| Código digitado corretamente | O mesmo resultado da foto do código. |
+| Código digitado com um número errado | Mensagem de código inválido. A placa não faz a consulta. |
+| Código de produto fora da lista | Mensagem de código ausente da lista oficial. |
 | Foto sem foco ou escura | Mensagem que pede uma foto nova. Nenhum nome é preenchido. |
-| Chave não cadastrada | Aviso para cadastrar a chave. A câmera não abre. |
+| Chave da IA não cadastrada | A leitura do código de barras funciona. Sem código legível, a página pede uma foto nova ou a digitação. |
 | Dispenser sem internet | Mensagem de falta de internet. |
 
 ## Passo 21 — Modo do cuidador: abrir pelo botão, sem o celular
@@ -3401,8 +3508,9 @@ nuvem**. O serviço faz as chamadas aos modelos e às bases oficiais:
 No protótipo, a leitura da caixa por foto (H3.1,
 [Passo 20](#passo-20--leitura-da-caixa-do-remédio-por-foto-ia)) já funciona sem o serviço
 intermediário. A placa consulta o modelo de IA diretamente. A chave fica na memória do
-dispenser, como o token do Telegram. Na versão comercial, o serviço na nuvem faz esta
-chamada.
+dispenser, como o token do Telegram. A consulta do código de barras à lista da CMED
+também funciona. A base convertida fica no repositório do projeto. A placa baixa somente
+a parte do código lido. Na versão comercial, o serviço na nuvem faz estas duas chamadas.
 
 ## H3. Funcionalidades propostas
 
@@ -3410,20 +3518,21 @@ chamada.
 
 | Item | Descrição |
 |---|---|
-| **Proposta** | No cadastro, o cuidador lê o código de barras ou fotografa a caixa. Ele não digita. O sistema preenche o nome, o princípio ativo, a concentração e a forma farmacêutica. O cuidador confirma. |
-| **Função da IA** | Se o sistema não ler o código de barras, um modelo de visão lê o texto da caixa. Exemplos: embalagem danificada, medicamento manipulado. O modelo extrai os mesmos dados e também o **lote e a validade**. |
-| **Fontes de dados** | Código EAN-13 da embalagem, comparado com a lista de preços da CMED. A lista contém o EAN de cada apresentação registrada (ANVISA, 2026b). |
+| **Proposta** | No cadastro, o cuidador fotografa o código de barras da caixa ou digita os 13 números. O sistema consulta a base oficial. A base envia o nome, a apresentação, o princípio ativo, o laboratório, a tarja, o registro e a quantidade de unidades. O cuidador verifica e confirma. |
+| **Função da IA** | Se o sistema não ler o código de barras, um modelo de visão lê o texto da caixa. Exemplos: embalagem danificada, medicamento manipulado, produto fora da lista. O modelo extrai o nome e a concentração. Numa etapa futura, o modelo extrai também o **lote e a validade**. |
+| **Fontes de dados** | **Código EAN-13**: chave de identificação da apresentação. O código não descreve o medicamento. A lista de preços da CMED liga cada código à apresentação registrada (ANVISA, 2026b). **Código DataMatrix (IUM)**: contém o GTIN, o registro, o número de série, o lote e a validade (ANVISA, 2017). Muitas embalagens ainda não têm este código. **QR code da bula digital**: abre a bula do medicamento (ANVISA, 2024). |
+| **Posologia** | Estas fontes não contêm a posologia do paciente. A receita médica define a posologia. A posologia normal da bula é somente uma informação de apoio (H3.3 e H3.10). |
 | **Benefício para o usuário** | Elimina os erros de digitação e de concentração no cadastro. Simplifica o uso para cuidadores com pouca experiência em tecnologia. |
-| **Mudanças no projeto** | Sem hardware novo. Página: botão de foto e tela de confirmação. Serviço na nuvem: leitura do código, consulta à CMED e chamada ao modelo de visão. |
-| **Situação** | A leitura do nome e da concentração pela foto está implementada no protótipo ([Passo 20](#passo-20--leitura-da-caixa-do-remédio-por-foto-ia)). A consulta do código de barras à CMED é a etapa seguinte. |
+| **Mudanças no projeto** | Sem hardware novo. Página: leitura do código na foto, digitação do código e tela de confirmação. Dados: conversão mensal da lista da CMED (`tools/cmed_para_json.py`). Serviço na nuvem: hospedagem da base e chamada ao modelo de visão. |
+| **Situação** | Implementado no protótipo ([Passo 20](#passo-20--leitura-da-caixa-do-remédio-por-foto-ia)): leitura do código na foto ou por digitação, consulta à lista oficial e leitura por IA sem código encontrado. Etapa seguinte: leitura do DataMatrix (lote e validade) e acesso à bula digital pelo QR code. |
 
 ### H3.2 Conferência na reposição
 
 | Item | Descrição |
 |---|---|
 | **Proposta** | No abastecimento e na reposição, o cuidador lê a caixa nova. Se o produto ou a concentração forem diferentes do cadastro, o sistema mostra um alerta **antes de abrir a tampa do compartimento**. Exemplo: Losartana 50 mg no cadastro e Losartana 100 mg na caixa nova. |
-| **Função da IA** | A mesma leitura da H3.1. A IA compara a embalagem nova com o cadastro. A IA também avisa sobre **validade vencida ou próxima do fim**. |
-| **Fontes de dados** | EAN e CMED. Texto da embalagem. |
+| **Função da IA** | O cadastro guarda o código EAN da embalagem. Na reposição, um código igual confirma a mesma apresentação, sem IA. Um código diferente inicia a comparação do produto e da concentração pela lista oficial. A leitura da H3.1 ocorre somente quando o sistema não lê o código. O sistema também avisa sobre **validade vencida ou próxima do fim**. |
+| **Fontes de dados** | EAN e lista da CMED. Lote e validade do código DataMatrix, quando presente (ANVISA, 2017), ou do texto da embalagem. |
 | **Benefício para o usuário** | Evita o erro de dosagem na troca de embalagem. Este é um dos erros mais comuns em casa. |
 | **Mudanças no projeto** | Sem hardware novo. Firmware: a abertura para reposição espera a verificação ou a confirmação do cuidador. |
 
@@ -3433,7 +3542,7 @@ chamada.
 |---|---|
 | **Proposta** | Depois do cadastro, o sistema compara os horários com a posologia normal da bula. O sistema mostra as diferenças. Exemplo: "a bula indica uso a cada 12 h; o cadastro tem 08:00 e 14:00". |
 | **Função da IA** | Um modelo de linguagem lê a seção de posologia da bula. O modelo converte o texto em intervalos para comparar com o cadastro. |
-| **Fontes de dados** | Bulário Eletrônico da Anvisa (ANVISA, 2026a). |
+| **Fontes de dados** | Bulário Eletrônico da Anvisa (ANVISA, 2026a) e bula digital pelo QR code da embalagem (ANVISA, 2024). O código de barras e a lista da CMED identificam o medicamento (H3.1). |
 | **Benefício para o usuário** | Mais segurança, com a decisão do cuidador. A mensagem informa a diferença e recomenda verificar a receita. O médico pode prescrever uma posologia diferente da normal. O sistema não bloqueia nem corrige o cadastro. |
 | **Mudanças no projeto** | Sem hardware novo. Serviço na nuvem: consulta à bula e comparação. Página: aviso junto ao medicamento. |
 
@@ -3492,8 +3601,8 @@ chamada.
 | Item | Descrição |
 |---|---|
 | **Proposta** | O sistema calcula quando cada medicamento vai acabar. O sistema avisa com 5 a 7 dias de antecedência e envia a lista de compras. |
-| **Função da IA** | A leitura da embalagem (H3.1) informa a quantidade de comprimidos. A previsão junta este dado com o consumo registrado. |
-| **Fontes de dados** | Leitura da embalagem. Abastecimentos e doses do histórico. |
+| **Função da IA** | A consulta do código de barras (H3.1) informa a quantidade de unidades da caixa. Este dado vem da apresentação na lista da CMED. A previsão junta este dado com o consumo registrado e com a validade do lote lida no DataMatrix. |
+| **Fontes de dados** | Lista da CMED (unidades por embalagem). DataMatrix ou texto da embalagem (validade). Abastecimentos e doses do histórico. |
 | **Benefício para o usuário** | Evita a interrupção do tratamento por falta do medicamento. |
 | **Mudanças no projeto** | Sem hardware novo. Firmware: contagem de doses de cada compartimento. |
 
@@ -3502,8 +3611,8 @@ chamada.
 | Item | Descrição |
 |---|---|
 | **Proposta** | Para cada medicamento cadastrado, um resumo curto em linguagem simples: a indicação, o uso com ou sem alimento e os sinais de atenção. |
-| **Função da IA** | Modelo de linguagem que resume a bula. O resumo mostra sempre a fonte. |
-| **Fontes de dados** | Bulário Eletrônico da Anvisa. |
+| **Função da IA** | Modelo de linguagem que resume a bula. O resumo mostra sempre a fonte. O resumo é somente informativo e não muda o cadastro. |
+| **Fontes de dados** | Bulário Eletrônico da Anvisa e bula digital (QR code da embalagem). O registro da lista da CMED identifica a bula. |
 | **Benefício para o usuário** | O cuidador sem formação na área entende melhor o tratamento. |
 | **Mudanças no projeto** | Sem hardware novo. Página: campo de informação em cada medicamento. |
 
@@ -3543,7 +3652,7 @@ chamada.
 | **Segurança da informação** | Chaves de acesso somente no serviço. Comunicação cifrada entre o serviço e os provedores. Controle das pessoas que podem consultar e alterar os dados de cada dispenser. |
 | **Proteção de dados** | Os dados de saúde são dados pessoais sensíveis. Eles precisam de consentimento, finalidade definida, envio mínimo e opção de exclusão (BRASIL, 2018). |
 | **Regulação** | Funções de apoio a decisões sobre medicamentos podem classificar o software como dispositivo médico. Neste caso, é necessária a avaliação da classe de risco e a notificação ou o registro na Anvisa antes da venda (ANVISA, 2022). |
-| **Manutenção** | Atualização periódica das bases oficiais (a lista da CMED tem atualização mensal). Acompanhamento da qualidade das respostas dos modelos. |
+| **Manutenção** | Atualização periódica das bases oficiais. A lista da CMED tem atualização mensal; o programa `tools/cmed_para_json.py` faz a conversão. Acompanhamento da qualidade das respostas dos modelos. |
 
 ## H6. Etapas de implantação
 
@@ -3584,7 +3693,11 @@ as bases oficiais e normas citadas na Parte H e a especificação de redação u
 
 <div class="referencias" markdown="1">
 
+AGÊNCIA NACIONAL DE VIGILÂNCIA SANITÁRIA (ANVISA). **Resolução da Diretoria Colegiada – RDC nº 157, de 11 de maio de 2017**: dispõe sobre a implantação do Sistema Nacional de Controle de Medicamentos e os mecanismos e procedimentos para rastreamento de medicamentos. Brasília, DF: Anvisa, 2017. Disponível em: <https://saude.campinas.sp.gov.br/saude/lista_legislacoes/legis_2017/U_RS-MS-ANVISA-RDC-157_110517.pdf>. Acesso em: 29 out. 2026.
+
 AGÊNCIA NACIONAL DE VIGILÂNCIA SANITÁRIA (ANVISA). **Perguntas & respostas: RDC nº 657, de 24 de março de 2022**: software como dispositivo médico. Brasília, DF: Anvisa, 2022. Disponível em: <https://www.gov.br/anvisa/pt-br/assuntos/noticias-anvisa/2022/software-como-dispositivo-medico-perguntas-e-respostas/perguntas-respostas-rdc-657-de-2022-v1-01-09-2022.pdf>. Acesso em: 29 set. 2026.
+
+AGÊNCIA NACIONAL DE VIGILÂNCIA SANITÁRIA (ANVISA). **Resolução da Diretoria Colegiada – RDC nº 885, de 10 de julho de 2024**: dispõe sobre o projeto-piloto da bula digital de medicamentos. Brasília, DF: Anvisa, 2024. Disponível em: <https://antigo.anvisa.gov.br/documents/10181/6691799/RDC_885_2024_.pdf/3a0d760c-2497-4df6-be9f-f2e645fe8b31>. Acesso em: 29 out. 2026.
 
 AGÊNCIA NACIONAL DE VIGILÂNCIA SANITÁRIA (ANVISA). **Bulário eletrônico**. Brasília, DF: Anvisa, 2026a. Disponível em: <https://consultas.anvisa.gov.br/#/bulario/>. Acesso em: 29 set. 2026.
 

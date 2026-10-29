@@ -1261,6 +1261,7 @@ String cartaoCompartimento(int c, bool aberto) {
   html += "<input type='text' name='m" + String(c) + "_nome' id='m" + String(c) + "_nome' value='" + escaparHTML(m.nome) +
           "' data-original='" + escaparHTML(m.nome) + "' oninput='atualizarDica(" + String(c) + ")' maxlength='40'>";
   html += "<button type='button' class='secundario' onclick='tirarFoto(" + String(c) + ")'>&#128247; Foto da caixa do remédio</button>";
+  html += "<button type='button' class='secundario' onclick='digitarCodigo(" + String(c) + ")'>&#128290; Digitar o código de barras</button>";
   html += "<input type='file' accept='image/*' capture='environment' id='foto-" + String(c) + "' style='display:none' onchange='enviarFoto(" + String(c) + ", this)'>";
   html += "<p class='suave' id='foto-status-" + String(c) + "' style='display:none'></p>";
   html += "<label>Horários:</label>";
@@ -1531,35 +1532,70 @@ void handleRoot() {
   html += "}";
   // Envia o cadastro com fetch (como os outros comandos): o envio classico de
   // formulario por http faz o navegador mostrar o aviso "informacoes nao protegidas".
-  // Foto da caixa: o celular reduz a imagem (ate 800 px) e envia ao dispenser,
-  // que consulta a IA. O nome so e preenchido depois da confirmacao.
-  html += "function tirarFoto(c) {";
-  html += "  if (!TEM_CHAVE_IA) { alert('Para ler a caixa por foto, cole antes a chave da IA no quadro \\u0022Leitura da caixa por foto\\u0022, no fim da página, e salve.'); return; }";
-  html += "  document.getElementById('foto-' + c).click();";
+  // Foto da caixa: o celular procura o codigo de barras (EAN-13) na foto e o
+  // dispenser consulta a lista oficial da CMED/Anvisa. Sem codigo legivel, a foto
+  // vai para a IA (se houver chave). O nome so e preenchido depois da confirmacao.
+  html += "function tirarFoto(c) { document.getElementById('foto-' + c).click(); }";
+  html += "function statusFoto(c, texto) {";
+  html += "  var status = document.getElementById('foto-status-' + c);";
+  html += "  status.style.display = 'block'; status.textContent = texto; return status;";
+  html += "}";
+  html += "function digitarCodigo(c) {";
+  html += "  var codigo = prompt('Digite os 13 números do código de barras da caixa:');";
+  html += "  if (codigo === null) return;";
+  html += "  consultarCodigo(c, codigo.replace(/\\D/g, ''), statusFoto(c, 'Consultando a lista oficial de medicamentos...'), null);";
+  html += "}";
+  html += "function consultarCodigo(c, codigo, status, alternativa) {";
+  html += "  fetch('/consultar-codigo', {method:'POST', body: new URLSearchParams({codigo: codigo})})";
+  html += "  .then(function(r){ return r.json(); })";
+  html += "  .then(function(d){ if (!d.ok && alternativa) { alternativa(); return; } mostrarLeitura(c, d, status); })";
+  html += "  .catch(function(){ if (alternativa) alternativa(); else status.textContent = 'Não foi possível falar com o dispenser. Tente de novo.'; });";
+  html += "}";
+  html += "function mostrarLeitura(c, d, status) {";
+  html += "  if (!d.ok) { status.textContent = d.erro; return; }";
+  html += "  var b = d.base, sugestao, texto;";
+  html += "  if (b) {";
+  html += "    sugestao = d.nome.substring(0, 40);";
+  html += "    texto = 'Encontrado na lista oficial (CMED/Anvisa):\\n\\n' + b.produto + '\\n' + b.apresentacao +";
+  html += "      (b.substancia ? '\\nPrincípio ativo: ' + b.substancia : '') + (b.laboratorio ? '\\nLaboratório: ' + b.laboratorio : '') +";
+  html += "      (b.tarja ? '\\nTarja: ' + b.tarja : '') + (b.quantidade ? '\\nUnidades na caixa: ' + b.quantidade : '') +";
+  html += "      '\\nCódigo de barras: ' + d.codigo + '\\n\\nNome sugerido: ' + sugestao;";
+  html += "  } else {";
+  html += "    sugestao = (d.nome + ' ' + d.concentracao).trim().substring(0, 40);";
+  html += "    texto = 'Lido na foto:\\n\\n' + sugestao + (d.codigo ? '\\nCódigo de barras: ' + d.codigo : '');";
+  html += "  }";
+  html += "  if (confirm(texto + '\\n\\nConfira com a caixa. Preencher o nome do remédio?')) {";
+  html += "    document.getElementById('m' + c + '_nome').value = sugestao; atualizarDica(c);";
+  html += "    status.textContent = (b ? 'Nome preenchido pela lista oficial' : 'Nome preenchido pela foto') + '. Confira e toque em Salvar.';";
+  html += "  } else { status.textContent = 'Leitura descartada.'; }";
+  html += "}";
+  html += "function lerComIA(c, img, status) {";
+  html += "  if (!TEM_CHAVE_IA) { status.textContent = 'Não foi possível ler o código de barras na foto. Tire outra foto mais perto do código ou toque em \\u0022Digitar o código de barras\\u0022.'; return; }";
+  html += "  status.textContent = 'Lendo a caixa... isso pode levar alguns segundos.';";
+  html += "  comprimirFoto(img, 900, 0.7, function(foto) {";
+  html += "    var dados = new FormData(); dados.append('foto', foto, 'caixa.jpg');";
+  html += "    fetch('/ler-caixa', {method:'POST', body: dados})";
+  html += "    .then(function(r){ return r.json(); })";
+  html += "    .then(function(d){ mostrarLeitura(c, d, status); })";
+  html += "    .catch(function(){ status.textContent = 'Não foi possível falar com o dispenser. Tente de novo.'; });";
+  html += "  });";
   html += "}";
   html += "function enviarFoto(c, entrada) {";
   html += "  var arquivo = entrada.files[0]; if (!arquivo) return;";
-  html += "  var status = document.getElementById('foto-status-' + c);";
-  html += "  status.style.display = 'block'; status.textContent = 'Lendo a caixa... isso pode levar alguns segundos.';";
+  html += "  var status = statusFoto(c, 'Procurando o código de barras na foto...');";
   html += "  var endereco = URL.createObjectURL(arquivo); var img = new Image();";
   html += "  img.onerror = function(){ status.textContent = 'Não foi possível abrir a foto.'; entrada.value = ''; };";
   html += "  img.onload = function() {";
   html += "    URL.revokeObjectURL(endereco); entrada.value = '';";
-  html += "    comprimirFoto(img, 900, 0.7, function(foto) {";
-  html += "      var dados = new FormData(); dados.append('foto', foto, 'caixa.jpg');";
-  html += "      fetch('/ler-caixa', {method:'POST', body: dados})";
-  html += "      .then(function(r){ return r.json(); })";
-  html += "      .then(function(d){";
-  html += "        if (!d.ok) { status.textContent = d.erro; return; }";
-  html += "        var sugestao = (d.nome + ' ' + d.concentracao).trim().substring(0, 40);";
-  html += "        var texto = 'Lido na foto:\\n\\n' + sugestao + (d.codigo ? '\\nCódigo de barras: ' + d.codigo : '') + '\\n\\nConfira com a caixa. Preencher o nome do remédio?';";
-  html += "        if (confirm(texto)) {";
-  html += "          document.getElementById('m' + c + '_nome').value = sugestao; atualizarDica(c);";
-  html += "          status.textContent = 'Nome preenchido pela foto. Confira e toque em Salvar.';";
-  html += "        } else { status.textContent = 'Leitura descartada.'; }";
-  html += "      })";
-  html += "      .catch(function(){ status.textContent = 'Não foi possível falar com o dispenser. Tente de novo.'; });";
-  html += "    });";
+  html += "    var semCodigo = function(){ lerComIA(c, img, status); };";
+  html += "    if (!('BarcodeDetector' in window)) { semCodigo(); return; }";
+  html += "    try {";
+  html += "      new BarcodeDetector({formats: ['ean_13']}).detect(img).then(function(lidos) {";
+  html += "        if (!lidos.length) { semCodigo(); return; }";
+  html += "        status.textContent = 'Código ' + lidos[0].rawValue + ' lido. Consultando a lista oficial...';";
+  html += "        consultarCodigo(c, lidos[0].rawValue, status, TEM_CHAVE_IA ? semCodigo : null);";
+  html += "      }).catch(semCodigo);";
+  html += "    } catch (e) { semCodigo(); }";
   html += "  };";
   html += "  img.src = endereco;";
   html += "}";
@@ -1925,8 +1961,78 @@ const char* PEDIDO_IA_FIM =
     "\"codigo_barras\":{\"type\":\"STRING\"},\"legivel\":{\"type\":\"BOOLEAN\"}},"
     "\"required\":[\"nome\",\"concentracao\",\"codigo_barras\",\"legivel\"]}}}";
 
+// ---------- BASE OFICIAL DE MEDICAMENTOS (CMED/Anvisa) ----------
+// Lista de precos da CMED convertida por tools/cmed_para_json.py e publicada no
+// repositorio do projeto, dividida em partes de poucos KB (dados/cmed/NNN.json).
+// O dispenser baixa so a parte do codigo lido (digitos 10 a 12 do EAN).
+const char* BASE_MEDICAMENTOS_URL = "https://raw.githubusercontent.com/plmartimiano/zelo-plus/main/dados/cmed/";
+
+struct InfoMedicamento {
+  String nome;          // nome sugerido para o cadastro (produto + concentracao)
+  String produto;
+  String apresentacao;
+  String substancia;
+  String laboratorio;
+  String tarja;
+  String registro;
+  String tipo;
+  int quantidade = 0;   // unidades na embalagem (0 = nao identificada)
+};
+
+String somenteDigitos(const String& texto) {
+  String saida;
+  for (unsigned int i = 0; i < texto.length(); i++) {
+    if (isdigit((unsigned char)texto[i])) saida += texto[i];
+  }
+  return saida;
+}
+
+// EAN-13: 13 digitos e o ultimo confere com o digito verificador.
+bool eanValido(const String& codigo) {
+  if (codigo.length() != 13) return false;
+  int soma = 0;
+  for (int i = 0; i < 12; i++) soma += (codigo[i] - '0') * (i % 2 ? 3 : 1);
+  return (10 - soma % 10) % 10 == codigo[12] - '0';
+}
+
+// Consulta o codigo na base oficial. Devolve 1 se encontrou, 0 se o codigo nao
+// esta na lista e -1 se nao foi possivel consultar (sem internet ou falha).
+int consultarBaseMedicamentos(const String& ean, InfoMedicamento& info) {
+  if (WiFi.status() != WL_CONNECTED) return -1;
+  WiFiClientSecure cliente;
+  cliente.setInsecure(); // prototipo: nao valida o certificado do servidor
+  HTTPClient http;
+  http.setTimeout(15000);
+  String endereco = String(BASE_MEDICAMENTOS_URL) + ean.substring(9, 12) + ".json";
+  if (!http.begin(cliente, endereco)) return -1;
+  int codigo = http.GET();
+  String resposta = codigo == 200 ? http.getString() : "";
+  http.end();
+  Serial.print("Base de medicamentos: HTTP ");
+  Serial.println(codigo);
+  if (codigo == 404) return 0; // parte inexistente: nenhum codigo deste grupo na lista
+  if (codigo != 200) return -1;
+
+  JsonDocument filtro;
+  filtro[ean] = true;
+  JsonDocument doc;
+  if (deserializeJson(doc, resposta, DeserializationOption::Filter(filtro))) return -1;
+  JsonArray item = doc[ean];
+  if (item.isNull()) return 0;
+  info.nome = item[0] | "";
+  info.produto = item[1] | "";
+  info.apresentacao = item[2] | "";
+  info.substancia = item[3] | "";
+  info.laboratorio = item[4] | "";
+  info.tarja = item[5] | "";
+  info.registro = item[6] | "";
+  info.tipo = item[7] | "";
+  info.quantidade = item[8] | 0;
+  return 1;
+}
+
 void responderLeitura(const String& erro, const String& nome = "", const String& concentracao = "",
-                      const String& codigo = "") {
+                      const String& codigo = "", const InfoMedicamento* base = nullptr) {
   JsonDocument doc;
   doc["ok"] = (erro == "");
   if (erro != "") {
@@ -1935,6 +2041,17 @@ void responderLeitura(const String& erro, const String& nome = "", const String&
     doc["nome"] = nome;
     doc["concentracao"] = concentracao;
     doc["codigo"] = codigo;
+    if (base != nullptr) {
+      JsonObject b = doc["base"].to<JsonObject>();
+      b["produto"] = base->produto;
+      b["apresentacao"] = base->apresentacao;
+      b["substancia"] = base->substancia;
+      b["laboratorio"] = base->laboratorio;
+      b["tarja"] = base->tarja;
+      b["registro"] = base->registro;
+      b["tipo"] = base->tipo;
+      b["quantidade"] = base->quantidade;
+    }
   }
   String saida;
   serializeJson(doc, saida);
@@ -2062,6 +2179,18 @@ void handleLerCaixa() {
   nome.trim();
   concentracao.trim();
   codigoBarras.trim();
+
+  // Codigo de barras lido: a lista oficial tem prioridade sobre o texto lido na
+  // foto (traz nome, concentracao, principio ativo e quantidade da embalagem).
+  String ean = somenteDigitos(codigoBarras);
+  if (eanValido(ean)) {
+    InfoMedicamento info;
+    if (consultarBaseMedicamentos(ean, info) == 1) {
+      responderLeitura("", info.nome, "", ean, &info);
+      return;
+    }
+  }
+
   if (!(leitura["legivel"] | false) || nome == "") {
     if (codigoBarras != "") {
       responderLeitura("Código de barras lido (" + codigoBarras + "), mas o nome do remédio não aparece na foto. "
@@ -2072,6 +2201,36 @@ void handleLerCaixa() {
     return;
   }
   responderLeitura("", nome, concentracao, codigoBarras);
+}
+
+// Consulta direta pelo codigo de barras (lido pela camera do celular ou digitado),
+// sem foto e sem IA. Quem confirma e preenche e a pagina.
+void handleConsultarCodigo() {
+  String ean = somenteDigitos(server.arg("codigo"));
+  if (!eanValido(ean)) {
+    responderLeitura("Código inválido. Confira os 13 números impressos sob o código de barras.");
+    return;
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    responderLeitura("Sem internet: a consulta à lista oficial de medicamentos precisa de conexão com a internet.");
+    return;
+  }
+  if (estadoAtual == AGUARDANDO) {
+    temaVisor(COR_AZUL_ESCURO);
+    limparVisor();
+    escreverLinha(0, "Consultando...");
+  }
+  InfoMedicamento info;
+  int resultado = consultarBaseMedicamentos(ean, info);
+  if (estadoAtual == AGUARDANDO) limparVisor();
+  if (resultado == 1) {
+    responderLeitura("", info.nome, "", ean, &info);
+  } else if (resultado == 0) {
+    responderLeitura("O código " + ean + " não está na lista oficial de medicamentos (CMED/Anvisa). "
+                     "Use a foto da caixa ou digite o nome do remédio.");
+  } else {
+    responderLeitura("Não foi possível consultar a lista oficial agora. Tente de novo em instantes.");
+  }
 }
 
 void handleHistoricoCSV() {
@@ -2684,6 +2843,7 @@ void iniciarModoNormal() {
   server.on("/testar-mensagens", HTTP_POST, handleTestarMensagens);
   server.on("/telegram-ids", HTTP_POST, handleTelegramIds);
   server.on("/ler-caixa", HTTP_POST, handleLerCaixa, receberFoto);
+  server.on("/consultar-codigo", HTTP_POST, handleConsultarCodigo);
   server.on("/historico.csv", handleHistoricoCSV);
   server.on("/limpar-historico", HTTP_POST, handleLimparHistorico);
   server.on("/trocar-wifi", handleTrocarWifi);
