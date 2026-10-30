@@ -31,6 +31,7 @@
   - [B4. Onde fica cada componente](#b4-onde-fica-cada-componente)
   - [B5. Abertura de emergência sem energia](#b5-abertura-de-emergência-sem-energia)
   - [B6. Modelo 3D do gabinete e impressão](#b6-modelo-3d-do-gabinete-e-impressão)
+  - [B7. Fechamento manual da tampa (em avaliação)](#b7-fechamento-manual-da-tampa-em-avaliação)
 - [Parte C — O código, passo a passo](#parte-c--o-código-passo-a-passo)
   - [Passo 1 — Bibliotecas e pinos](#passo-1--bibliotecas-e-pinos)
   - [Passo 2 — Estruturas de dados](#passo-2--estruturas-de-dados)
@@ -221,7 +222,7 @@ documentado no guia e foi aceito pelo Product Owner.
 | **Proteção de dados de saúde (LGPD)** | Consentimento, envio mínimo de dados, chaves somente no serviço e opção de exclusão. |
 | **Dependência de internet e de serviços de terceiros** | A rotina de doses funciona sem conexão; a IA é complementar e terá alternativa própria (H7). |
 | **Falta de energia ou de hora certa** | Bateria com módulo UPS e relógio DS3231; aviso "Acerte a hora" e ajuste pelo celular; power bank na entrada USB-C e liberação manual das portas, sem energia (E11). |
-| **Durabilidade mecânica** | Ensaios de ciclo de abertura; troca do SG90 pelo MG90S (engrenagem de metal) se necessário. |
+| **Durabilidade mecânica** | Ensaios de ciclo de abertura; troca do SG90 pelo MG90S (engrenagem de metal) se necessário; fechamento manual da tampa com o servo sem sinal e sensor de tampa (B7). |
 | **Custo e câmbio** | Faixas de custo revisadas a cada ciclo; produção em lote piloto por impressão 3D antes de investir em moldes. |
 | **Premissa de uso** | Paciente com autonomia para apertar um botão e cuidador com celular e Telegram; validada no lote piloto. |
 
@@ -231,6 +232,7 @@ documentado no guia e foi aceito pelo Product Owner.
 |---|---|
 | **Peça piloto (sprints 1 a 3, até 27/11/2026)** | Montagem autônoma com fonte e bateria, relógio DS3231, tempos definitivos, gabinete impresso em 3D e ensaio completo da validação de pré-requisitos (E1). |
 | **Release de validação** | Lote piloto de cerca de 100 unidades em impressão 3D, testes com famílias e coleta dos indicadores acima. |
+| **Decisão pendente (planejamento da Sprint 2)** | Implantar ou não o fechamento manual da tampa com sensor de tampa fechada e servo MG90S (B7). |
 | **Ciclos seguintes** | Etapas de IA conforme o retorno dos usuários, consulta regulatória e homologação na Anatel antes da comercialização. |
 
 **Investimento de referência:** cerca de R$ 303–403 para montar um protótipo (Parte F);
@@ -646,6 +648,42 @@ Nas duas conferências não houve nenhuma colisão.
 
 O volume das peças modeladas é de cerca de 437 cm³, próximo da estimativa da G2
 (443 cm³), usada no cálculo de custo do gabinete.
+
+## B7. Fechamento manual da tampa (em avaliação)
+
+**Objetivo:** manter a **abertura automática** e permitir que o paciente feche a tampa de
+três formas: **com a mão**, pelo **botão** ou **sozinha**, depois de 3 minutos. Com a
+tampa fechada, o compartimento continua travado pelo servo.
+
+**Princípio:** o servo segura a tampa pelas engrenagens enquanto recebe sinal. Uma tampa
+empurrada contra o servo ligado força as engrenagens de plástico do SG90. Sem sinal, o
+servo gira livremente e a tampa fecha com um empurrão leve.
+
+| Forma de fechamento | Funcionamento proposto |
+|---|---|
+| **Com a mão** | Depois de abrir a tampa, o ESP32 desliga o sinal do servo (`detach`). O paciente fecha a tampa com a mão. O sensor da tampa detecta o fechamento, e o ESP32 religa o servo na posição fechada, sem movimento, o que trava de novo o compartimento. |
+| **Pelo botão** | Como hoje: depois da trava de 7 s, um toque religa o servo e fecha a tampa devagar. |
+| **Sozinha** | Como hoje: a tampa fecha depois de 3 minutos. |
+
+**Mudanças necessárias:**
+
+| Item | Descrição | Custo estimado |
+|---|---|---|
+| **Sensor de tampa fechada (3)** | Reed switch com ímã pequeno colado na tampa, ou microchave, um por compartimento, ligado a uma entrada livre do ESP32. Informa ao programa a posição real da tampa. | R$ 1–3 cada |
+| **Servo MG90S (3)** | Engrenagem de metal no lugar do SG90, mais resistente ao fechamento com a mão. | + R$ 3–5 por servo |
+| **Programa** | Soltar o servo depois da abertura, ler os sensores, religar o servo com a tampa fechada e registrar no histórico o fechamento com a mão. | — |
+
+**Benefícios adicionais do sensor:** confirmação de que a tampa fechou, aviso de tampa
+aberta ou mal fechada e registro mais completo da dose.
+
+**Versão de produção:** um **acoplamento que patina** (embreagem de atrito ou
+acoplamento magnético) entre o braço do servo e a alavanca da tampa protege as
+engrenagens também quando alguém força uma tampa fechada. O acoplamento solta acima de
+um limite de força e encaixa de novo no movimento seguinte do servo. Esta opção exige
+um novo desenho do braço e da alavanca (B5 e arquivos em `cad/`).
+
+**Situação:** proposta registrada no backlog, com decisão de implantação pelo Product
+Owner (ver [Próximos passos](#próximos-passos)).
 
 ---
 
