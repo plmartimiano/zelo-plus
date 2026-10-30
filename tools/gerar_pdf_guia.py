@@ -110,7 +110,7 @@ figcaption { font-size: 8pt; font-style: italic; color: #4b5563; margin: 4px 30p
 .capa .data { font-size: 9pt; color: #6b7280; margin-top: 16px; }
 /* sumario */
 h2#sumário { margin-top: 10px; }
-h2#sumário + ul { font-size: FONTE_SUMARIO; line-height: 1.0; padding-left: 14px; }
+h2#sumário + ul { font-size: FONTE_SUMARIO; line-height: 1.05; padding-left: 14px; }
 h2#sumário + ul code { font-size: inherit; padding: 0 2px; line-height: 1; }
 h2#sumário + ul ul { padding-left: 16px; margin: 0; }
 h2#sumário + ul li { margin: 0; }
