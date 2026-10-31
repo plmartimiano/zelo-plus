@@ -18,6 +18,9 @@ cena.add_geometry(malha(tampa_tecnica(), CORES["tampa tecnica"]), node_name="tam
 cena.add_geometry(malha(trava_botao() + trava_lingueta(), CORES["trava"]), node_name="trava_moeda")
 for i in range(3):
     cena.add_geometry(malha(tampa(i), CORES["tampa"]), node_name=f"tampa_{i+1}")
+    cena.add_geometry(malha(pinos_dobradica(i), (148, 163, 184)), node_name=f"pinos_dobradica_{i+1}")
+    for k, (o0, o1) in enumerate(olhais_x(i)):
+        cena.add_geometry(malha(presilha(o0, o1), CORES["trava"]), node_name=f"presilha_{i+1}{'ab'[k]}")
     al, br = acionamento(i)
     cena.add_geometry(malha(al, CORES["alavanca"]), node_name=f"alavanca_{i+1}")
     cena.add_geometry(malha(br, CORES["braco"]), node_name=f"braco_servo_{i+1}")

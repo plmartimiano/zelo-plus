@@ -458,18 +458,19 @@ As vistas também estão em escala no arquivo vetorial
 |---|---|---|
 | Largura (vista superior) | 3 + **65,7** + 3,45 + **65,7** + 3,45 + **65,7** + 3 | **210** ✓ |
 | Profundidade | 3 + **75,7** (compartimento) + 2 + **46,3** (área técnica) + 3 | **130** ✓ |
-| Altura | 2,5 (fundo) + 42,5 (eletrônica) + 2,5 (piso) + **50,5** (compartimento) + 2 (tampa) | **100** ✓ |
+| Altura | 2,5 (fundo) + 42,5 (eletrônica) + 2,5 (piso) + **49,5** (compartimento) + 3 (tampa) | **100** ✓ |
 | Frente | 27 + **18** (botão) + 31,5 + **57** (janela da tela) + 20,5 + **40** (acrílico) + 16 | **210** ✓ |
 
 | Elemento | Medida (mm) |
 |---|---|
 | Faixa preta (eletrônica) / faixa azul (compartimentos) | 45 / 55 |
 | Abertura de cada compartimento | 65,7 × 75,7 |
-| Tampa móvel (3, iguais) | 65 × 93,6 × 2 (folga de 0,35 por lado na largura) |
-| Eixo das dobradiças das tampas | 94,5 da frente e 1 abaixo do topo (13,8 atrás da divisória) |
-| Divisórias entre compartimentos | 2 no corpo, **3,45 no topo** (apoio das tampas) |
-| Profundidade útil do compartimento | 50,5 (≈ 251 cm³ cada) |
-| Tampa da área técnica (**abre sem ferramenta**: 4 ímãs e trava de moeda) | 203,3 × 29,2 × 2 |
+| Tampa móvel (3, iguais) | 64,1 × 90,7 × 3, com barril da dobradiça Ø 8 (folga de 0,8 para a frente e para cada lado) |
+| Eixo das dobradiças das tampas | 94,5 da frente e 4 abaixo do topo (13,8 atrás da divisória) |
+| Apoios das tampas | Ressaltos de 3 na frente e nos dois lados de cada tampa, 3 abaixo do topo, com chanfro de 45° por baixo |
+| Divisórias entre compartimentos | 2 no corpo, **3,45 no topo**, com os apoios laterais das tampas vizinhas |
+| Profundidade útil do compartimento | 49,5 (≈ 246 cm³ cada) |
+| Tampa da área técnica (**abre sem ferramenta**: 4 ímãs e trava de moeda) | 203,3 × 27,3 × 2 |
 | Botão / janela da tela / acrílico | 18 × 18 / 57 × 17 / 40 × 18, centros a **22,5** da base |
 | Centros horizontais (botão / tela / acrílico) | 36 / **105** / 174 |
 | Placa da tela TFT (atrás do painel) | 73 × 21 × ~20 (com os conectores dos fios) |
@@ -490,16 +491,23 @@ As vistas também estão em escala no arquivo vetorial
 - **Altura de 100 mm:**
   - A proporção fica **210 : 130 : 100** (≈ 2,1 : 1,3 : 1), com a altura em ~48 % da largura: perfil de caixa de mesa, estável e sem cara de "bloco".
   - A faixa preta de 45 mm acomoda a placa da tela (21 mm) com 12 mm de margem acima e abaixo.
-  - Cada compartimento fica com **50,5 mm de profundidade útil** (~251 cm³), cerca de 8 vezes o volume de um mês de comprimidos (60 unidades ≈ 30 cm³). É raso o bastante para os dedos alcançarem o fundo.
+  - Cada compartimento fica com **49,5 mm de profundidade útil** (~246 cm³), cerca de 8 vezes o volume de um mês de comprimidos (60 unidades ≈ 30 cm³). É raso o bastante para os dedos alcançarem o fundo.
   - Opcional: um fundo em rampa de 10–15° para a frente deixa os comprimidos mais perto da mão.
 - **Frente simétrica:**
   - A janela da tela fica no **eixo central (105 mm)**, alinhada com o logotipo. Ela mede 57 × 17 mm: a área visível (55,2 × 14,8 mm) com cerca de 1 mm de folga de cada lado, para a borda da imagem não ficar escondida atrás do painel.
   - O botão (centro em 36 mm) e o acrílico (centro em 174 mm) ficam cada um no meio do seu lado, **à mesma distância do centro (69 mm)**. Assim os três elementos ficam equilibrados, mesmo com larguras diferentes.
-- **Folga das tampas:** para a tampa de 65 mm de largura ter 0,35 mm de folga de cada lado, a abertura precisa medir 65,7 mm. Por isso as divisórias têm 3,45 mm no topo, onde as tampas se apoiam.
-- **Dobradiça atrás da divisória:** o eixo fica 13,8 mm atrás da divisória do compartimento. Assim a alavanca do acionamento gira sem tocar a divisória quando a tampa abre a 90° (B5). Por isso a tampa mede 93,6 mm: cobre o compartimento, a divisória e a faixa da dobradiça.
+- **Folga das tampas:** a tampa mede 64,1 mm de largura na abertura de 65,7 mm, com **0,8 mm de folga** de cada lado e na frente. Essa folga absorve a variação da impressão 3D (rebarbas, primeira camada mais larga, pequenas deformações) e a tampa fecha sem prender.
+- **Apoio em três lados:** cada tampa fecha sobre um **ressalto de 3 mm** na frente e nos dois lados (paredes laterais do corpo e divisórias), 3 mm abaixo do topo. A tampa apoia 2,2 mm em cada ressalto e não pode passar para dentro do compartimento. O chanfro de 45° sob os ressaltos dispensa suporte na impressão.
+- **Dobradiça robusta:** a tampa tem 3 mm de espessura e, na parte de trás, um **barril de Ø 8 mm** que gira em torno de **pinos de aço de 3 mm**. Cada pino fica colado no barril e se apoia num **olhal** da bandeja, com rasgo em U aberto para cima; uma **presilha** parafusada fecha o rasgo. A tampa é colocada de cima para baixo, sem forçar nenhuma peça, e sai ao soltar as duas presilhas.
+- **Dobradiça atrás da divisória:** o eixo fica 13,8 mm atrás da divisória do compartimento e 4 mm abaixo do topo. Assim a alavanca do acionamento gira sem tocar a divisória quando a tampa abre a 90° (B5), e o barril gira sem tocar a tampa técnica.
 - **Manutenção:** a tampa da área técnica abre **sem ferramenta** (ímãs e trava de moeda), com acesso aos servos e aos pinos das tampas. O **fundo removível** (4 parafusos M3) dá acesso à protoboard, ao ESP32 com o USB para atualizar o programa (E10), ao módulo UPS e à bateria.
 - **Energia e som:** o conector USB-C de painel fica na **parede lateral direita**, ao lado do módulo UPS; os furos de som do buzzer ficam na **parede lateral esquerda**.
 - **Emergência:** sem energia, cada tampa de compartimento se solta do servo pelo pino com argola, acessível pela tampa técnica (B5).
+
+<figure markdown="1">
+![Tampa do compartimento: folgas, apoios e dobradiça](docs/tampa-dobradica.png)
+<figcaption><b>Tampa do compartimento</b> — folga de 0,8 mm, apoios de 3 mm na frente e nos dois lados e dobradiça com barril de Ø 8 mm, pinos de aço de 3 mm, olhal com rasgo em U e presilha (cortes do modelo 3D). Gerado por <code>cad/figura_tampa.py</code>.</figcaption>
+</figure>
 
 ## B4. Onde fica cada componente
 
@@ -510,7 +518,7 @@ As vistas também estão em escala no arquivo vetorial
 | ESP32 na protoboard de 400 pontos | Berço da protoboard no fundo removível, sob os compartimentos (B6) |
 | Relógio DS3231 | Berço próprio no fundo, sob a área técnica |
 | Módulo UPS LX-2BUPS com as baterias 18650 (90 × 42 × 33) | Berço próprio no fundo, junto à lateral direita, com furos de ventilação embaixo |
-| 3 servos SG90 | Área técnica, com o eixo paralelo ao da dobradiça, a 98,5 mm da frente e 73 mm da base (B5) |
+| 3 servos SG90 | Área técnica, com o eixo paralelo ao da dobradiça, a 98,5 mm da frente e 70 mm da base (B5) |
 | Conector USB-C de painel | Parede lateral direita, 15 mm acima da base, apoiado numa prateleira interna |
 | Buzzer | Alojamento na parede lateral esquerda, atrás dos furos de som |
 | Capacitor 1000 µF | Berço próprio no fundo, sob a área técnica |
@@ -555,15 +563,15 @@ passa a 1,5 mm da divisória com a tampa aberta, e o braço não toca a tampa t�
 
 | Posição | Medida (mm, a partir da frente e da base do gabinete) |
 |---|---|
-| Eixo da dobradiça da tampa | Y 94,5 · Z 99 (13,8 atrás da divisória) |
-| Eixo do servo SG90 (paralelo ao da dobradiça) | Y 98,5 · Z 73 |
+| Eixo da dobradiça da tampa | Y 94,5 · Z 96 (13,8 atrás da divisória) |
+| Eixo do servo SG90 (paralelo ao da dobradiça) | Y 98,5 · Z 70 |
 | Furo do pino no braço do servo | a 20 do eixo do servo |
 | Rasgo da alavanca | de 6,0 a 12,3 do eixo da dobradiça, a 35° abaixo da horizontal com a tampa fechada |
 | Curso do servo | 47° para a tampa ir de 0° a 90° |
 
 | Peça | Impressão | Montagem |
 |---|---|---|
-| **Alavanca da tampa** | PETG, 100 % de preenchimento, camada de 0,16 mm; deitada sobre a face de colagem | Colada sob a tampa com cianoacrilato, de Y 82,5 a Y 92,7 (a face de colagem termina 1,8 mm à frente do eixo da dobradiça), perto de uma lateral da tampa e alinhada com o braço do servo |
+| **Alavanca da tampa** | PETG, 100 % de preenchimento, camada de 0,16 mm; deitada sobre a face de colagem | Colada sob a tampa com cianoacrilato, de Y 82,5 a Y 90,2 (a face de colagem termina 4,3 mm à frente do eixo da dobradiça, antes do barril), perto de uma lateral da tampa e alinhada com o braço do servo |
 | **Braço do servo** | PETG, 100 % de preenchimento, camada de 0,16 mm; com o rebaixo para cima | O braço simples original do SG90 encaixa no rebaixo; fixar com 2 parafusos M2 × 6 (ou cola) e o parafuso central do servo |
 | **Pino com argola** | PETG, 100 % de preenchimento, camada de 0,12 mm; deitado, como no arquivo | Entra pelo lado da alavanca, atravessa o rasgo e o furo do braço e trava por pressão na ponta |
 
@@ -610,10 +618,11 @@ Nas duas conferências não houve nenhuma colisão.
 | Peça | Qtd | Tamanho (mm) | Impressão | O que tem |
 |---|---|---|---|---|
 | **Corpo** (`corpo.stl`) | 1 | 210 × 130 × 100 | PLA, 20 % de preenchimento, 3 paredes; em pé, com suporte só sob os ressaltos internos e as colunas do fundo | Paredes; janelas da tela, do botão e do acrílico; berço do botão; suporte do LED; trilhos da tela; alojamento e furos de som do buzzer (lateral esquerda); recorte e prateleira do USB-C (lateral direita); apoios da bandeja, das tampas e da tampa técnica; rebaixos dos ímãs; colunas dos parafusos do fundo |
-| **Bandeja** (`bandeja.stl`) | 1 | 203,4 × 104,7 × 56,5 | PLA, 20 %; com o piso na mesa, sem suporte | Piso e divisórias dos compartimentos; divisória da área técnica; 3 placas dos servos (janela para o corpo do SG90 e 2 furos para M2); olhais das dobradiças |
+| **Bandeja** (`bandeja.stl`) | 1 | 203,4 × 104,7 × 53 | PLA, 20 %; com o piso na mesa, sem suporte | Piso e divisórias dos compartimentos, com os apoios laterais das tampas; divisória da área técnica; 3 placas dos servos (janela para o corpo do SG90 e 2 furos para M2); 6 olhais das dobradiças (rasgo em U e furo para M2) |
 | **Fundo** (`fundo.stl`) | 1 | 203,4 × 123,4 × 8,5 | PLA, 20 %; deitado | Berços da protoboard (83 × 55), do módulo UPS (90 × 42) e do relógio (38 × 22); berço do capacitor; ventilação sob o UPS; rebaixos dos pés; furos dos 4 parafusos |
-| **Tampa do compartimento** (`tampa-compartimento.stl`) | 3 | 65 × 93,7 × 5 | PLA, 100 %; com a face de cima na mesa e suporte só nas articulações | Placa da tampa, recortes dos olhais e 2 articulações |
-| **Tampa técnica** (`tampa-tecnica.stl`) | 1 | 203,3 × 29,2 × 2 | PLA, 100 %; deitada | Rebaixos dos ímãs, furo da trava e rebaixo para o dedo |
+| **Tampa do compartimento** (`tampa-compartimento.stl`) | 3 | 64,1 × 94,7 × 8 | PLA, 100 %; com a face de cima na mesa, sem suporte | Placa de 3 mm, recortes dos olhais e barril da dobradiça em 2 trechos, com furo de 3,1 mm para os pinos de aço |
+| **Presilha do olhal** (`presilha-olhal.stl`) | 6 | 6 × 11,4 × 2,5 | PETG, 100 %; deitada | Fecha o rasgo do olhal sobre o pino da dobradiça; furo e rebaixo para a cabeça do parafuso M2 |
+| **Tampa técnica** (`tampa-tecnica.stl`) | 1 | 203,3 × 27,3 × 2 | PLA, 100 %; deitada | Rebaixos dos ímãs, furo da trava e rebaixo para o dedo |
 | **Trava de moeda** (`trava-botao.stl` e `trava-lingueta.stl`) | 1 + 1 | 10 × 10 × 8,2 e 6 × 14 × 1,8 | PETG, 100 % | Botão com fenda para a moeda e lingueta encaixada no eixo quadrado |
 | **Alavanca, braço do servo e pino com argola** | 3 de cada | ver B5 | PETG, 100 % | Acionamento das tampas (B5) |
 
@@ -623,7 +632,8 @@ Nas duas conferências não houve nenhuma colisão.
 |---|---|---|
 | Parafuso M3 × 8 autoatarraxante | 4 | Fundo |
 | Parafuso M2 × 6 autoatarraxante | 12 | Abas dos servos (6) e braço do servo (6) |
-| Filamento de 1,75 mm (pedaços de 9 mm) | 6 | Pinos das dobradiças, colados com uma gota de cola |
+| Pino cilíndrico de aço 3 × 10 mm (ou pedaço de vareta de aço de 3 mm) | 6 | Pinos das dobradiças, colados no barril da tampa |
+| Parafuso M2 × 8 autoatarraxante | 6 | Presilhas dos olhais |
 | Ímã de neodímio 6 × 2 mm | 8 | Tampa técnica (4) e apoios do corpo (4) |
 | Pé de borracha adesivo de 10 mm | 4 | Fundo |
 | Protoboard de 400 pontos (83 × 55 mm) | 1 | ESP32 e ligações, no berço do fundo |
@@ -639,13 +649,16 @@ Nas duas conferências não houve nenhuma colisão.
 3. **Bandeja:** encaixar o corpo de cada servo na janela da sua placa e parafusar as abas; montar os
    braços e as alavancas (B5); descer a bandeja pelo topo do corpo até apoiar no ressalto
    a 45 mm da base, passando os fios dos servos para baixo.
-4. **Tampas:** colar as alavancas sob as tampas; encaixar as articulações entre os olhais
-   e passar os pinos de filamento; ligar braço e alavanca com o pino com argola.
+4. **Tampas:** passar uma broca de 3 mm nos furos do barril; colar um pino de aço em cada
+   ponta do barril, com 5 mm para fora (cianoacrilato só no barril); colar a alavanca sob a
+   tampa; apoiar a tampa fechada com os pinos nos rasgos dos olhais e parafusar as
+   presilhas; conferir se a tampa abre e fecha livre, apoiada nos ressaltos; ligar braço e
+   alavanca com o pino com argola.
 5. **Fechamento:** fechar o fundo com os 4 parafusos; colar os ímãs; montar a trava de
    moeda na tampa técnica (botão por cima, lingueta por baixo).
 
-O volume das peças modeladas é de cerca de 437 cm³, próximo da estimativa da G2
-(443 cm³), usada no cálculo de custo do gabinete.
+O volume das peças modeladas é de cerca de 471 cm³, cerca de 6 % acima da estimativa da
+G2 (443 cm³), usada no cálculo de custo do gabinete.
 
 ---
 

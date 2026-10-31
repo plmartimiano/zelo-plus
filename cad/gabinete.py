@@ -21,9 +21,17 @@ X_COMP = [3.0, 72.15, 141.3]           # inicio de cada compartimento (abertura 
 LARG_COMP = 65.7
 Y_DIV = 78.7                           # divisoria compartimento / area tecnica (78,7 a 80,7)
 Z_PISO = 45.0                          # piso dos compartimentos (45 a 47,5)
-H_Y, H_Z = 94.5, 99.0                  # eixo das dobradicas
+H_Y, H_Z = 94.5, 96.0                  # eixo das dobradicas (4 mm abaixo do topo)
 S_DY, S_DZ = 4.0, -26.0                # eixo do servo em relacao ao eixo da dobradica
+DZ_SERVO = H_Z - 99.0                  # deslocamento do servo em relacao a referencia de 99
 FOLGA = 0.3
+# tampas dos compartimentos
+FOLGA_TAMPA = 0.8                      # folga da tampa para a frente e para os lados da abertura
+Z_TAMPA = 97.0                         # face de baixo da tampa (tampa de 3 mm, Z 97 a 100)
+RESSALTO = 3.0                         # largura dos apoios da tampa (frente e laterais)
+R_BARRIL, R_FURO_BARRIL = 4.0, 1.55    # barril da dobradica e furo do pino de aco de 3 mm
+R_RASGO_OLHAL = 1.7                    # rasgo em U do olhal (pino de 3 mm com folga)
+Y_PARAFUSO_PRESILHA = 89.5             # parafuso M2 que prende a presilha sobre o olhal
 
 def caixa(x0, y0, z0, x1, y1, z1):
     return M.cube((x1 - x0, y1 - y0, z1 - z0)).translate((x0, y0, z0))
@@ -36,16 +44,34 @@ def cil_z(z0, z1, x, y, r):
 def uniao(lista):
     return M.batch_boolean(lista, mf.OpType.Add)
 
-def tampa_x(i):                        # inicio (X) da tampa do compartimento i
+def tampa_x(i):                        # referencia em X do acionamento do compartimento i
     return X_COMP[i] + 0.35
+def tampa_lim(i):                      # limites da tampa em X (folga de 0,8 para cada lado)
+    return X_COMP[i] + FOLGA_TAMPA, X_COMP[i] + LARG_COMP - FOLGA_TAMPA
+def olhais_x(i):                       # olhais da dobradica, nos dois lados da tampa
+    return [(X_COMP[i] + 0.3, X_COMP[i] + 6.3), (X_COMP[i] + 59.4, X_COMP[i] + 65.4)]
+def barris_x(i):                       # trechos do barril na tampa (livres o plano da alavanca e do braco)
+    a = tampa_x(i)
+    return [(X_COMP[i] + 6.8, a + 11.5), (a + 19.2, X_COMP[i] + 58.9)]
+def pinos_x(i):                        # pinos de aco 3 x 10 (um de cada lado: metade no barril, metade no olhal)
+    return [(X_COMP[i] + 1.3, X_COMP[i] + 11.3), (X_COMP[i] + 54.4, X_COMP[i] + 64.4)]
+def ressalto(x0, y0, x1, y1, lado):
+    """Apoio da tampa (Z 94 a 97) com chanfro de 45 graus por baixo, a partir da face indicada."""
+    topo = caixa(x0, y0, Z_TAMPA - 3, x1, y1, Z_TAMPA)
+    e = 0.01
+    face = {"-x": caixa(x0, y0, Z_TAMPA - 6, x0 + e, y1, Z_TAMPA), "+x": caixa(x1 - e, y0, Z_TAMPA - 6, x1, y1, Z_TAMPA),
+            "-y": caixa(x0, y0, Z_TAMPA - 6, x1, y0 + e, Z_TAMPA)}[lado]
+    return M.batch_hull([topo, face])
 
 # =================== CORPO (casca com suportes da frente e das laterais) ===================
 def corpo():
     pecas = [caixa(0, 0, 0, C, P, A) - caixa(PAREDE, PAREDE, -1, C - PAREDE, P - PAREDE, A + 1)]
-    # apoios da bandeja (Z 43 a 45) e das tampas (Z 95 a 98), com chanfro de 45 graus por baixo
+    # apoios da bandeja (Z 43 a 45)
     for (x0, y0, x1, y1) in [(3, 3, 207, 5.3), (3, 3, 5.3, 78.6), (204.7, 3, 207, 78.6)]:
-        for z0, z1 in [(43, 45), (95, 98)]:
-            pecas.append(caixa(x0, y0, z0, x1, y1, z1))
+        pecas.append(caixa(x0, y0, 43, x1, y1, 45))
+    # apoios das tampas (Z 94 a 97): frente e paredes laterais, com chanfro de 45 graus por baixo
+    pecas += [ressalto(3, 3, 207, 3 + RESSALTO, "-y"), ressalto(3, 3, 3 + RESSALTO, 78.6, "-x"),
+              ressalto(207 - RESSALTO, 3, 207, 78.6, "+x")]
     # apoios da tampa tecnica: laterais e parede de tras (com os imas)
     pecas += [caixa(3, 100.3, 94, 9.5, 121, 98), caixa(200.5, 100.3, 94, 207, 121, 98),
               caixa(3, 121, 94, 207, 127, 98)]
@@ -87,38 +113,57 @@ def corpo():
 # =================== BANDEJA (compartimentos, suportes dos servos e dobradicas) ===================
 def bandeja():
     pecas = [caixa(3.3, 3.3, 45, 206.7, Y_DIV, 47.5),                   # piso
-             caixa(3.3, Y_DIV, 45, 206.7, 80.7, 98)]                     # divisoria da area tecnica
+             caixa(3.3, Y_DIV, 45, 206.7, 80.7, Z_TAMPA - 0.3)]          # divisoria da area tecnica
+    y_cap = 3 + RESSALTO + 0.3                                           # comeca atras do apoio frontal
     for k in (1, 2):                                                     # divisorias entre compartimentos
         x = X_COMP[k] - 3.45
-        pecas += [caixa(x + 0.725, 3.3, 47.5, x + 2.725, Y_DIV, 93), caixa(x, 5.4, 93, x + 3.45, Y_DIV, 98)]
+        pecas += [caixa(x + 0.725, 3.3, 47.5, x + 2.725, Y_DIV, 93), caixa(x, y_cap, 93, x + 3.45, Y_DIV, 98)]
+        # apoios laterais das tampas vizinhas, dos dois lados da divisoria
+        pecas += [ressalto(x - RESSALTO, y_cap, x, Y_DIV, "+x"), ressalto(x + 3.45, y_cap, x + 3.45 + RESSALTO, Y_DIV, "-x")]
     furos = []
     for i in range(3):
         a = tampa_x(i)
         # placa do servo (o corpo do SG90 atravessa a janela; abas presas com 2 parafusos M2)
         pecas.append(caixa(a + 29.5, 80.7, 45, a + 32, 108, 87))   # nasce na mesa de impressao
-        furos += [caixa(a + 29, 92.3, 56.0, a + 32.5, 104.7, 79.3),
-                  cil_x(a + 29, a + 32.5, 98.5, 81.35, 0.8), cil_x(a + 29, a + 32.5, 98.5, 53.95, 0.8)]
-        # olhais das dobradicas (dos dois lados da tampa) e apoio da tampa tecnica
-        for (x0, x1) in [(a, a + 4), (a + 61, a + 65)]:
-            pecas += [caixa(x0, 80.7, 45, x1, 100, 98), cil_x(x0, x1, H_Y, H_Z, 2.5)]
-            furos.append(cil_x(x0 - 0.1, x1 + 0.1, H_Y, H_Z, 0.95))     # pino: filamento de 1,75 mm
+        furos += [caixa(a + 29, 92.3, 56.0 + DZ_SERVO, a + 32.5, 104.7, 79.3 + DZ_SERVO),
+                  cil_x(a + 29, a + 32.5, 98.5, 81.35 + DZ_SERVO, 0.8), cil_x(a + 29, a + 32.5, 98.5, 53.95 + DZ_SERVO, 0.8)]
+        # olhais das dobradicas: placa desde o piso, bloco de cima com rasgo em U aberto para
+        # cima (o pino da tampa entra por cima) e furo do parafuso da presilha
+        for (x0, x1) in olhais_x(i):
+            pecas += [caixa(x0, 80.7, 45, x1, 99.5, 94), caixa(x0, 86.5, 94, x1, 100.0, 97.5)]
+            furos += [cil_x(x0 - 0.1, x1 + 0.1, H_Y, H_Z, R_RASGO_OLHAL),
+                      caixa(x0 - 0.1, H_Y - R_RASGO_OLHAL, H_Z, x1 + 0.1, H_Y + R_RASGO_OLHAL, 98),
+                      cil_z(86.5, 97.6, (x0 + x1) / 2, Y_PARAFUSO_PRESILHA, 0.85)]   # M2 autoatarraxante
+    # as divisorias passam sob o chanfro do apoio frontal (que e do corpo)
+    furos.append(ressalto(3, 2.7, 207, 3 + RESSALTO + 0.3, "-y").translate((0, 0, -0.3)))
     return uniao(pecas) - uniao(furos)
+
+# =================== PRESILHAS DOS OLHAIS (prendem o pino da dobradica por cima) ===================
+def presilha(x0, x1):
+    p = caixa(x0, 87.0, 97.5, x1, 98.4, 100)
+    cx = (x0 + x1) / 2
+    return p - cil_z(97.4, 100.1, cx, Y_PARAFUSO_PRESILHA, 1.2) - cil_z(98.6, 100.1, cx, Y_PARAFUSO_PRESILHA, 2.1)
 
 # =================== TAMPAS DOS COMPARTIMENTOS ===================
 def tampa(i):
-    a = tampa_x(i)
-    t = caixa(a, 3.35, 98, a + 65, 96.95, 100)
-    t = t - caixa(a - 0.1, 91.5, 96, a + 4.3, 98, 102) - caixa(a + 60.7, 91.5, 96, a + 65.1, 98, 102)
-    for (x0, x1) in [(a + 4.5, a + 9.5), (a + 55.5, a + 60.5)]:          # articulacoes
-        t = t + cil_x(x0, x1, H_Y, H_Z, 2.5)
-        t = t - cil_x(x0 - 0.1, x1 + 0.1, H_Y, H_Z, 0.95)
+    x0, x1 = tampa_lim(i)
+    t = caixa(x0, 3 + FOLGA_TAMPA, Z_TAMPA, x1, H_Y, 100)               # placa de 3 mm
+    (o0, o1), (o2, o3) = olhais_x(i)
+    t = t - caixa(x0 - 0.1, 85, 90, o1 + 0.5, 101, 101) - caixa(o2 - 0.5, 85, 90, x1 + 0.1, 101, 101)  # recortes dos olhais
+    for (b0, b1) in barris_x(i):                                         # barril (O 8) com furo para o pino de aco
+        t = t + cil_x(b0, b1, H_Y, H_Z, R_BARRIL)
+    for (b0, b1) in barris_x(i):
+        t = t - cil_x(b0 - 0.1, b1 + 0.1, H_Y, H_Z, R_FURO_BARRIL)
     return t
+
+def pinos_dobradica(i):
+    return uniao([cil_x(p0, p1, H_Y, H_Z, 1.5) for (p0, p1) in pinos_x(i)])
 
 # =================== TAMPA TECNICA E TRAVA DE MOEDA ===================
 TRAVA_X, TRAVA_Y = 192.0, 113.0
 def tampa_tecnica():
-    t = caixa(3.35, 97.5, 98, 206.65, 126.65, 100)
-    furos = [caixa(95, 97.4, 97, 115, 100.5, 101),                       # rebaixo para o dedo
+    t = caixa(3.35, 99.3, 98, 206.65, 126.65, 100)                       # frente livre do barril da tampa
+    furos = [caixa(95, 99.2, 97, 115, 102.3, 101),                       # rebaixo para o dedo
              cil_z(97, 101, TRAVA_X, TRAVA_Y, 3.2), cil_z(99, 101, TRAVA_X, TRAVA_Y, 5.2)]
     for (x, y) in [(6.25, 104.5), (203.75, 104.5), (6.25, 124), (203.75, 124)]:
         furos.append(cil_z(97.9, 99.7, x, y, 3.1))
@@ -184,8 +229,8 @@ def componentes():
     comp["conector USB-C"] = caixa(198, 48.5, 12.4, 207.2, 61.5, 17.5)
     for i in range(3):
         a = tampa_x(i)
-        comp[f"servo {i+1}"] = caixa(a + 22.7, 92.6, 56.4, a + 45.4, 104.4, 78.9) + \
-                               caixa(a + 27, 92.6, 51.65, a + 29.5, 104.4, 83.65)
+        comp[f"servo {i+1}"] = caixa(a + 22.7, 92.6, 56.4 + DZ_SERVO, a + 45.4, 104.4, 78.9 + DZ_SERVO) + \
+                               caixa(a + 27, 92.6, 51.65 + DZ_SERVO, a + 29.5, 104.4, 83.65 + DZ_SERVO)
     return comp
 
 def salvar(m, nome):
@@ -199,6 +244,9 @@ if __name__ == "__main__":
              "trava (botao)": trava_botao(), "trava (lingueta)": trava_lingueta()}
     for i in range(3):
         pecas[f"tampa {i+1}"] = tampa(i)
+        pecas[f"pinos dobradica {i+1}"] = pinos_dobradica(i)
+        for k, (o0, o1) in enumerate(olhais_x(i)):
+            pecas[f"presilha {i+1}{'ab'[k]}"] = presilha(o0, o1)
         al, br = acionamento(i)
         pecas[f"alavanca {i+1}"] = al
         pecas[f"braco {i+1}"] = br
@@ -207,6 +255,8 @@ if __name__ == "__main__":
     todos = {**pecas, **comp}
     ignorar = {frozenset(p) for p in [("tampa 1", "alavanca 1"), ("tampa 2", "alavanca 2"), ("tampa 3", "alavanca 3"),
                                        ("trava (botao)", "trava (lingueta)")]}
+    for i in (1, 2, 3):                 # o pino de aco entra justo no furo do barril (fica colado na tampa)
+        ignorar.add(frozenset((f"tampa {i}", f"pinos dobradica {i}")))
     problemas = []
     for (n1, m1), (n2, m2) in itertools.combinations(todos.items(), 2):
         if frozenset((n1, n2)) in ignorar: continue
@@ -217,7 +267,8 @@ if __name__ == "__main__":
     # ---- arquivos para impressao ----
     arquivos = {"corpo": "corpo.stl", "bandeja": "bandeja.stl", "fundo": "fundo.stl",
                 "tampa tecnica": "tampa-tecnica.stl", "trava (botao)": "trava-botao.stl",
-                "trava (lingueta)": "trava-lingueta.stl", "tampa 1": "tampa-compartimento.stl"}
+                "trava (lingueta)": "trava-lingueta.stl", "tampa 1": "tampa-compartimento.stl",
+                "presilha 1a": "presilha-olhal.stl"}
     for nome, arq in arquivos.items():
         t = salvar(pecas[nome], arq)
         b = t.bounds[1] - t.bounds[0]

@@ -3,8 +3,9 @@
 // Abra no OpenSCAD, escolha a peca em PECA e exporte o STL (F6, depois F7).
 //
 // Montagem (corte lateral; Y para tras e Z para cima, em mm a partir da frente e da base):
-//   eixo da dobradica da tampa ........ Y 94,5  Z 99   (13,8 mm atras da divisoria)
-//   eixo do servo SG90 ................. Y 98,5  Z 73   (eixo paralelo ao da dobradica)
+//   eixo da dobradica da tampa ........ Y 94,5  Z 96   (13,8 mm atras da divisoria)
+//   eixo do servo SG90 ................. Y 98,5  Z 70   (eixo paralelo ao da dobradica)
+//   face de baixo da tampa ............. Z 97   (1 mm acima do eixo)
 //   furo do pino no braco do servo ..... a 20 mm do eixo do servo
 //   rasgo da alavanca .................. de 6,0 a 12,3 mm do eixo da dobradica, a -35 graus
 //   curso do servo ..................... 47 graus para a tampa ir de 0 a 90 graus
@@ -20,6 +21,8 @@ PAREDE = 1.6;
 ESP_ALAVANCA = 3.0;
 ESP_BRACO = 3.2;
 PINO_D = 3.0;
+FACE = 1.0;            // face de baixo da tampa em relacao ao eixo da dobradica
+SAPATA_FIM = -4.3;     // a sapata termina antes do barril da dobradica (raio 4)
 // braco simples original do SG90 (encaixe)
 HORN_L = 15.5;  HORN_CUBO = 3.8;  HORN_PONTA = 2.3;
 
@@ -30,14 +33,14 @@ rb = FURO / 2 + PAREDE;
 
 module bossa()  { hull() { translate(ao_longo(RASGO_INI)) circle(rb); translate(ao_longo(RASGO_FIM)) circle(rb); } }
 module rasgo()  { hull() { translate(ao_longo(RASGO_INI)) circle(FURO / 2); translate(ao_longo(RASGO_FIM)) circle(FURO / 2); } }
-module sapata() { translate([-12, -3]) square([10.2, 2]); }   // face de colagem em Z = -1
+module sapata() { translate([-12, FACE - 2]) square([SAPATA_FIM + 12, 2]); }   // face de colagem = face de baixo da tampa
 
 module alavanca() {
   linear_extrude(ESP_ALAVANCA)
     difference() {
       intersection() {
         union() { sapata(); hull() { sapata(); translate(ao_longo(RASGO_INI)) circle(rb); } bossa(); }
-        translate([-20, -30]) square([50, 29]);            // nada acima de Z = -1
+        translate([-20, -30]) square([50, 30 + FACE]);     // nada acima da face de baixo da tampa
       }
       rasgo();
     }

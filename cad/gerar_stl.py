@@ -15,6 +15,8 @@ PAREDE = 1.6
 ESP_ALAVANCA = 3.0
 ESP_BRACO = 3.2
 PINO_D = 3.0
+FACE = 1.0            # face de baixo da tampa em relacao ao eixo da dobradica (tampa de Z 97 a 100, eixo em Z 96)
+SAPATA_FIM = -4.3     # a sapata termina antes do barril da dobradica (raio 4)
 
 def circ(r, c=(0, 0)): return CS.circle(r).translate(c)
 def rect(x0, y0, x1, y1): return CS.square((x1 - x0, y1 - y0)).translate((x0, y0))
@@ -24,18 +26,19 @@ u = (math.cos(math.radians(PHI0)), math.sin(math.radians(PHI0)))
 def ao_longo(r): return (r * u[0], r * u[1])
 rb = FURO / 2 + PAREDE
 bossa = CS.batch_hull([circ(rb, ao_longo(RASGO_INI)), circ(rb, ao_longo(RASGO_FIM))])
-sapata = rect(-12.0, -3.0, -1.8, -1.0)                 # face de colagem em Z = -1 (face de baixo da tampa)
-ligacao = CS.batch_hull([sapata, circ(rb, ao_longo(RASGO_INI))])
-perfil = sapata + ligacao + bossa
-perfil = perfil ^ rect(-20, -30, 30, -1.0)            # nada acima da face de baixo da tampa
+sapata = rect(-12.0, FACE - 2.0, SAPATA_FIM, FACE)     # face de colagem = face de baixo da tampa
+ligacao = CS.batch_hull([rect(-12.0, FACE - 2.0, SAPATA_FIM - 0.5, FACE - 0.3), circ(rb, ao_longo(RASGO_INI))])  # sem vertice em comum com a sapata
+perfil = ligacao + bossa                                # a sapata entra inteira na extrusao abaixo
+perfil = perfil ^ rect(-20, -30, 30, FACE)            # nada acima da face de baixo da tampa
 rasgo = CS.batch_hull([circ(FURO / 2, ao_longo(RASGO_INI)), circ(FURO / 2, ao_longo(RASGO_FIM))])
 perfil = perfil - rasgo
 alavanca = perfil.extrude(ESP_ALAVANCA) + sapata.extrude(9.0).translate((0, 0, -6.0))   # sapata de 9 mm para a cola, do lado oposto ao braco
-# impressa com a face de colagem (Z = -1) na mesa
+# impressa com a face de colagem na mesa
 alavanca.to_mesh()
 def salvar(m, nome):
     mesh = m.to_mesh()
-    t = trimesh.Trimesh(vertices=np.array(mesh.vert_properties)[:, :3], faces=np.array(mesh.tri_verts))
+    # process=False: grava a malha do manifold sem fundir vertices proximos (ela ja e fechada)
+    t = trimesh.Trimesh(vertices=np.array(mesh.vert_properties)[:, :3], faces=np.array(mesh.tri_verts), process=False)
     t.export(OUT + nome)
     b = t.bounds
     print(f"{nome}: {b[1][0]-b[0][0]:.1f} x {b[1][1]-b[0][1]:.1f} x {b[1][2]-b[0][2]:.1f} mm, volume {t.volume:.0f} mm3, estanque={t.is_watertight}")

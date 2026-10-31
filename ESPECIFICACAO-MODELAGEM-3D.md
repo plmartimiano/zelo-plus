@@ -32,7 +32,7 @@
 | Eixo X | Largura, da esquerda para a direita (0 a 210) |
 | Eixo Y | Profundidade, da frente para trás (0 a 130) |
 | Eixo Z | Altura, da base para cima (0 a 100) |
-| Tolerância de encaixe | 0,3 por lado entre peças impressas; 0,35 por lado entre tampa e abertura |
+| Tolerância de encaixe | 0,3 por lado entre peças impressas; 0,8 por lado entre tampa e abertura |
 | Notação de posição | Faixas como "X 27–45" indicam início e fim da feição |
 
 ---
@@ -60,7 +60,7 @@
 |---|---|---|
 | Largura | 3 + **65,7** + 3,45 + **65,7** + 3,45 + **65,7** + 3 | **210** |
 | Profundidade | 3 + **75,7** (compartimento) + 2 (divisória) + **46,3** (área técnica) + 3 | **130** |
-| Altura | 2,5 (fundo) + 42,5 (eletrônica) + 2,5 (piso) + **50,5** (compartimento) + 2 (tampa) | **100** |
+| Altura | 2,5 (fundo) + 42,5 (eletrônica) + 2,5 (piso) + **49,5** (compartimento) + 3 (tampa) | **100** |
 | Frente | 27 + **18** (botão) + 31,5 + **57** (janela da tela) + 20,5 + **40** (acrílico) + 16 | **210** |
 
 ---
@@ -72,26 +72,33 @@
 | Item | Medida / posição |
 |---|---|
 | Aberturas | X 3–68,7 · X 72,15–137,85 · X 141,3–207 (65,7 cada); Y 3–78,7 (75,7) |
-| Piso dos compartimentos | Z 45–47,5 (profundidade útil de 50,5; cerca de 251 cm³ por compartimento) |
-| Divisórias entre compartimentos | 2 de espessura (Z 47,5–93), com apoio de 3,45 no topo (Z 93–98) |
-| Divisória da área técnica | Y 78,7–80,7, Z 45–98, em toda a largura interna |
+| Piso dos compartimentos | Z 45–47,5 (profundidade útil de 49,5; cerca de 246 cm³ por compartimento) |
+| Divisórias entre compartimentos | 2 de espessura (Z 47,5–93), com topo de 3,45 (Z 93–98, a partir de Y 6,3) e apoios laterais das tampas nos dois lados |
+| Divisória da área técnica | Y 78,7–80,7, Z 45–96,7, em toda a largura interna |
 | Área técnica (servos) | Y 80,7–127 (46,3 de fundo) |
 
 **Tampas dos compartimentos** (3, iguais):
 
 | Item | Medida / posição |
 |---|---|
-| Placa | 65 × 93,6 × 2; Y 3,35–96,95; Z 98–100 |
-| Início em X (tampas 1, 2 e 3) | a = 3,35 · 72,5 · 141,65 (a tampa ocupa X a até a + 65) |
-| Eixo das dobradiças | Y 94,5 · Z 99 (13,8 atrás da divisória da área técnica) |
-| Articulações da tampa | 2 cilindros Ø 5 ao longo de X, em X a+4,5–a+9,5 e a+55,5–a+60,5, com furo Ø 1,9 |
-| Recortes para os olhais | Cantos traseiros: X a–a+4,3 e a+60,7–a+65, a partir de Y 91,5 |
-| Olhais (na bandeja) | Nervuras X a–a+4 e a+61–a+65; Y 80,7–100; Z 45–98; cilindro Ø 5 no eixo, com furo Ø 1,9 |
-| Pino das dobradiças | Filamento de 1,75 (pedaços de 9), colado |
-| Apoios das tampas | Ressalto frontal (Y 3–5,3, Z 95–98); ressaltos laterais (Z 95–98); topo das divisórias (Z 93–98) |
+| Placa | 64,1 × 90,7 × 3; Y 3,8–94,5; Z 97–100 |
+| Limites em X (tampa i) | X_COMP + 0,8 até X_COMP + 64,9, com X_COMP = 3 · 72,15 · 141,3 (folga de 0,8 para cada lado e para a frente) |
+| Eixo das dobradiças | Y 94,5 · Z 96 (13,8 atrás da divisória da área técnica, 4 abaixo do topo) |
+| Barril da dobradiça | Ø 8 ao longo de X, em 2 trechos: X_COMP + 6,8 até a + 11,5 e a + 19,2 até X_COMP + 58,9 (a = X_COMP + 0,35), com furo Ø 3,1; o intervalo entre os trechos deixa livres a alavanca e o braço do servo |
+| Recortes para os olhais | Cantos traseiros, a partir de Y 85: da borda da tampa até X_COMP + 6,8 e de X_COMP + 58,9 até a borda |
+| Pinos das dobradiças | Pino cilíndrico de aço 3 × 10 (2 por tampa), colado no barril: X_COMP + 1,3–11,3 e X_COMP + 54,4–64,4 |
+| Olhais (na bandeja) | 2 por tampa, 6 de largura: X_COMP + 0,3–6,3 e X_COMP + 59,4–65,4; placa Y 80,7–99,5, Z 45–94; bloco de cima Y 86,5–100, Z 94–97,5, com rasgo em U de 3,4 aberto para cima (fundo no eixo) e furo Ø 1,7 para M2 em Y 89,5 |
+| Presilhas dos olhais | 6 × 11,4 × 2,5 (Y 87–98,4, Z 97,5–100), presas por parafuso M2 × 8; fecham o rasgo sobre o pino |
+| Apoios das tampas | Ressaltos de 3 (Z 94–97) com chanfro de 45° por baixo: frontal (Y 3–6, no corpo), nas paredes laterais (no corpo) e nos dois lados de cada divisória (na bandeja) |
 
 A dobradiça fica atrás da divisória para que a alavanca do acionamento (seção 8) gire
-sem tocar a divisória com a tampa aberta a 90°.
+sem tocar a divisória com a tampa aberta a 90°. A tampa é colocada de cima: os pinos
+entram nos rasgos dos olhais e as presilhas fecham os rasgos.
+
+<figure markdown="1">
+![Tampa do compartimento: folgas, apoios e dobradiça](docs/tampa-dobradica.png)
+<figcaption><b>Tampa do compartimento</b> — folga de 0,8 mm, apoios de 3 mm na frente e nos dois lados e dobradiça com barril de Ø 8 mm, pinos de aço de 3 mm, olhal com rasgo em U e presilha (cortes do modelo 3D). Gerado por <code>cad/figura_tampa.py</code>.</figcaption>
+</figure>
 
 ---
 
@@ -99,11 +106,11 @@ sem tocar a divisória com a tampa aberta a 90°.
 
 | Item | Medida / posição |
 |---|---|
-| Tampa técnica | 203,3 × 29,15 × 2; X 3,35–206,65; Y 97,5–126,65; Z 98–100 |
+| Tampa técnica | 203,3 × 27,35 × 2; X 3,35–206,65; Y 99,3–126,65; Z 98–100 (borda frontal livre do barril das tampas) |
 | Fixação | 4 pares de ímãs de neodímio 6 × 2 |
 | Rebaixos dos ímãs na tampa | Ø 6,2 × 1,7 (por baixo), em (X 6,25; Y 104,5), (203,75; 104,5), (6,25; 124), (203,75; 124) |
 | Rebaixos dos ímãs no corpo | Ø 6,2 × 2,4 nos apoios, nas mesmas posições (topo em Z 98) |
-| Rebaixo para o dedo | X 95–115, da borda frontal até Y 100,5 |
+| Rebaixo para o dedo | X 95–115, da borda frontal até Y 102,3 |
 | Furo da trava | Ø 6,4 passante, com rebaixo Ø 10,4 × 1 por cima, em X 192 · Y 113 |
 | Botão da trava | Cabeça Ø 10 × 1 com fenda de 1,2 × 8 × 0,7 para moeda; eixo Ø 6 até Z 93,6; ponta quadrada 3 × 3 (Z 91,8–93,6) |
 | Lingueta | 6 × 14 × 1,8 (Z 91,8–93,6), com furo quadrado de 3,4; trava por baixo do apoio traseiro (Z 94) |
@@ -170,13 +177,13 @@ emergência; sem ele, a tampa abre livre.
 
 | Item | Medida / posição |
 |---|---|
-| Eixo da dobradiça | Y 94,5 · Z 99 |
-| Eixo do servo (paralelo ao da dobradiça) | Y 98,5 · Z 73 |
+| Eixo da dobradiça | Y 94,5 · Z 96 |
+| Eixo do servo (paralelo ao da dobradiça) | Y 98,5 · Z 70 |
 | Furo do pino no braço do servo | A 20 do eixo do servo |
 | Rasgo da alavanca | 3,4 de largura, de 6,0 a 12,3 do eixo da dobradiça, a 35° abaixo da horizontal com a tampa fechada |
 | Curso do servo | 47° para a tampa ir de 0° a 90° |
 | Plano da alavanca / do braço / do corpo do servo | X a+12–a+15 / a+15,5–a+18,7 / a+22,7–a+45,4 |
-| Placa do servo (na bandeja) | X a+29,5–a+32 · Y 80,7–108 · Z 45–87; janela Y 92,3–104,7 · Z 56–79,3; 2 furos Ø 1,6 em Y 98,5 · Z 53,95 e 81,35 |
+| Placa do servo (na bandeja) | X a+29,5–a+32 · Y 80,7–108 · Z 45–87; janela Y 92,3–104,7 · Z 53–76,3; 2 furos Ø 1,6 em Y 98,5 · Z 50,95 e 78,35 |
 
 <figure markdown="1">
 ![Peças do acionamento](docs/pecas-acionamento.png)
@@ -185,16 +192,16 @@ emergência; sem ele, a tampa abre livre.
 
 | Peça | Medida |
 |---|---|
-| Alavanca da tampa | 25,4 × 9,4 × 9; face de colagem sob a tampa de Y 82,5 a 92,7 |
+| Alavanca da tampa | 25,4 × 11,4 × 9; face de colagem sob a tampa de Y 82,5 a 90,2 |
 | Braço do servo | 30 × 12 × 3,2; rebaixo de 1,6 para o braço simples original do SG90 (cerca de 15,5); 2 furos para M2 |
 | Pino com argola | Ø 3 × 9,3 de haste, com ponta bipartida de trava; argola Ø 12 |
 
 **Restrições de movimento (verificadas no modelo de referência):**
 
 - A alavanca passa a 1,5 da divisória da área técnica com a tampa aberta a 90°.
-- O ponto mais alto do braço do servo fica em Z 97, abaixo da tampa técnica (Z 98).
+- O ponto mais alto do braço do servo fica em Z 94, abaixo da tampa técnica (Z 98).
 - O pino permanece dentro do rasgo em todo o curso (posição de 6,3 a 12,0 ao longo da alavanca).
-- A parte da tampa atrás do eixo gira dentro de um raio de 2,7, sem tocar a tampa técnica.
+- O barril da tampa gira dentro de um raio de 4 em torno do eixo (até Y 98,5) e fica a 0,8 da tampa técnica (Y 99,3), inclusive com a tampa aberta a 90°.
 
 ---
 
@@ -202,7 +209,7 @@ emergência; sem ele, a tampa abre livre.
 
 | Componente | Medidas usadas no modelo | Posição no gabinete |
 |---|---|---|
-| Servo SG90 (3) | Corpo 22,5 × 11,8 × 22,7; abas 32 × 11,8 × 2,5 com furos a 27,5 | Placas da bandeja, eixo em Y 98,5 · Z 73 |
+| Servo SG90 (3) | Corpo 22,5 × 11,8 × 22,7; abas 32 × 11,8 × 2,5 com furos a 27,5 | Placas da bandeja, eixo em Y 98,5 · Z 70 |
 | Tela TFT 2,25" (ST7789P3) | Placa 73 × 21 × ~4 (cerca de 20 com os conectores); área visível 55,2 × 14,8 | Atrás da janela frontal, X 68,5–141,5 · Z 12–33 |
 | Protoboard de 400 pontos com ESP32 DevKit (30 pinos) | 83 × 55 × 9,5; ESP32 51 × 28 | Berço do fundo, sob os compartimentos |
 | Módulo UPS LX-2BUPS com baterias 18650 | 90 × 42 × 33 | Berço do fundo, junto à lateral direita |
@@ -229,10 +236,11 @@ com as peças reais antes da impressão final.
 | Peça | Qtd | Tamanho | Impressão |
 |---|---|---|---|
 | Corpo | 1 | 210 × 130 × 100 | PLA, 20 %, 3 paredes; em pé, com suporte só sob os ressaltos internos e as colunas |
-| Bandeja | 1 | 203,4 × 104,7 × 56,5 | PLA, 20 %; com o piso na mesa |
+| Bandeja | 1 | 203,4 × 104,7 × 53 | PLA, 20 %; com o piso na mesa |
 | Fundo | 1 | 203,4 × 123,4 × 8,5 | PLA, 20 %; deitado |
-| Tampa do compartimento | 3 | 65 × 93,7 × 5 | PLA, 100 %; face de cima na mesa, suporte só nas articulações |
-| Tampa técnica | 1 | 203,3 × 29,2 × 2 | PLA, 100 %; deitada |
+| Tampa do compartimento | 3 | 64,1 × 94,7 × 8 | PLA, 100 %; face de cima na mesa, sem suporte |
+| Presilha do olhal | 6 | 6 × 11,4 × 2,5 | PETG, 100 %; deitada |
+| Tampa técnica | 1 | 203,3 × 27,3 × 2 | PLA, 100 %; deitada |
 | Trava de moeda (botão e lingueta) | 1 + 1 | 10 × 10 × 8,2 e 6 × 14 × 1,8 | PETG, 100 % |
 | Alavanca, braço do servo e pino com argola | 3 de cada | ver seção 8 | PETG, 100 %, camada de 0,12–0,16 |
 
@@ -240,7 +248,8 @@ com as peças reais antes da impressão final.
 |---|---|---|
 | Parafuso M3 × 8 autoatarraxante | 4 | Fundo |
 | Parafuso M2 × 6 autoatarraxante | 12 | Abas dos servos (6) e braço do servo (6) |
-| Filamento de 1,75 (pedaços de 9) | 6 | Pinos das dobradiças |
+| Pino cilíndrico de aço 3 × 10 | 6 | Pinos das dobradiças |
+| Parafuso M2 × 8 autoatarraxante | 6 | Presilhas dos olhais |
 | Ímã de neodímio 6 × 2 | 8 | Tampa técnica e apoios do corpo |
 | Pé de borracha adesivo de 10 | 4 | Fundo |
 | Acrílico translúcido 42 × 20 × 2 | 1 | Janela do LED |
@@ -254,6 +263,7 @@ com as peças reais antes da impressão final.
 | `alavanca-tampa.stl`, `braco-servo.stl`, `pino-argola.stl` | Peças do acionamento |
 | `zelo_acionamento.scad` | Peças do acionamento, editáveis no OpenSCAD |
 | `gabinete.py`, `conferir_movimento.py` | Modelo paramétrico do gabinete e conferência de colisões |
+| `figura_tampa.py` | Cortes da tampa, dos apoios e da dobradiça (figura da seção 3) |
 
 ---
 
@@ -265,8 +275,8 @@ referência:
 1. **Sem colisões com as tampas fechadas** entre peças e entre peças e componentes.
 2. **Sem colisões durante a abertura** de 0° a 90° das três tampas, incluindo as
    alavancas e os braços dos servos.
-3. **Folgas mínimas:** 0,3 por lado entre peças encaixadas; 0,35 por lado entre tampa e
-   abertura; 0,5 entre a tampa do compartimento e a tampa técnica.
+3. **Folgas mínimas:** 0,3 por lado entre peças encaixadas; 0,8 por lado e na frente entre
+   tampa e abertura; 0,8 entre o barril da tampa e a tampa técnica em todo o curso.
 4. **Montagem:** a bandeja entra pelo topo do corpo e apoia no ressalto de Z 45; os
    componentes eletrônicos ficam no fundo removível; os servos e os pinos com argola
    ficam acessíveis pela tampa técnica.

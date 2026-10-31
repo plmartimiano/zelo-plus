@@ -5,6 +5,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gabinete import *
 fixas = {"corpo": corpo(), "bandeja": bandeja(), "tampa tecnica": tampa_tecnica(),
          "trava": trava_botao() + trava_lingueta(), **componentes()}
+for i in range(3):
+    for k, (o0, o1) in enumerate(olhais_x(i)):
+        fixas[f"presilha {i+1}{'ab'[k]}"] = presilha(o0, o1)
 PHI0, R = -35.0, 20.0
 Sy, Sz = H_Y + S_DY, H_Z + S_DZ
 pior = []
@@ -17,7 +20,7 @@ for i in range(3):
         th = math.radians(graus)
         def girar(m):   # gira em torno do eixo da dobradica (abre levantando a frente)
             return m.translate((0, -H_Y, -H_Z)).rotate((-graus, 0, 0)).translate((0, H_Y, H_Z))
-        movel = {"tampa": girar(t0), "alavanca": girar(al)}
+        movel = {"tampa": girar(t0), "alavanca": girar(al), "pinos": girar(pinos_dobradica(i))}
         # posicao do pino: circulo do braco x linha do rasgo
         u = (math.cos(math.radians(PHI0) - th), math.sin(math.radians(PHI0) - th))
         dy, dz = H_Y - Sy, H_Z - Sz

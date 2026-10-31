@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Gera os PDFs do guia do produto a partir dos arquivos Markdown.
+"""Gera os PDFs dos guias e da especificacao 3D a partir dos arquivos Markdown.
 
 Uso:
-    python3 tools/gerar_pdf_guia.py            # gera os dois guias
-    python3 tools/gerar_pdf_guia.py ste        # gera so a versao STE100
+    python3 tools/gerar_pdf_guia.py                 # gera todos os documentos
+    python3 tools/gerar_pdf_guia.py ste             # gera so a versao STE100
+    python3 tools/gerar_pdf_guia.py especificacao   # gera so a especificacao 3D
 
 Etapas: Markdown -> HTML (com capa e sumario numerado) -> PDF pelo Chromium sem
 interface (--print-to-pdf) -> marcadores (indice lateral) com PyMuPDF. O sumario e
@@ -28,6 +29,15 @@ import pymupdf
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DOCS = os.path.join(RAIZ, 'docs')
 
+CAPA_GUIA = {
+    'subtitulo': 'Guia do produto',
+    'imagem': 'referencia-produto.jpg',
+    'legenda': 'Imagem de referência — conceito visual do produto final (ilustrativo).',
+    'linhas': ['Dispenser inteligente de medicamentos com 3 compartimentos<br>\n  ESP32 · servos · LCD I2C · Telegram · histórico de doses',
+               'Desenho técnico · funcionamento · montagem<br>\n  componentes · custo de produção'],
+    'data': 'Setembro de 2026',
+}
+
 GUIAS = {
     'principal': {
         'md': 'GUIA-DO-PRODUTO.md',
@@ -35,6 +45,8 @@ GUIAS = {
         'titulo': 'Zelo+ — Guia do produto',
         'selo': '',
         'fonte_sumario': '7.3pt',
+        'capa': CAPA_GUIA,
+        'marcadores': 'partes',
     },
     'ste': {
         'md': 'GUIA-DO-PRODUTO-STE.md',
@@ -42,22 +54,37 @@ GUIAS = {
         'titulo': 'Zelo+ — Guia do produto (STE100)',
         'selo': 'Redação controlada conforme as regras da ASD-STE100',
         'fonte_sumario': '7.0pt',
+        'capa': CAPA_GUIA,
+        'marcadores': 'partes',
+    },
+    'especificacao': {
+        'md': 'ESPECIFICACAO-MODELAGEM-3D.md',
+        'pdf': 'docs/Zelo-Especificacao-Modelagem-3D.pdf',
+        'titulo': 'Zelo+ — Especificação para modelagem 3D',
+        'selo': '',
+        'fonte_sumario': '7.3pt',
+        'capa': {
+            'subtitulo': 'Especificação para modelagem 3D',
+            'imagem': 'gabinete-3d.png',
+            'legenda': 'Modelo 3D de referência do gabinete.',
+            'linhas': ['Dispenser inteligente de medicamentos com 3 compartimentos',
+                       'Dimensões · compartimentos e tampas · aberturas e suportes<br>\n  acionamento das tampas · componentes · impressão'],
+            'data': 'Outubro de 2026',
+        },
+        'marcadores': 'secoes',   # cada secao (##) e um marcador de primeiro nivel
     },
 }
 
 CAPA = '''
 <section class="capa">
   <div class="marca">Zelo+</div>
-  <div class="subtitulo">Guia do produto</div>
+  <div class="subtitulo">{subtitulo}</div>
   {selo}
-  <img src="referencia-produto.jpg" alt="Imagem de referência do produto Zelo+">
-  <p class="legenda-capa">Imagem de referência — conceito visual do produto final (ilustrativo).</p>
+  <img src="{imagem}" alt="{legenda}">
+  <p class="legenda-capa">{legenda}</p>
   <hr>
-  <p class="linha">Dispenser inteligente de medicamentos com 3 compartimentos<br>
-  ESP32 · servos · LCD I2C · Telegram · histórico de doses</p>
-  <p class="linha">Desenho técnico · funcionamento · montagem<br>
-  componentes · custo de produção</p>
-  <p class="data">Setembro de 2026</p>
+  {linhas}
+  <p class="data">{data}</p>
 </section>
 '''
 
@@ -80,6 +107,7 @@ blockquote { margin: 10px 0; padding: 8px 14px; background: #fff7ed; border-left
 blockquote p { margin: 3px 0; }
 code { font-family: 'DejaVu Sans Mono', monospace; font-size: 8.4pt; background: #e8edf8; color: #1e3a8a; padding: 1px 4px; border-radius: 3px; }
 pre { font-family: 'DejaVu Sans Mono', monospace; font-size: 7.6pt; line-height: 1.38; background: #f3f4f6; border-left: 4px solid #3b82f6; border-radius: 3px; padding: 8px 10px; white-space: pre-wrap; word-break: break-word; margin: 8px 0; }
+h1 code, h2 code, h3 code { font-size: 0.9em; }
 pre code, .codehilite code { background: none; color: inherit; padding: 0; font-size: inherit; }
 .codehilite { margin: 8px 0; }
 .codehilite pre { margin: 0; }
@@ -176,12 +204,15 @@ def numerar_sumario(corpo, paginas):
 
 def montar_html(guia, corpo):
     selo = f'<div class="selo">{guia["selo"]}</div>' if guia['selo'] else ''
+    c = guia['capa']
+    linhas = '\n  '.join(f'<p class="linha">{l}</p>' for l in c['linhas'])
+    capa = CAPA.format(selo=selo, subtitulo=c['subtitulo'], imagem=c['imagem'], legenda=c['legenda'], linhas=linhas, data=c['data'])
     css = CSS.replace('FONTE_SUMARIO', guia['fonte_sumario'])
     # o primeiro titulo (# do arquivo) e substituido pela capa
     corpo = re.sub(r'^<h1[^>]*>.*?</h1>', '', corpo, count=1, flags=re.S)
     return (f'<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
             f'<title>{guia["titulo"]}</title><style>{css}</style></head><body>'
-            f'{CAPA.format(selo=selo)}<div class="intro">{corpo}</div></body></html>')
+            f'{capa}<div class="intro">{corpo}</div></body></html>')
 
 
 def chromium():
@@ -212,10 +243,15 @@ def titulos(corpo):
 
 
 def localizar_paginas(pdf, lista):
-    """Procura cada titulo no PDF, em ordem, a partir da pagina do titulo anterior."""
+    """Procura cada titulo no PDF, em ordem, a partir da pagina do titulo anterior. So contam
+    os trechos em letra de titulo (12 pt ou mais), para nao confundir com o sumario."""
     doc = pymupdf.open(pdf)
-    textos = [re.sub(r'\s+', '', doc[i].get_text()) for i in range(doc.page_count)]
-    paginas, atual = {}, 2  # a capa e o sumario ficam nas primeiras paginas
+    textos = []
+    for pagina in doc:
+        trechos = [span['text'] for bloco in pagina.get_text('dict')['blocks'] for linha in bloco.get('lines', [])
+                   for span in linha['spans'] if span['size'] >= 12]
+        textos.append(re.sub(r'\s+', '', ''.join(trechos)))
+    paginas, atual = {}, 1  # a capa (pagina 1) nao tem titulos
     for nivel, ident, texto in lista:
         if ident == 'sumário':
             continue
@@ -253,7 +289,10 @@ def gerar(chave):
     for nivel, ident, texto in lista:
         if ident not in paginas:
             continue
-        if nivel == 1:
+        if guia['marcadores'] == 'secoes':
+            if nivel == 2:
+                marcadores.append([1, texto, paginas[ident]])
+        elif nivel == 1:
             em_parte = texto.startswith('Parte ')
             marcadores.append([1, texto, paginas[ident]])
         elif em_parte:
