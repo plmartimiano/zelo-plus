@@ -21,7 +21,7 @@
 // Atualizar a cada alteracao do codigo.
 // Aparece no visor ao ligar, no Serial Monitor e no rodape da pagina; a capa do guia
 // do produto mostra a mesma data (tools/gerar_pdf_guia.py le esta linha).
-#define VERSAO_PROGRAMA "01/11/2026-2"
+#define VERSAO_PROGRAMA "01/11/2026-3"
 
 #define BUZZER_PIN 15
 #define LED_PIN 4
@@ -2575,6 +2575,19 @@ void iniciarModoNormal() {
   }
 }
 
+// Motivo do ultimo reinicio, para diagnostico no visor e no Serial Monitor.
+// Vazio quando a placa foi ligada normalmente.
+String motivoReinicio() {
+  switch (esp_reset_reason()) {
+    case ESP_RST_BROWNOUT: return "queda de energia";
+    case ESP_RST_PANIC: return "erro no programa";
+    case ESP_RST_INT_WDT:
+    case ESP_RST_TASK_WDT:
+    case ESP_RST_WDT: return "travamento";
+    default: return "";
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   Serial.println("Zelo+ - versao do programa: " VERSAO_PROGRAMA);
@@ -2589,9 +2602,11 @@ void setup() {
   digitalWrite(LED_PIN, LOW);
 
   iniciarVisor();
-  escreverLinha(0, "Zelo+ iniciando...");
+  String motivo = motivoReinicio();
+  Serial.println("Motivo do reinicio: " + (motivo == "" ? String("ligado normalmente") : motivo));
+  escreverLinha(0, motivo == "" ? String("Zelo+ iniciando...") : "Reiniciou: " + motivo);
   escreverLinha(1, "Versão " VERSAO_PROGRAMA);
-  delay(1500);  // tempo para ler a versao no visor
+  delay(motivo == "" ? 1500 : 4000);  // tempo para ler a versao (e o motivo) no visor
 
   // Liga os servos um de cada vez: ao receber o primeiro sinal, cada um corre
   // para a posicao fechada e puxa um pico de corrente. Com tudo na mesma fonte

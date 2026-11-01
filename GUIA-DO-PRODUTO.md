@@ -11,7 +11,7 @@
 
 *Imagem de referência — conceito visual do produto final (ilustrativo).*
 
-**Versão do programa do dispenser: 01/11/2026-2**
+**Versão do programa do dispenser: 01/11/2026-3**
 <!-- /so-github -->
 
 ---
