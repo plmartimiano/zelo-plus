@@ -10,6 +10,8 @@
 ![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
 
 *Imagem de referência — conceito visual do produto final (ilustrativo).*
+
+**Versão do programa do dispenser: 01/11/2026**
 <!-- /so-github -->
 
 ---
@@ -2877,6 +2879,9 @@ A montagem autônoma não impede atualizações:
    bancada.
 4. Tire o USB, **religue o fio do VIN** e recoloque o fundo. O dispenser volta a funcionar
    pela fonte e pela bateria.
+5. **Confira a versão:** ao ligar, o visor mostra `Versão dd/mm/aaaa` por alguns segundos
+   (a mesma data aparece no rodapé da página e no Serial Monitor). Ela deve ser igual à
+   data da capa deste guia; a data fica em `VERSAO_PROGRAMA`, no início de `src/main.cpp`.
 
 ## E11. Procedimento de emergência
 

@@ -8,6 +8,8 @@
 ![Imagem de referência do produto Zelo+](docs/referencia-produto.jpg)
 
 *Imagem de referência — conceito visual do produto final (ilustrativo).*
+
+**Versão do programa do dispenser: 01/11/2026**
 <!-- /so-github -->
 
 ---
@@ -3095,6 +3097,7 @@ O VCC usa o mesmo 3V3 do visor (marca **3V3** no diagrama da seção E3).
 6. Remova o cabo USB.
 7. **Ligue de novo o fio do VIN.**
 8. Coloque o fundo e os 4 parafusos. O dispenser funciona de novo pela fonte e pela bateria.
+9. **Verifique a versão:** quando o dispenser liga, o visor mostra `Versão dd/mm/aaaa` durante alguns segundos. A mesma data aparece no rodapé da página e no Serial Monitor. Esta data deve ser igual à data da capa deste guia. A data está em `VERSAO_PROGRAMA`, no início de `src/main.cpp`.
 
 ## E11. Procedimento de emergência
 

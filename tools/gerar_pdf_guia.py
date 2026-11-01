@@ -27,6 +27,16 @@ import markdown
 import pymupdf
 
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+
+def versao_programa():
+    """Data da versao do programa, lida de VERSAO_PROGRAMA em src/main.cpp."""
+    with open(os.path.join(RAIZ, 'src', 'main.cpp'), encoding='utf-8') as f:
+        m = re.search(r'#define\s+VERSAO_PROGRAMA\s+"([^"]+)"', f.read())
+    if not m:
+        raise SystemExit('VERSAO_PROGRAMA não encontrada em src/main.cpp.')
+    return m.group(1)
+
 DOCS = os.path.join(RAIZ, 'docs')
 
 CAPA_GUIA = {
@@ -36,6 +46,7 @@ CAPA_GUIA = {
     'linhas': ['Dispenser inteligente de medicamentos com 3 compartimentos<br>\n  ESP32 · servos · LCD I2C · Telegram · histórico de doses',
                'Desenho técnico · funcionamento · montagem<br>\n  componentes · custo de produção'],
     'data': 'Setembro de 2026',
+    'versao': True,   # mostra a data da versao do programa (src/main.cpp)
 }
 
 GUIAS = {
@@ -85,6 +96,7 @@ CAPA = '''
   <hr>
   {linhas}
   <p class="data">{data}</p>
+  {versao}
 </section>
 '''
 
@@ -136,6 +148,7 @@ figcaption { font-size: 8pt; font-style: italic; color: #4b5563; margin: 4px 30p
 .capa hr { width: 70%; margin: 6px auto 14px; border-top: 3px solid #3b82f6; }
 .capa .linha { font-size: 10.5pt; color: #374151; margin: 10px 0; }
 .capa .data { font-size: 9pt; color: #6b7280; margin-top: 16px; }
+.capa .versao { font-size: 9.5pt; color: #1e3a8a; margin-top: 6px; }
 /* sumario */
 h2#sumário { margin-top: 10px; }
 h2#sumário + ul { font-size: FONTE_SUMARIO; line-height: 1.05; padding-left: 14px; }
@@ -206,7 +219,11 @@ def montar_html(guia, corpo):
     selo = f'<div class="selo">{guia["selo"]}</div>' if guia['selo'] else ''
     c = guia['capa']
     linhas = '\n  '.join(f'<p class="linha">{l}</p>' for l in c['linhas'])
-    capa = CAPA.format(selo=selo, subtitulo=c['subtitulo'], imagem=c['imagem'], legenda=c['legenda'], linhas=linhas, data=c['data'])
+    versao = ''
+    if c.get('versao'):
+        versao = f'<p class="versao">Versão do programa do dispenser: <b>{versao_programa()}</b></p>'
+    capa = CAPA.format(selo=selo, subtitulo=c['subtitulo'], imagem=c['imagem'], legenda=c['legenda'], linhas=linhas,
+                       data=c['data'], versao=versao)
     css = CSS.replace('FONTE_SUMARIO', guia['fonte_sumario'])
     # o primeiro titulo (# do arquivo) e substituido pela capa
     corpo = re.sub(r'^<h1[^>]*>.*?</h1>', '', corpo, count=1, flags=re.S)
@@ -268,7 +285,10 @@ def localizar_paginas(pdf, lista):
 def gerar(chave):
     guia = GUIAS[chave]
     with open(os.path.join(RAIZ, guia['md']), encoding='utf-8') as f:
-        corpo = converter_html(preparar_markdown(f.read()))
+        texto = f.read()
+    if guia['capa'].get('versao') and f'Versão do programa do dispenser: {versao_programa()}' not in texto:
+        raise SystemExit(f'{guia["md"]}: atualize a linha "Versão do programa do dispenser" para {versao_programa()}.')
+    corpo = converter_html(preparar_markdown(texto))
     lista = titulos(corpo)
     destino = os.path.join(RAIZ, guia['pdf'])
     temporario = tempfile.NamedTemporaryFile('w', suffix='.html', dir=DOCS, delete=False, encoding='utf-8')

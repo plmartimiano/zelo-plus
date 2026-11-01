@@ -16,6 +16,11 @@
 #include <RTClib.h>
 #include <esp_sntp.h>
 
+// Data desta versao do programa (dd/mm/aaaa). Atualizar a cada alteracao do codigo.
+// Aparece no visor ao ligar, no Serial Monitor e no rodape da pagina; a capa do guia
+// do produto mostra a mesma data (tools/gerar_pdf_guia.py le esta linha).
+#define VERSAO_PROGRAMA "01/11/2026"
+
 #define BUZZER_PIN 15
 #define LED_PIN 4
 #define BUTTON_PIN 5
@@ -1483,6 +1488,7 @@ void handleRoot() {
   html += "</p>";
   html += blocoTelegram(pendente);
   html += blocoIA();
+  html += "<p class='rodape' style='font-size:14px;color:#9ca3af'>Zelo+ &middot; versão do programa " VERSAO_PROGRAMA "</p>";
 
   html += "<script>";
   html += "var TEM_CHAVE_IA = " + String(chaveIA != "" ? "true" : "false") + ";";
@@ -2857,6 +2863,7 @@ void iniciarModoNormal() {
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("Zelo+ - versao do programa: " VERSAO_PROGRAMA);
 #if MODO_TESTE
   Serial.println("ATENCAO: MODO_TESTE ativo (avisos aos 30 s e 60 s)");
 #endif
@@ -2868,8 +2875,9 @@ void setup() {
   digitalWrite(LED_PIN, LOW);
 
   iniciarVisor();
-  escreverLinha(0, "Zelo+");
-  escreverLinha(1, "Iniciando...");
+  escreverLinha(0, "Zelo+ iniciando...");
+  escreverLinha(1, "Versão " VERSAO_PROGRAMA);
+  delay(1500);  // tempo para ler a versao no visor
 
   // Liga os servos um de cada vez: ao receber o primeiro sinal, cada um corre
   // para a posicao fechada e puxa um pico de corrente. Com tudo na mesma fonte
