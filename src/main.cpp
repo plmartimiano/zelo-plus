@@ -15,11 +15,13 @@
 #include <ESP32Servo.h>
 #include <RTClib.h>
 #include <esp_sntp.h>
+#include "leitor_js.h"   // leitor de codigo de barras da pagina (tools/leitor/)
 
-// Data desta versao do programa (dd/mm/aaaa). Atualizar a cada alteracao do codigo.
+// Data desta versao do programa (dd/mm/aaaa; "-2", "-3"... para outra versao no mesmo dia).
+// Atualizar a cada alteracao do codigo.
 // Aparece no visor ao ligar, no Serial Monitor e no rodape da pagina; a capa do guia
 // do produto mostra a mesma data (tools/gerar_pdf_guia.py le esta linha).
-#define VERSAO_PROGRAMA "01/11/2026"
+#define VERSAO_PROGRAMA "01/11/2026-2"
 
 #define BUZZER_PIN 15
 #define LED_PIN 4
@@ -118,9 +120,6 @@ Medicamento medicamentos[NUM_COMPARTIMENTOS];
 Contato cuidador;
 Contato familiares[MAX_FAMILIARES];
 String tokenTelegram = ""; // token do bot, criado pelo cuidador no @BotFather
-String chaveIA = "";       // chave da API do Gemini (leitura da caixa por foto)
-const char* MODELO_IA_PADRAO = "gemini-3.5-flash";
-String modeloIA = MODELO_IA_PADRAO; // modelo do Gemini usado na leitura
 int ultimoMinutoChecado = -1;
 
 const unsigned long TEMPO_PORTA_ABERTA = 3UL * 60UL * 1000UL;
@@ -661,8 +660,6 @@ void salvarCadastro() {
   }
 
   prefsCadastro.putString("tg_token", tokenTelegram);
-  prefsCadastro.putString("ia_chave", chaveIA);
-  prefsCadastro.putString("ia_modelo", modeloIA);
   salvarContato("cuid", cuidador);
   for (int i = 0; i < MAX_FAMILIARES; i++) {
     salvarContato(prefixoFamiliar(i).c_str(), familiares[i]);
@@ -697,8 +694,9 @@ void carregarCadastro() {
   }
 
   tokenTelegram = prefsCadastro.getString("tg_token", "");
-  chaveIA = prefsCadastro.getString("ia_chave", "");
-  modeloIA = prefsCadastro.getString("ia_modelo", MODELO_IA_PADRAO);
+  // A leitura por IA saiu do projeto: apaga a chave antiga, se houver.
+  if (prefsCadastro.isKey("ia_chave")) prefsCadastro.remove("ia_chave");
+  if (prefsCadastro.isKey("ia_modelo")) prefsCadastro.remove("ia_modelo");
   carregarContato("cuid", cuidador);
   for (int i = 0; i < MAX_FAMILIARES; i++) {
     carregarContato(prefixoFamiliar(i).c_str(), familiares[i]);
@@ -1265,9 +1263,9 @@ String cartaoCompartimento(int c, bool aberto) {
   html += "<label>Nome do remédio:</label>";
   html += "<input type='text' name='m" + String(c) + "_nome' id='m" + String(c) + "_nome' value='" + escaparHTML(m.nome) +
           "' data-original='" + escaparHTML(m.nome) + "' oninput='atualizarDica(" + String(c) + ")' maxlength='40'>";
-  html += "<button type='button' class='secundario' onclick='tirarFoto(" + String(c) + ")'>&#128247; Foto da caixa do remédio</button>";
+  html += "<button type='button' class='secundario' onclick='lerCodigo(" + String(c) + ")'>&#128247; Ler código de barras</button>";
   html += "<button type='button' class='secundario' onclick='digitarCodigo(" + String(c) + ")'>&#128290; Digitar o código de barras</button>";
-  html += "<input type='file' accept='image/*' capture='environment' id='foto-" + String(c) + "' style='display:none' onchange='enviarFoto(" + String(c) + ", this)'>";
+  html += "<input type='file' accept='image/*' capture='environment' id='foto-" + String(c) + "' style='display:none' onchange='lerFoto(" + String(c) + ", this)'>";
   html += "<p class='suave' id='foto-status-" + String(c) + "' style='display:none'></p>";
   html += "<label>Horários:</label>";
   html += "<div id='horarios-" + String(c) + "'>";
@@ -1374,29 +1372,6 @@ String blocoTelegram(bool pendente) {
   return html;
 }
 
-// Bloco da leitura da caixa por foto (fim da pagina): so pede a chave da IA.
-String blocoIA() {
-  String html = "<details class='caixa' id='leitura-foto'>";
-  html += "<summary><span style='font-size:26px'>&#128247;</span><span><b>Leitura da caixa por foto</b><small>";
-  html += chaveIA != "" ? "<span class='ok'>configurada &#10003;</span>" : "<span class='falta'>falta a chave da IA</span>";
-  html += "</small></span><span class='seta'></span></summary><div class='conteudo'>";
-  html += "<p class='suave'>No cadastro, o botão <b>Foto da caixa do remédio</b> lê o nome e a concentração impressos na embalagem ";
-  html += "usando inteligência artificial (Gemini, do Google). O nome só é preenchido depois da sua confirmação. Precisa de internet.</p>";
-  html += "<label>Chave da API do Gemini:</label>";
-  html += "<input type='password' form='cadastro' name='ia_chave' autocomplete='off' placeholder='";
-  html += chaveIA != "" ? "(salva &mdash; deixe em branco para manter)" : "cole aqui a chave criada no Google AI Studio";
-  html += "'>";
-  html += "<label>Modelo:</label>";
-  html += "<input type='text' form='cadastro' name='ia_modelo' autocomplete='off' autocapitalize='off' value='" + escaparHTML(modeloIA) + "'>";
-  html += "<button type='submit' form='cadastro' class='principal'>&#128190; Salvar</button>";
-  html += "<details class='caixa'><summary>&#10067; Como obter a chave<span class='seta'></span></summary><div class='conteudo'><ol>";
-  html += "<li>Acesse <b>aistudio.google.com</b> com uma conta Google.</li>";
-  html += "<li>Toque em <b>Get API key</b> e crie uma chave (a camada gratuita não pede cartão).</li>";
-  html += "<li>Cole a chave acima e toque em <b>Salvar</b>. O campo Modelo já vem preenchido.</li></ol></div></details>";
-  html += "</div></details>";
-  return html;
-}
-
 void handleRoot() {
   int ativos = totalMedicamentosAtivos();
   String faltando;
@@ -1487,11 +1462,9 @@ void handleRoot() {
   html += rtcPresente ? "conectado" : "não instalado (hora pela internet)";
   html += "</p>";
   html += blocoTelegram(pendente);
-  html += blocoIA();
   html += "<p class='rodape' style='font-size:14px;color:#9ca3af'>Zelo+ &middot; versão do programa " VERSAO_PROGRAMA "</p>";
 
   html += "<script>";
-  html += "var TEM_CHAVE_IA = " + String(chaveIA != "" ? "true" : "false") + ";";
   // Sem hora (sem internet e sem DS3231): usa a hora deste aparelho ao abrir a pagina.
   html += "var HORA_DESCONHECIDA = " + String(time(nullptr) < (time_t)HORA_MINIMA_VALIDA ? "true" : "false") + ";";
   html += "if (HORA_DESCONHECIDA) {";
@@ -1538,10 +1511,11 @@ void handleRoot() {
   html += "}";
   // Envia o cadastro com fetch (como os outros comandos): o envio classico de
   // formulario por http faz o navegador mostrar o aviso "informacoes nao protegidas".
-  // Foto da caixa: o celular procura o codigo de barras (EAN-13) na foto e o
-  // dispenser consulta a lista oficial da CMED/Anvisa. Sem codigo legivel, a foto
-  // vai para a IA (se houver chave). O nome so e preenchido depois da confirmacao.
-  html += "function tirarFoto(c) { document.getElementById('foto-' + c).click(); }";
+  // Ler codigo de barras: a camera do celular tira a foto e a propria pagina le o
+  // EAN-13 (BarcodeDetector no Chrome do Android; nos outros navegadores, o leitor
+  // /leitor.js, gravado no ESP32). O dispenser so recebe os 13 numeros e consulta a
+  // lista oficial da CMED/Anvisa. O nome so e preenchido depois da confirmacao.
+  html += "function lerCodigo(c) { document.getElementById('foto-' + c).click(); }";
   html += "function statusFoto(c, texto) {";
   html += "  var status = document.getElementById('foto-status-' + c);";
   html += "  status.style.display = 'block'; status.textContent = texto; return status;";
@@ -1549,72 +1523,67 @@ void handleRoot() {
   html += "function digitarCodigo(c) {";
   html += "  var codigo = prompt('Digite os 13 números do código de barras da caixa:');";
   html += "  if (codigo === null) return;";
-  html += "  consultarCodigo(c, codigo.replace(/\\D/g, ''), statusFoto(c, 'Consultando a lista oficial de medicamentos...'), null);";
+  html += "  consultarCodigo(c, codigo.replace(/\\D/g, ''), statusFoto(c, 'Consultando a lista oficial de medicamentos...'));";
   html += "}";
-  html += "function consultarCodigo(c, codigo, status, alternativa) {";
+  html += "function consultarCodigo(c, codigo, status) {";
   html += "  fetch('/consultar-codigo', {method:'POST', body: new URLSearchParams({codigo: codigo})})";
   html += "  .then(function(r){ return r.json(); })";
-  html += "  .then(function(d){ if (!d.ok && alternativa) { alternativa(); return; } mostrarLeitura(c, d, status); })";
-  html += "  .catch(function(){ if (alternativa) alternativa(); else status.textContent = 'Não foi possível falar com o dispenser. Tente de novo.'; });";
+  html += "  .then(function(d){ mostrarLeitura(c, d, status); })";
+  html += "  .catch(function(){ status.textContent = 'Não foi possível falar com o dispenser. Tente de novo.'; });";
   html += "}";
   html += "function mostrarLeitura(c, d, status) {";
   html += "  if (!d.ok) { status.textContent = d.erro; return; }";
-  html += "  var b = d.base, sugestao, texto;";
-  html += "  if (b) {";
-  html += "    sugestao = d.nome.substring(0, 40);";
-  html += "    texto = 'Encontrado na lista oficial (CMED/Anvisa):\\n\\n' + b.produto + '\\n' + b.apresentacao +";
-  html += "      (b.substancia ? '\\nPrincípio ativo: ' + b.substancia : '') + (b.laboratorio ? '\\nLaboratório: ' + b.laboratorio : '') +";
-  html += "      (b.tarja ? '\\nTarja: ' + b.tarja : '') + (b.quantidade ? '\\nUnidades na caixa: ' + b.quantidade : '') +";
-  html += "      '\\nCódigo de barras: ' + d.codigo + '\\n\\nNome sugerido: ' + sugestao;";
-  html += "  } else {";
-  html += "    sugestao = (d.nome + ' ' + d.concentracao).trim().substring(0, 40);";
-  html += "    texto = 'Lido na foto:\\n\\n' + sugestao + (d.codigo ? '\\nCódigo de barras: ' + d.codigo : '');";
-  html += "  }";
+  html += "  var b = d.base || {}, sugestao = d.nome.substring(0, 40);";
+  html += "  var texto = 'Encontrado na lista oficial (CMED/Anvisa):\\n\\n' + b.produto + '\\n' + b.apresentacao +";
+  html += "    (b.substancia ? '\\nPrincípio ativo: ' + b.substancia : '') + (b.laboratorio ? '\\nLaboratório: ' + b.laboratorio : '') +";
+  html += "    (b.tarja ? '\\nTarja: ' + b.tarja : '') + (b.quantidade ? '\\nUnidades na caixa: ' + b.quantidade : '') +";
+  html += "    '\\nCódigo de barras: ' + d.codigo + '\\n\\nNome sugerido: ' + sugestao;";
   html += "  if (confirm(texto + '\\n\\nConfira com a caixa. Preencher o nome do remédio?')) {";
   html += "    document.getElementById('m' + c + '_nome').value = sugestao; atualizarDica(c);";
-  html += "    status.textContent = (b ? 'Nome preenchido pela lista oficial' : 'Nome preenchido pela foto') + '. Confira e toque em Salvar.';";
+  html += "    status.textContent = 'Nome preenchido pela lista oficial. Confira e toque em Salvar.';";
   html += "  } else { status.textContent = 'Leitura descartada.'; }";
   html += "}";
-  html += "function lerComIA(c, img, status) {";
-  html += "  if (!TEM_CHAVE_IA) { status.textContent = 'Não foi possível ler o código de barras na foto. Tire outra foto mais perto do código ou toque em \\u0022Digitar o código de barras\\u0022.'; return; }";
-  html += "  status.textContent = 'Lendo a caixa... isso pode levar alguns segundos.';";
-  html += "  comprimirFoto(img, 900, 0.7, function(foto) {";
-  html += "    var dados = new FormData(); dados.append('foto', foto, 'caixa.jpg');";
-  html += "    fetch('/ler-caixa', {method:'POST', body: dados})";
-  html += "    .then(function(r){ return r.json(); })";
-  html += "    .then(function(d){ mostrarLeitura(c, d, status); })";
-  html += "    .catch(function(){ status.textContent = 'Não foi possível falar com o dispenser. Tente de novo.'; });";
-  html += "  });";
+  html += "function codigoNaoLido(status) {";
+  html += "  status.textContent = 'Não foi possível ler o código de barras. Tire outra foto mais perto do código (10 a 15 cm), com boa luz e o código inteiro na foto, ou toque em \"Digitar o código de barras\".';";
   html += "}";
-  html += "function enviarFoto(c, entrada) {";
+  html += "function carregarLeitor(pronto, falhou) {";
+  html += "  if (window.lerCodigoZXing) { pronto(); return; }";
+  html += "  var s = document.createElement('script'); s.src = '/leitor.js';";
+  html += "  s.onload = pronto; s.onerror = falhou; document.head.appendChild(s);";
+  html += "}";
+  html += "function lerComZXing(c, img, status) {";
+  html += "  status.textContent = 'Procurando o código de barras na foto...';";
+  html += "  carregarLeitor(function() {";
+  html += "    setTimeout(function() {";
+  html += "      var lado = 1600, escala = Math.min(1, lado / Math.max(img.width, img.height));";
+  html += "      var tela = document.createElement('canvas');";
+  html += "      tela.width = Math.round(img.width * escala); tela.height = Math.round(img.height * escala);";
+  html += "      tela.getContext('2d').drawImage(img, 0, 0, tela.width, tela.height);";
+  html += "      var codigo = window.lerCodigoZXing(tela);";
+  html += "      if (!codigo) { codigoNaoLido(status); return; }";
+  html += "      status.textContent = 'Código ' + codigo + ' lido. Consultando a lista oficial...';";
+  html += "      consultarCodigo(c, codigo, status);";
+  html += "    }, 30);";
+  html += "  }, function() { status.textContent = 'Não foi possível carregar o leitor. Toque em \"Digitar o código de barras\".'; });";
+  html += "}";
+  html += "function lerFoto(c, entrada) {";
   html += "  var arquivo = entrada.files[0]; if (!arquivo) return;";
   html += "  var status = statusFoto(c, 'Procurando o código de barras na foto...');";
   html += "  var endereco = URL.createObjectURL(arquivo); var img = new Image();";
   html += "  img.onerror = function(){ status.textContent = 'Não foi possível abrir a foto.'; entrada.value = ''; };";
   html += "  img.onload = function() {";
   html += "    URL.revokeObjectURL(endereco); entrada.value = '';";
-  html += "    var semCodigo = function(){ lerComIA(c, img, status); };";
-  html += "    if (!('BarcodeDetector' in window)) { semCodigo(); return; }";
+  html += "    var semDetector = function(){ lerComZXing(c, img, status); };";
+  html += "    if (!('BarcodeDetector' in window)) { semDetector(); return; }";
   html += "    try {";
   html += "      new BarcodeDetector({formats: ['ean_13']}).detect(img).then(function(lidos) {";
-  html += "        if (!lidos.length) { semCodigo(); return; }";
+  html += "        if (!lidos.length) { semDetector(); return; }";
   html += "        status.textContent = 'Código ' + lidos[0].rawValue + ' lido. Consultando a lista oficial...';";
-  html += "        consultarCodigo(c, lidos[0].rawValue, status, TEM_CHAVE_IA ? semCodigo : null);";
-  html += "      }).catch(semCodigo);";
-  html += "    } catch (e) { semCodigo(); }";
+  html += "        consultarCodigo(c, lidos[0].rawValue, status);";
+  html += "      }).catch(semDetector);";
+  html += "    } catch (e) { semDetector(); }";
   html += "  };";
   html += "  img.src = endereco;";
-  html += "}";
-  // Reduz a foto ate caber no limite do dispenser (cerca de 100 KB).
-  html += "function comprimirFoto(img, lado, qualidade, pronto) {";
-  html += "  var escala = Math.min(1, lado / Math.max(img.width, img.height));";
-  html += "  var tela = document.createElement('canvas');";
-  html += "  tela.width = Math.round(img.width * escala); tela.height = Math.round(img.height * escala);";
-  html += "  tela.getContext('2d').drawImage(img, 0, 0, tela.width, tela.height);";
-  html += "  tela.toBlob(function(foto) {";
-  html += "    if (foto.size > 100000 && lado > 500) { comprimirFoto(img, Math.round(lado * 0.8), 0.6, pronto); return; }";
-  html += "    pronto(foto);";
-  html += "  }, 'image/jpeg', qualidade);";
   html += "}";
   html += "function enviarCadastro(e) {";
   html += "  e.preventDefault();";
@@ -1862,111 +1831,6 @@ void handleTelegramIds() {
   server.send(200, "text/plain; charset=utf-8", lista);
 }
 
-// ---------- LEITURA DA CAIXA POR FOTO (IA) ----------
-
-// Foto recebida da pagina (JPEG). Fica numa unica area de memoria: o ESP32 nao
-// comporta duas copias de uma foto de ~80 KB.
-const size_t FOTO_MAX = 110000;
-uint8_t* fotoRecebida = nullptr;
-size_t fotoTamanho = 0;
-bool fotoRecusada = false;
-
-void descartarFoto() {
-  free(fotoRecebida);
-  fotoRecebida = nullptr;
-  fotoTamanho = 0;
-}
-
-// Recebe a foto em pedacos, conforme ela chega pela rede.
-void receberFoto() {
-  HTTPUpload& envio = server.upload();
-  if (envio.status == UPLOAD_FILE_START) {
-    descartarFoto();
-    fotoRecusada = false;
-  } else if (envio.status == UPLOAD_FILE_WRITE) {
-    if (fotoRecusada) return;
-    if (fotoTamanho + envio.currentSize > FOTO_MAX) {
-      fotoRecusada = true;
-      descartarFoto();
-      return;
-    }
-    uint8_t* maior = (uint8_t*)realloc(fotoRecebida, fotoTamanho + envio.currentSize);
-    if (maior == nullptr) {
-      fotoRecusada = true;
-      descartarFoto();
-      return;
-    }
-    fotoRecebida = maior;
-    memcpy(fotoRecebida + fotoTamanho, envio.buf, envio.currentSize);
-    fotoTamanho += envio.currentSize;
-  }
-}
-
-// Corpo do pedido a IA: inicio do JSON, foto convertida para base64 no momento
-// do envio (sem uma segunda copia na memoria) e fim do JSON.
-class CorpoPedidoIA : public Stream {
- public:
-  CorpoPedidoIA(const char* inicio, const uint8_t* dados, size_t tamanhoDados, const char* fim)
-      : inicio(inicio), fim(fim), dados(dados), tamanhoDados(tamanhoDados),
-        tamanhoInicio(strlen(inicio)), tamanhoBase64((tamanhoDados + 2) / 3 * 4), tamanhoFim(strlen(fim)) {}
-  size_t tamanho() const { return tamanhoInicio + tamanhoBase64 + tamanhoFim; }
-  int available() override { return tamanho() - pos; }
-  int read() override {
-    int c = peek();
-    if (c >= 0) pos++;
-    return c;
-  }
-  int peek() override { return pos < tamanho() ? (uint8_t)caractere(pos) : -1; }
-  size_t readBytes(char* buffer, size_t tamanhoMax) {
-    size_t lidos = 0;
-    while (lidos < tamanhoMax && pos < tamanho()) buffer[lidos++] = caractere(pos++);
-    return lidos;
-  }
-  size_t write(uint8_t) override { return 0; }
-
- private:
-  char caractere(size_t i) const {
-    if (i < tamanhoInicio) return inicio[i];
-    i -= tamanhoInicio;
-    if (i < tamanhoBase64) return base64(i);
-    return fim[i - tamanhoBase64];
-  }
-  char base64(size_t i) const {
-    static const char* ALFABETO = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    size_t g = i / 4 * 3;
-    int p = i % 4;
-    if (p == 2 && g + 1 >= tamanhoDados) return '=';
-    if (p == 3 && g + 2 >= tamanhoDados) return '=';
-    uint32_t v = (uint32_t)dados[g] << 16;
-    if (g + 1 < tamanhoDados) v |= (uint32_t)dados[g + 1] << 8;
-    if (g + 2 < tamanhoDados) v |= dados[g + 2];
-    return ALFABETO[(v >> (18 - 6 * p)) & 63];
-  }
-  const char* inicio;
-  const char* fim;
-  const uint8_t* dados;
-  size_t tamanhoDados, tamanhoInicio, tamanhoBase64, tamanhoFim;
-  size_t pos = 0;
-};
-
-// Instrucoes e formato da resposta pedidos a IA (Gemini). A foto vai entre o
-// inicio e o fim; a resposta vem em JSON com os campos do esquema (saida estruturada).
-const char* PEDIDO_IA_INICIO =
-    "{\"contents\":[{\"parts\":[{\"inline_data\":{\"mime_type\":\"image/jpeg\",\"data\":\"";
-const char* PEDIDO_IA_FIM =
-    "\"}},{\"text\":\""
-    "A imagem mostra a embalagem de um medicamento, fotografada por um cuidador para cadastrar o remédio "
-    "num dispenser. Transcreva exatamente como impresso: em nome, o nome do medicamento (nome comercial ou "
-    "princípio ativo, o que estiver em destaque); em concentracao, a dosagem (ex.: 50 mg); em codigo_barras, "
-    "os dígitos impressos sob o código de barras, se estiverem visíveis. Não deduza o nome a partir do código "
-    "de barras nem de outras informações: se o nome não estiver legível na foto, deixe nome vazio e legivel "
-    "como false. Campos que não aparecem na foto ficam vazios."
-    "\"}]}],\"generationConfig\":{\"responseMimeType\":\"application/json\",\"responseSchema\":{"
-    "\"type\":\"OBJECT\",\"properties\":{"
-    "\"nome\":{\"type\":\"STRING\"},\"concentracao\":{\"type\":\"STRING\"},"
-    "\"codigo_barras\":{\"type\":\"STRING\"},\"legivel\":{\"type\":\"BOOLEAN\"}},"
-    "\"required\":[\"nome\",\"concentracao\",\"codigo_barras\",\"legivel\"]}}}";
-
 // ---------- BASE OFICIAL DE MEDICAMENTOS (CMED/Anvisa) ----------
 // Lista de precos da CMED convertida por tools/cmed_para_json.py e publicada no
 // repositorio do projeto, dividida em partes de poucos KB (dados/cmed/NNN.json).
@@ -2064,153 +1928,17 @@ void responderLeitura(const String& erro, const String& nome = "", const String&
   server.send(200, "application/json; charset=utf-8", saida);
 }
 
-// Com a foto ja recebida (receberFoto), pergunta a IA o nome do
-// remedio e devolve o que foi lido. Quem confirma e preenche e a pagina.
-void handleLerCaixa() {
-  if (chaveIA == "") {
-    descartarFoto();
-    responderLeitura("Cadastre antes a chave da IA no quadro Leitura da caixa por foto.");
-    return;
-  }
-  if (WiFi.status() != WL_CONNECTED) {
-    descartarFoto();
-    responderLeitura("Sem internet: a leitura por foto precisa de conexão com a internet.");
-    return;
-  }
-  if (fotoRecusada || fotoRecebida == nullptr) {
-    descartarFoto();
-    responderLeitura("Foto grande demais ou não recebida. Tente de novo.");
-    return;
-  }
-  if (fotoTamanho < 1000 || fotoRecebida[0] != 0xFF || fotoRecebida[1] != 0xD8) {
-    descartarFoto();
-    responderLeitura("A foto não chegou em formato JPEG. Tente de novo.");
-    return;
-  }
-
-  if (estadoAtual == AGUARDANDO) {
-    temaVisor(COR_AZUL_ESCURO);
-    limparVisor();
-    escreverLinha(0, "Lendo a caixa...");
-  }
-
-  CorpoPedidoIA corpo(PEDIDO_IA_INICIO, fotoRecebida, fotoTamanho, PEDIDO_IA_FIM);
-
-  WiFiClientSecure cliente;
-  cliente.setInsecure(); // prototipo: nao valida o certificado do servidor
-  HTTPClient http;
-  http.setTimeout(40000);
-  String resposta;
-  int codigo = -1;
-  String endereco = "https://generativelanguage.googleapis.com/v1beta/models/" + modeloIA + ":generateContent";
-  if (http.begin(cliente, endereco)) {
-    http.addHeader("Content-Type", "application/json");
-    http.addHeader("x-goog-api-key", chaveIA);
-    codigo = http.sendRequest("POST", &corpo, corpo.tamanho());
-    if (codigo > 0) resposta = http.getString();
-    http.end();
-  }
-  descartarFoto();
-  if (estadoAtual == AGUARDANDO) limparVisor();
-  Serial.print("IA (leitura da caixa): HTTP ");
-  Serial.println(codigo);
-
-  // Em caso de erro, o Google explica o motivo em error.message; ele aparece na
-  // pagina e no Serial Monitor para facilitar o diagnostico.
-  String motivo = "";
-  if (codigo != 200 && codigo > 0) {
-    JsonDocument erro;
-    JsonDocument filtroErro;
-    filtroErro["error"]["message"] = true;
-    filtroErro["error"]["status"] = true;
-    if (!deserializeJson(erro, resposta, DeserializationOption::Filter(filtroErro))) {
-      motivo = erro["error"]["message"] | "";
-      String situacao = erro["error"]["status"] | "";
-      if (situacao != "") motivo = situacao + ": " + motivo;
-    }
-    if (motivo.length() > 220) motivo = motivo.substring(0, 220) + "...";
-    Serial.println("IA (leitura da caixa): " + motivo);
-  }
-  String detalhe = motivo != "" ? " Resposta do Google (" + String(codigo) + "): " + motivo : "";
-
-  if (codigo == 400 && resposta.indexOf("API_KEY_INVALID") >= 0) {
-    responderLeitura("Chave da IA recusada: o Google não reconheceu a chave. Confira se foi copiada inteira." + detalhe);
-    return;
-  }
-  if (codigo == 401 || codigo == 403) {
-    responderLeitura("Chave da IA recusada: a chave existe, mas não tem permissão para usar o Gemini." + detalhe);
-    return;
-  }
-  if (codigo == 404) {
-    responderLeitura("Modelo de IA não encontrado (" + modeloIA + "). Confira o nome do modelo no Google AI Studio.");
-    return;
-  }
-  if (codigo == 429) {
-    responderLeitura("Limite de uso da IA atingido por agora. Tente de novo mais tarde.");
-    return;
-  }
-  if (codigo >= 500) {
-    responderLeitura("O serviço de IA está ocupado. Tente de novo em instantes.");
-    return;
-  }
-  if (codigo != 200) {
-    responderLeitura("Não foi possível falar com o serviço de IA (código " + String(codigo) + "). Tente de novo." + detalhe);
-    return;
-  }
-
-  JsonDocument filtro;
-  filtro["candidates"][0]["finishReason"] = true;
-  filtro["candidates"][0]["content"]["parts"][0]["text"] = true;
-  filtro["candidates"][0]["content"]["parts"][0]["thought"] = true;
-  JsonDocument doc;
-  if (deserializeJson(doc, resposta, DeserializationOption::Filter(filtro))) {
-    responderLeitura("Resposta da IA não reconhecida. Tente de novo.");
-    return;
-  }
-  JsonObject candidato = doc["candidates"][0];
-  String texto = "";
-  for (JsonObject parte : candidato["content"]["parts"].as<JsonArray>()) {
-    if (parte["thought"] | false) continue; // resumo do raciocinio, nao e a resposta
-    texto += parte["text"] | "";
-  }
-  JsonDocument leitura;
-  if (candidato["finishReason"] != "STOP" || texto == "" || deserializeJson(leitura, texto)) {
-    responderLeitura("Não foi possível ler a caixa. Tente outra foto.");
-    return;
-  }
-
-  String nome = leitura["nome"] | "";
-  String concentracao = leitura["concentracao"] | "";
-  String codigoBarras = leitura["codigo_barras"] | "";
-  nome.trim();
-  concentracao.trim();
-  codigoBarras.trim();
-
-  // Codigo de barras lido: a lista oficial tem prioridade sobre o texto lido na
-  // foto (traz nome, concentracao, principio ativo e quantidade da embalagem).
-  String ean = somenteDigitos(codigoBarras);
-  if (eanValido(ean)) {
-    InfoMedicamento info;
-    if (consultarBaseMedicamentos(ean, info) == 1) {
-      responderLeitura("", info.nome, "", ean, &info);
-      return;
-    }
-  }
-
-  if (!(leitura["legivel"] | false) || nome == "") {
-    if (codigoBarras != "") {
-      responderLeitura("Código de barras lido (" + codigoBarras + "), mas o nome do remédio não aparece na foto. "
-                       "Fotografe a frente da caixa, onde o nome está escrito.");
-    } else {
-      responderLeitura("Não foi possível ler o nome do remédio. Tente uma foto mais próxima, com boa luz.");
-    }
-    return;
-  }
-  responderLeitura("", nome, concentracao, codigoBarras);
+// Leitor de codigo de barras para a pagina (navegadores sem BarcodeDetector, como o
+// Safari do iPhone). Arquivo compactado (gzip) gravado junto com o programa; o
+// navegador guarda uma copia por 1 dia.
+void handleLeitorJs() {
+  server.sendHeader("Content-Encoding", "gzip");
+  server.sendHeader("Cache-Control", "max-age=86400");
+  server.send_P(200, "application/javascript", (const char*)LEITOR_JS_GZ, LEITOR_JS_GZ_TAM);
 }
 
-// Consulta direta pelo codigo de barras (lido pela camera do celular ou digitado),
-// sem foto e sem IA. Quem confirma e preenche e a pagina.
+// Consulta pelo codigo de barras (lido pela camera do celular ou digitado).
+// Quem confirma e preenche e a pagina.
 void handleConsultarCodigo() {
   String ean = somenteDigitos(server.arg("codigo"));
   if (!eanValido(ean)) {
@@ -2233,7 +1961,7 @@ void handleConsultarCodigo() {
     responderLeitura("", info.nome, "", ean, &info);
   } else if (resultado == 0) {
     responderLeitura("O código " + ean + " não está na lista oficial de medicamentos (CMED/Anvisa). "
-                     "Use a foto da caixa ou digite o nome do remédio.");
+                     "Confira os números ou digite o nome do remédio.");
   } else {
     responderLeitura("Não foi possível consultar a lista oficial agora. Tente de novo em instantes.");
   }
@@ -2361,20 +2089,6 @@ void handleSalvar() {
   String novoToken = server.arg("tg_token");
   novoToken.trim();
   if (novoToken != "") tokenTelegram = novoToken; // em branco = mantem o token salvo
-
-  String novaChave = server.arg("ia_chave");
-  novaChave.trim();
-  if (novaChave != "") chaveIA = novaChave; // em branco = mantem a chave salva
-
-  // Nome do modelo: so letras minusculas, numeros, ponto e hifen (vai na URL).
-  String novoModelo = server.arg("ia_modelo");
-  novoModelo.trim();
-  bool modeloValido = novoModelo.length() > 0 && novoModelo.length() <= 60;
-  for (unsigned int i = 0; i < novoModelo.length() && modeloValido; i++) {
-    char ch = novoModelo[i];
-    modeloValido = (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '.' || ch == '-';
-  }
-  if (modeloValido) modeloIA = novoModelo;
 
   nomePaciente = server.arg("paciente");
   nomePaciente.trim();
@@ -2848,7 +2562,7 @@ void iniciarModoNormal() {
   server.on("/esvaziar", HTTP_POST, handleEsvaziar);
   server.on("/testar-mensagens", HTTP_POST, handleTestarMensagens);
   server.on("/telegram-ids", HTTP_POST, handleTelegramIds);
-  server.on("/ler-caixa", HTTP_POST, handleLerCaixa, receberFoto);
+  server.on("/leitor.js", handleLeitorJs);
   server.on("/consultar-codigo", HTTP_POST, handleConsultarCodigo);
   server.on("/historico.csv", handleHistoricoCSV);
   server.on("/limpar-historico", HTTP_POST, handleLimparHistorico);

@@ -144,7 +144,6 @@ pagina(f"""
       <li>Celular com navegador de internet (qualquer marca)</li>
       <li>Rede Wi-Fi de <b>2,4 GHz</b> com a senha em mãos <span style="color:#64748b">(opcional: o dispenser também funciona sem internet)</span></li>
       <li>Aplicativo <b>Telegram</b> no celular de quem vai receber avisos <span style="color:#64748b">(opcional)</span></li>
-      <li>Conta Google, para a leitura da caixa por foto <span style="color:#64748b">(opcional)</span></li>
     </ul>
   </div>
 </div>
@@ -241,12 +240,12 @@ pagina(f"""
 </div>
 <h2>{icone('wifi', ESCURO, 20)} Instalação, rede e abastecimento</h2>
 <div class="grade-visor">
-  <div>{visor('iniciando')}<span><b>Iniciando</b>O dispenser acabou de ser ligado.</span></div>
+  <div>{visor('iniciando')}<span><b>Iniciando</b>O dispenser acabou de ser ligado. Embaixo aparece a versão do programa.</span></div>
   <div>{visor('config')}<span><b>Conecte no Wi-Fi</b>Primeira instalação: conecte o celular à rede indicada.</span></div>
   <div>{visor('endereco')}<span><b>Endereço da página</b>Digite este número no navegador do celular.</span></div>
   <div>{visor('rede-propria')}<span><b>Rede própria</b>Sem internet: o dispenser criou a própria rede Wi-Fi.</span></div>
   <div>{visor('abastecer')}<span><b>Abastecer</b>Compartimento aberto para colocar o remédio indicado.</span></div>
-  <div>{visor('lendo')}<span><b>Lendo a caixa</b>A foto da caixa do remédio está sendo analisada.</span></div>
+  <div>{visor('consultando')}<span><b>Consultando</b>O código de barras do remédio está sendo buscado na lista oficial.</span></div>
 </div>
 """)
 
@@ -301,7 +300,7 @@ pagina(f"""
       <tr><th style="width:9mm">N.º</th><th>Seção</th><th>O que se faz nela</th></tr>
       <tr><td><span class="marca" style="position:static">1</span></td><td><b>Avisos</b></td><td>Faixas amarelas no topo indicam algo pendente, como um contato sem Telegram ou a falta de internet.</td></tr>
       <tr><td><span class="marca" style="position:static">2</span></td><td><b>Paciente</b></td><td>Nome do paciente, usado nas mensagens.</td></tr>
-      <tr><td><span class="marca" style="position:static">3</span></td><td><b>Remédios</b></td><td>Os três compartimentos, com nome do remédio, horários e foto da caixa.</td></tr>
+      <tr><td><span class="marca" style="position:static">3</span></td><td><b>Remédios</b></td><td>Os três compartimentos, com nome do remédio, horários e leitura do código de barras.</td></tr>
       <tr><td><span class="marca" style="position:static">4</span></td><td><b>Contatos</b></td><td>Cuidador (obrigatório) e até 5 familiares.</td></tr>
       <tr><td><span class="marca" style="position:static">5</span></td><td><b>Salvar alterações</b></td><td>Grava remédios, horários e contatos.</td></tr>
     </table>
@@ -311,7 +310,6 @@ pagina(f"""
       <div class="cartao" style="padding:2.5mm 3.5mm;border-left:4px solid {ROXO}">{icone('grafico', ROXO)} <b>Histórico de doses</b> — adesão e lista das últimas doses.</div>
       <div class="cartao" style="padding:2.5mm 3.5mm;border-left:4px solid {ESCURO}">{icone('wifi', ESCURO)} <b>Trocar rede Wi-Fi</b> — volta à página de conexão.</div>
       <div class="cartao" style="padding:2.5mm 3.5mm;border-left:4px solid {AZUL}">{icone('enviar', AZUL)} <b>Avisos pelo Telegram</b> — token do bot e IDs dos contatos.</div>
-      <div class="cartao" style="padding:2.5mm 3.5mm;border-left:4px solid {VERDE}">{icone('camera', VERDE)} <b>Leitura da caixa por foto</b> — chave da inteligência artificial.</div>
     </div>
     {nota('atencao', 'Depois de mudar qualquer campo, toque em <b>Salvar alterações</b>. Sair da página sem salvar descarta as mudanças.')}
   </div>
@@ -326,7 +324,7 @@ pagina(f"""
   <div>
     <ol class="passos">
       <li><b>Toque no compartimento</b> (1 azul, 2 verde ou 3 roxo) para abrir o cartão.</li>
-      <li><b>Digite o nome do remédio</b> com a dosagem, como está na caixa (ex.: <i>Losartana 50 mg</i>). Ou toque em <b>Foto da caixa do remédio</b> para preencher pela câmera.</li>
+      <li><b>Digite o nome do remédio</b> com a dosagem, como está na caixa (ex.: <i>Losartana 50 mg</i>). Ou toque em <b>Ler código de barras</b> para preencher pela câmera (seção 10).</li>
       <li><b>Informe os horários.</b> Use <b>+ Adicionar horário</b> para mais de um por dia. Para tirar um horário, apague o campo.</li>
       <li><b>Confira o quadro tracejado</b>: ele diz em qual compartimento colocar o remédio.</li>
       <li>Toque em <b>Salvar alterações</b>. O compartimento <b>abre sozinho</b> para ser abastecido:<div style="margin:2mm 0">{visor('abastecer', '62mm')}</div></li>
@@ -344,28 +342,28 @@ pagina(f"""
 </div>
 """)
 
-# ---------------------------------------------------------------- 10 foto da caixa
+# ---------------------------------------------------------------- 10 codigo de barras
 pagina(f"""
-{faixa(10, 'Leitura da caixa por foto', 'A câmera do celular lê o nome e a dosagem impressos na embalagem.', VERDE)}
+{faixa(10, 'Ler o código de barras', 'A câmera do celular lê o código da caixa e o dispenser busca o remédio na lista oficial.', VERDE)}
 <div class="lado inv">
   <div>
-    {fluxo_horizontal([('camera', 'Fotografar', 'Frente da caixa, bem iluminada'), ('engrenagem', 'Analisar', 'Visor: "Lendo a caixa..."'), ('ok', 'Confirmar', 'O nome só entra com o seu OK')], VERDE)}
-    <h2>{icone('chave', VERDE, 20)} Ativar a leitura (uma vez só)</h2>
-    <ol class="passos" style="--c:{VERDE}">
-      <li>No computador ou no celular, acesse <b>aistudio.google.com</b> com uma conta Google pessoal.</li>
-      <li>Toque em <b>Get API key</b> e crie uma chave em um projeto novo. O uso gratuito não pede cartão.</li>
-      <li>Na página do dispenser, abra <b>Leitura da caixa por foto</b>, cole a chave e toque em <b>Salvar</b>. O campo <i>Modelo</i> já vem preenchido.</li>
-    </ol>
+    {fluxo_horizontal([('camera', 'Fotografar', 'O código de barras, de perto e com boa luz'), ('lista', 'Consultar', 'Lista oficial de medicamentos (CMED/Anvisa)'), ('ok', 'Confirmar', 'O nome só entra com o seu OK')], VERDE)}
     <h2>{icone('camera', VERDE, 20)} Usar no cadastro</h2>
     <ol class="passos" style="--c:{VERDE}">
-      <li>Abra o compartimento na página e toque em <b>Foto da caixa do remédio</b>.</li>
-      <li>Fotografe a frente da embalagem, com o nome legível e sem reflexo.</li>
-      <li>Confira o nome sugerido e confirme. Depois, toque em <b>Salvar alterações</b>.</li>
+      <li>Abra o compartimento na página e toque em <b>Ler código de barras</b>. A câmera abre.</li>
+      <li>Fotografe o <b>código de barras</b> da caixa a 10–15 cm, com o código inteiro na foto e sem reflexo.</li>
+      <li>A página mostra o remédio encontrado: produto, princípio ativo, laboratório, tarja e unidades na caixa. Confira com a caixa e toque em <b>OK</b>.</li>
+      <li>O nome é preenchido. Depois, toque em <b>Salvar alterações</b>.</li>
     </ol>
-    {nota('atencao', 'A leitura é uma ajuda para digitar. <b>Confira sempre</b> o nome e a dosagem com a receita antes de salvar.')}
-    {nota('dica', 'Se aparecer "chave recusada", crie a chave com uma conta Google pessoal (Gmail), em um projeto novo do AI Studio, e cole-a de novo.')}
+    <h2>{icone('lista', VERDE, 20)} Sem câmera? Digite o código</h2>
+    <ol class="passos" style="--c:{VERDE}">
+      <li>Toque em <b>Digitar o código de barras</b>.</li>
+      <li>Digite os 13 números impressos embaixo das barras e confirme.</li>
+    </ol>
+    {nota('atencao', 'A lista oficial ajuda a preencher o nome. <b>Confira sempre</b> o nome e a dosagem com a caixa e a receita antes de salvar.')}
+    {nota('dica', 'Precisa de internet. Suplementos e alguns produtos sem preço regulado não estão na lista oficial: nesses casos, digite o nome do remédio.')}
   </div>
-  {celular('ia', 'Seção da leitura por foto')}
+  {celular('codigo', 'Confirmação com os dados da lista oficial')}
 </div>
 """)
 
@@ -579,7 +577,8 @@ pagina(f"""
   <tr><td><b>A rede da casa não aparece</b></td><td>Rede de 5 GHz ou roteador distante.</td><td>Use a rede de 2,4 GHz ou aproxime o dispenser do roteador. Toque em <i>Atualizar lista</i>.</td></tr>
   <tr><td><b>Faixa "Sem internet"</b></td><td>Roteador desligado, senha alterada ou queda da internet.</td><td>Aguarde a nova tentativa (10 min) ou toque em <i>Tentar conectar novamente</i>. Se a senha mudou, <i>Trocar rede Wi-Fi</i>.</td></tr>
   <tr><td><b>Mensagens do Telegram não chegam</b></td><td>Pessoa sem ID, não tocou em <i>Iniciar</i> no bot ou falta de internet.</td><td>Procure "(falta)" na seção do Telegram, peça para a pessoa tocar em <i>Iniciar</i>, busque os IDs de novo e salve.</td></tr>
-  <tr><td><b>"Chave da IA recusada"</b></td><td>Chave criada em conta ou projeto sem permissão.</td><td>Crie uma chave nova no AI Studio com uma conta Google pessoal, em um projeto novo.</td></tr>
+  <tr><td><b>"Não foi possível ler o código de barras"</b></td><td>Foto longe, escura, tremida ou sem o código inteiro.</td><td>Fotografe de novo a 10–15 cm, com boa luz, ou toque em <i>Digitar o código de barras</i>.</td></tr>
+  <tr><td><b>"O código não está na lista oficial"</b></td><td>Suplemento ou produto sem preço regulado, ou número digitado errado.</td><td>Confira os 13 números. Se o produto não estiver na lista, digite o nome do remédio.</td></tr>
   <tr><td><b>Visor "Dose pendente!"</b></td><td>A dose não foi retirada a tempo.</td><td>O paciente ainda pode apertar o botão para abrir. Avise-o ou verifique pessoalmente.</td></tr>
   <tr><td><b>O botão não fecha a porta</b></td><td>Primeiros 7 segundos com a porta aberta.</td><td>Aguarde alguns segundos e toque de novo, ou deixe fechar sozinha.</td></tr>
   <tr><td><b>Esqueceu a senha do Wi-Fi do dispenser</b></td><td>—</td><td>A rede própria é sempre <b>ZeloPlus</b>, senha <b>zelo1234</b>; na instalação, <b>ZeloPlus-Config</b>, sem senha.</td></tr>

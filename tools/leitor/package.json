@@ -1,0 +1,12 @@
+{
+  "name": "zelo-leitor",
+  "private": true,
+  "description": "Leitor de codigo de barras (EAN-13) da pagina do Zelo+, gerado a partir da biblioteca ZXing",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@zxing/library": "0.21.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.0"
+  }
+}

@@ -57,7 +57,7 @@ def mapa_mental():
         ('Liberar', 'porta', VERDE, (770, 92), ['Abre só o compartimento da dose', 'Paciente abre com o botão', 'Fecha sozinho em 3 minutos']),
         ('Avisar', 'enviar', LARANJA, (782, 318), ['Cuidador aos 6 minutos', 'Família aos 12 minutos', 'Confirma a chegada do paciente']),
         ('Registrar', 'grafico', ROXO, (770, 545), ['Histórico de cada dose', 'Adesão dos últimos 7 dias', 'Planilha para o médico']),
-        ('Configurar', 'celular', ESCURO, (150, 545), ['Remédios e horários', 'Contatos e Telegram', 'Leitura da caixa por foto']),
+        ('Configurar', 'celular', ESCURO, (150, 545), ['Remédios e horários', 'Contatos e Telegram', 'Código de barras do remédio']),
         ('Proteger', 'escudo', VERMELHO, (138, 318), ['Modo do cuidador (botão)', 'Funciona sem internet', 'Bateria e abertura manual']),
     ]
     g = []

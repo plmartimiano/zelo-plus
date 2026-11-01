@@ -11,7 +11,7 @@
 
 *Imagem de referência — conceito visual do produto final (ilustrativo).*
 
-**Versão do programa do dispenser: 01/11/2026**
+**Versão do programa do dispenser: 01/11/2026-2**
 <!-- /so-github -->
 
 ---
@@ -53,7 +53,7 @@
   - [Passo 17 — Escrevendo no LCD](#passo-17--escrevendo-no-lcd)
   - [Passo 18 — Modo de teste](#passo-18--modo-de-teste)
   - [Passo 19 — Relógio DS3231 (próxima etapa)](#passo-19--relógio-ds3231-próxima-etapa)
-  - [Passo 20 — Leitura da caixa do remédio por foto (IA)](#passo-20--leitura-da-caixa-do-remédio-por-foto-ia)
+  - [Passo 20 — Cadastro pelo código de barras](#passo-20--cadastro-pelo-código-de-barras)
   - [Passo 21 — Modo do cuidador: abrir pelo botão, sem o celular](#passo-21--modo-do-cuidador-abrir-pelo-botão-sem-o-celular)
 - [Parte D — Juntando tudo](#parte-d--juntando-tudo)
   - [D1. Linha do tempo de uma dose](#d1-linha-do-tempo-de-uma-dose)
@@ -136,7 +136,7 @@ na terceira idade.
 |---|---|
 | **Dose certa, na hora certa** | Três compartimentos com porta motorizada; no horário, alarme sonoro, luz e mensagem colorida na tela; um botão abre somente o compartimento da dose. |
 | **Família informada** | Aviso pelo Telegram quando a dose não é retirada (primeiro aviso aos 6 min e alerta final aos 12 min). |
-| **Configuração sem técnico** | Página no celular para cadastrar remédios, horários e familiares, com abastecimento guiado e leitura da caixa do remédio por foto. |
+| **Configuração sem técnico** | Página no celular para cadastrar remédios, horários e familiares, com abastecimento guiado e cadastro pelo código de barras da caixa. |
 | **Funciona mesmo sem internet** | Rede própria do dispenser quando o Wi-Fi da casa falha, novas tentativas automáticas e bateria para faltas de energia. |
 | **Informação para a consulta** | Histórico de doses e taxa de adesão por medicamento, com exportação em planilha. |
 
@@ -149,7 +149,7 @@ validado em bancada ou com usuários, em vez de fases longas e sequenciais.
 |---|---|---|
 | **1. Núcleo do dispenser** | Alarmes, portas, botão, tela, página no celular, avisos pelo Telegram, histórico e adesão | Concluído (protótipo funcional) |
 | **2. Robustez** | Montagem autônoma (fonte e bateria), relógio DS3231 para manter a hora sem internet, tempos definitivos de uso | Sprints 1 a 3 (peça piloto em 27/11/2026) |
-| **3. IA — 1ª etapa** | Cadastro por foto ou código de barras, conferência na reposição e relatório de adesão (H3.1, H3.2, H3.6) | Leitura por foto e consulta do código de barras à lista oficial já integradas; demais itens planejados |
+| **3. IA — 1ª etapa** | Cadastro por foto ou código de barras, conferência na reposição e relatório de adesão (H3.1, H3.2, H3.6) | Cadastro pelo código de barras com a lista oficial já integrado; demais itens planejados |
 | **4. IA — 2ª etapa** | Cadastro pela receita e assistente do cuidador no Telegram (H3.4, H3.7) | Planejado |
 | **5. Acessibilidade** | Voz para o paciente (H3.11) | Planejado, depende de componente |
 | **6. Modelo próprio de IA** | Leitura de embalagens sem serviço de terceiros (H7) | Horizonte de cerca de 12 meses |
@@ -157,7 +157,7 @@ validado em bancada ou com usuários, em vez de fases longas e sequenciais.
 **Produto mínimo viável (MVP):** o incremento 1. Inclui três compartimentos com porta
 motorizada, alarme sonoro e luminoso, abertura somente do compartimento da dose pelo
 botão, página no celular para cadastro, avisos pelo Telegram e histórico de adesão. Ficam
-fora do MVP as etapas de IA (exceto a leitura da caixa por foto, já integrada), a voz para o
+fora do MVP as etapas de IA, a voz para o
 paciente e o modelo próprio de IA.
 
 ## Equipe e papéis
@@ -422,7 +422,7 @@ familiaridade com tecnologia:
 | **Aviso de sem internet** (só na rede própria) | Motivo, nome e senha da rede, "Tentar conectar novamente", "Trocar rede Wi-Fi" | — | 4 |
 | **Aviso amarelo** (só se faltar algo) | Quem ainda não recebe avisos + "Configurar agora" | — | 7 |
 | **Paciente** | Nome do paciente | Campo para editar o nome | 7 |
-| **Remédios 1, 2 e 3** | Número, cor, remédio e horários | Nome, "Foto da caixa do remédio", horários (até 6), dica de onde colocar, "Esvaziar" | 7, 14, 20 |
+| **Remédios 1, 2 e 3** | Número, cor, remédio e horários | Nome, "Ler código de barras", "Digitar o código de barras", horários (até 6), dica de onde colocar, "Esvaziar" | 7, 14, 20 |
 | **Cuidador(a)** | Nome | Nome e celular | 7, 8 |
 | **Familiares** | Nome de cada um | Nome, celular, "Remover"; "+ Cadastrar familiar" no fim | 7 |
 | **Salvar alterações** | Botão azul grande | — | 8 |
@@ -431,7 +431,6 @@ familiaridade com tecnologia:
 | **Trocar rede Wi-Fi** | Link (pede confirmação) | — | 4 |
 | **Relógio DS3231** (rodapé) | "conectado" ou "não instalado" | — | 19 |
 | **Avisos pelo Telegram** | "configurado ✓" ou "falta configurar" | Token, "Buscar IDs", ID de cada pessoa, teste | 15 |
-| **Leitura da caixa por foto** | "configurada ✓" ou "falta a chave da IA" | Chave da API do Gemini, nome do modelo e como obter a chave | 20 |
 
 ---
 
@@ -1075,7 +1074,8 @@ As **rotas** ligam um endereço a uma função:
   server.on("/esvaziar", HTTP_POST, handleEsvaziar);
   server.on("/testar-mensagens", HTTP_POST, handleTestarMensagens);
   server.on("/telegram-ids", HTTP_POST, handleTelegramIds);
-  server.on("/ler-caixa", HTTP_POST, handleLerCaixa, receberFoto);
+  server.on("/leitor.js", handleLeitorJs);
+  server.on("/consultar-codigo", HTTP_POST, handleConsultarCodigo);
   server.on("/historico.csv", handleHistoricoCSV);
   server.on("/limpar-historico", HTTP_POST, handleLimparHistorico);
   server.on("/trocar-wifi", handleTrocarWifi);
@@ -1094,7 +1094,7 @@ As **rotas** ligam um endereço a uma função:
 | `/abrir-manual` | Abre um compartimento para reposição (Passo 14) |
 | `/esvaziar` | Esvazia um compartimento (Passo 14) |
 | `/testar-mensagens`, `/telegram-ids` | Telegram (Passo 15) |
-| `/ler-caixa` | Leitura da caixa do remédio por foto (Passo 20) |
+| `/leitor.js`, `/consultar-codigo` | Leitor de código de barras da página e consulta à lista oficial (Passo 20) |
 | `/tentar-wifi`, `/acertar-hora`, `/trocar-wifi` | Rede própria: nova tentativa, hora pelo celular e troca de rede (Passo 4) |
 | `/historico.csv`, `/limpar-historico` | Histórico (Passo 16) |
 
@@ -2138,129 +2138,72 @@ As mensagens do Serial Monitor de cada situação estão na [E9](#e9-módulo-de-
 
 ---
 
-## Passo 20 — Leitura da caixa do remédio por foto (IA)
+## Passo 20 — Cadastro pelo código de barras
 
-**O que faz:** no cadastro, o botão **"Foto da caixa do remédio"** abre a câmera do
-celular. A página procura na foto o **código de barras** da embalagem (EAN-13) e o
+**O que faz:** no cadastro, o botão **"📷 Ler código de barras"** abre a câmera do
+celular. A própria página lê na foto o **código de barras** da caixa (EAN-13), e o
 dispenser consulta esse código na **lista oficial de medicamentos da CMED/Anvisa**, que
-devolve nome, apresentação, princípio ativo, laboratório, tarja e quantidade de
-unidades da caixa. Quando o código não aparece ou não é lido, a foto segue para um
-modelo de inteligência artificial com visão (Gemini, do Google), que lê o **nome** e a
-**concentração** impressos na embalagem. O botão **"Digitar o código de barras"**
-permite informar os 13 números à mão. Em todos os casos, o cuidador confere o
-resultado e só então o nome é preenchido.
-É a primeira funcionalidade da [Parte H](#parte-h--evolução-do-produto-funcionalidades-com-inteligência-artificial)
+devolve nome, apresentação, princípio ativo, laboratório, tarja e quantidade de unidades
+da caixa. O botão **"🔢 Digitar o código de barras"** permite informar os 13 números à
+mão. O cuidador confere o resultado e só então o nome é preenchido. É a primeira
+funcionalidade da [Parte H](#parte-h--evolução-do-produto-funcionalidades-com-inteligência-artificial)
 (H3.1).
 
 **Por que existe:** digitar o nome do remédio é a etapa do cadastro mais sujeita a
-erro, especialmente a concentração (50 mg × 100 mg). A leitura da própria embalagem
-reduz esse risco e simplifica o uso.
+erro, especialmente a concentração (50 mg × 100 mg). O código de barras identifica a
+apresentação exata da caixa, e a lista oficial traz o nome e a dose corretos.
 
 **Fluxo completo:**
 
 | Etapa | Onde acontece | O que acontece |
 |---|---|---|
 | 1. Foto | Celular | A câmera abre pelo campo de arquivo da página, que funciona na página local (sem HTTPS). |
-| 2. Código de barras | Celular | O leitor de códigos do navegador (`BarcodeDetector`) procura o EAN-13 na foto, sem enviar a imagem a terceiros. |
-| 3. Lista oficial | Celular → ESP32 → base CMED | Com o código lido, o ESP32 baixa a parte da lista da CMED que contém o código e devolve os dados da apresentação. |
-| 4. Redução | Celular | Sem código lido ou fora da lista, a página reduz a foto para até 900 px e ~100 KB (JPEG), pois a memória do ESP32 é limitada. |
-| 5. Envio | Celular → ESP32 | A foto chega em pedaços (`receberFoto`) e é guardada numa única área de memória. |
-| 6. Consulta à IA | ESP32 → IA | O ESP32 monta o pedido e envia a foto em base64, convertida durante o envio. |
-| 7. Resposta | IA → ESP32 → Celular | O modelo devolve um JSON com nome, concentração e código. Se o código lido pela IA estiver na lista oficial, os dados da lista têm prioridade. |
-| 8. Confirmação | Celular | A página mostra o que foi lido e a origem dos dados; o nome só é preenchido se o cuidador confirmar. |
+| 2. Leitura do código | Celular | A página procura o EAN-13 na foto: com o leitor do navegador (`BarcodeDetector`, no Chrome do Android) ou com o leitor `/leitor.js`, gravado no ESP32 (Safari do iPhone e demais navegadores; ZXING PROJECT, 2026). A foto não sai do celular. |
+| 3. Lista oficial | Celular → ESP32 → base CMED | O ESP32 recebe só os 13 números, baixa a parte da lista da CMED que contém o código e devolve os dados da apresentação. |
+| 4. Confirmação | Celular | A página mostra os dados da lista; o nome só é preenchido se o cuidador confirmar. |
 
-**1. O botão na página (reduzindo a foto no celular)**
+**1. Os botões na página**
 
 ```cpp
-  html += "<button type='button' class='secundario' onclick='tirarFoto(" + String(c) + ")'>&#128247; Foto da caixa do remédio</button>";
+  html += "<button type='button' class='secundario' onclick='lerCodigo(" + String(c) + ")'>&#128247; Ler código de barras</button>";
   html += "<button type='button' class='secundario' onclick='digitarCodigo(" + String(c) + ")'>&#128290; Digitar o código de barras</button>";
-  html += "<input type='file' accept='image/*' capture='environment' id='foto-" + String(c) + "' style='display:none' onchange='enviarFoto(" + String(c) + ", this)'>";
-```
-
-```cpp
-  html += "function comprimirFoto(img, lado, qualidade, pronto) {";
-  html += "  var escala = Math.min(1, lado / Math.max(img.width, img.height));";
-  ...
-  html += "  tela.toBlob(function(foto) {";
-  html += "    if (foto.size > 100000 && lado > 500) { comprimirFoto(img, Math.round(lado * 0.8), 0.6, pronto); return; }";
-  html += "    pronto(foto);";
-  html += "  }, 'image/jpeg', qualidade);";
+  html += "<input type='file' accept='image/*' capture='environment' id='foto-" + String(c) + "' style='display:none' onchange='lerFoto(" + String(c) + ", this)'>";
 ```
 
 - `capture='environment'`: abre direto a câmera traseira do celular.
-- `comprimirFoto`: redesenha a foto menor num `canvas`; se ainda passar de 100 KB,
-  tenta de novo com 80 % do tamanho.
+- A câmera ao vivo (vídeo dentro da página) só é liberada pelos navegadores em páginas
+  seguras (HTTPS). A página do dispenser é local (HTTP); por isso a leitura usa uma foto.
 
-**2. Recebendo a foto no ESP32, em pedaços**
+**2. A leitura do código no celular**
 
 ```cpp
-void receberFoto() {
-  HTTPUpload& envio = server.upload();
-  if (envio.status == UPLOAD_FILE_START) {
-    descartarFoto();
-    fotoRecusada = false;
-  } else if (envio.status == UPLOAD_FILE_WRITE) {
-    ...
-    uint8_t* maior = (uint8_t*)realloc(fotoRecebida, fotoTamanho + envio.currentSize);
-    ...
-    memcpy(fotoRecebida + fotoTamanho, envio.buf, envio.currentSize);
-    fotoTamanho += envio.currentSize;
-  }
+  html += "    if (!('BarcodeDetector' in window)) { semDetector(); return; }";
+  html += "    try {";
+  html += "      new BarcodeDetector({formats: ['ean_13']}).detect(img).then(function(lidos) {";
+  html += "        if (!lidos.length) { semDetector(); return; }";
+  html += "        status.textContent = 'Código ' + lidos[0].rawValue + ' lido. Consultando a lista oficial...';";
+  html += "        consultarCodigo(c, lidos[0].rawValue, status);";
+```
+
+- `BarcodeDetector`: leitor de códigos do próprio navegador (Chrome do Android).
+- `semDetector`: nos navegadores sem esse leitor, como o Safari do iPhone, a página carrega
+  `/leitor.js` e lê o código na foto reduzida para até 1600 px. O leitor tenta a foto em
+  vários ângulos (0°, 90°, ±15°, ±30°, ±45°, ±60°), para códigos inclinados ou em pé.
+
+O leitor `/leitor.js` usa somente a parte de EAN-13 da biblioteca de código aberto **ZXing**
+(licença Apache-2.0). O programa `tools/leitor/gerar.py` gera o arquivo compactado
+`src/leitor_js.h` (cerca de 14 KB), gravado junto com o programa; o ESP32 o entrega já
+compactado:
+
+```cpp
+void handleLeitorJs() {
+  server.sendHeader("Content-Encoding", "gzip");
+  server.sendHeader("Cache-Control", "max-age=86400");
+  server.send_P(200, "application/javascript", (const char*)LEITOR_JS_GZ, LEITOR_JS_GZ_TAM);
 }
 ```
 
-- A foto nunca é copiada duas vezes: o ESP32 tem pouco mais de 300 KB de memória de
-  trabalho, e parte dela já é usada pelo Wi-Fi e pela conexão segura.
-
-**3. O pedido à IA**
-
-O pedido segue a API do Gemini, método `generateContent` (GOOGLE, 2026a). A classe `CorpoPedidoIA`
-envia, em sequência, o início do JSON, a foto convertida em base64 no momento do envio
-e o fim do JSON, que traz as instruções e o formato da resposta:
-
-```cpp
-const char* PEDIDO_IA_INICIO =
-    "{\"contents\":[{\"parts\":[{\"inline_data\":{\"mime_type\":\"image/jpeg\",\"data\":\"";
-```
-
-```cpp
-  String endereco = "https://generativelanguage.googleapis.com/v1beta/models/" + modeloIA + ":generateContent";
-  if (http.begin(cliente, endereco)) {
-    http.addHeader("Content-Type", "application/json");
-    http.addHeader("x-goog-api-key", chaveIA);
-```
-
-| Parâmetro | Função |
-|---|---|
-| `modeloIA` | Modelo do Gemini com visão; o padrão é `gemini-3.5-flash`, e o nome pode ser trocado na página sem gravar o programa de novo. |
-| `inline_data` | A foto da embalagem, em JPEG codificado em base64. |
-| `responseMimeType` e `responseSchema` | Obrigam a resposta a vir em JSON com os campos `nome`, `concentracao`, `codigo_barras` e `legivel`. |
-| `x-goog-api-key` | Chave de acesso criada no Google AI Studio. |
-
-As instruções enviadas junto com a foto pedem ao modelo que **transcreva exatamente o
-que está impresso** e que **não deduza o nome a partir do código de barras**. Se o nome
-não estiver legível, o campo volta vazio e `legivel` volta como falso.
-
-**4. Conferindo a resposta**
-
-```cpp
-  if (!(leitura["legivel"] | false) || nome == "") {
-    if (codigoBarras != "") {
-      responderLeitura("Código de barras lido (" + codigoBarras + "), mas o nome do remédio não aparece na foto. "
-                       "Fotografe a frente da caixa, onde o nome está escrito.");
-    } else {
-      responderLeitura("Não foi possível ler o nome do remédio. Tente uma foto mais próxima, com boa luz.");
-    }
-    return;
-  }
-```
-
-Antes dessa conferência, se a IA tiver lido um código de barras válido, o ESP32 o
-consulta na lista oficial (item 5); encontrado o código, a resposta usa os dados da
-lista. A mensagem acima aparece apenas quando o código lido não consta da lista e o
-nome não está visível na foto.
-
-**5. Consulta do código de barras na lista oficial (CMED/Anvisa)**
+**3. A consulta na lista oficial (CMED/Anvisa)**
 
 O código de barras EAN-13 impresso na caixa é apenas uma **chave de identificação**: os
 13 números não descrevem o medicamento. O significado vem da **lista de preços de
@@ -2323,78 +2266,40 @@ int consultarBaseMedicamentos(const String& ean, InfoMedicamento& info) {
 - Retorno: `1` encontrado, `0` fora da lista, `-1` sem internet ou falha na consulta.
 
 A rota `/consultar-codigo` recebe o código lido pela página ou digitado pelo cuidador e
-responde com os dados da lista. A mesma consulta é feita pela rota `/ler-caixa` quando a
-IA lê um código na foto.
-
-*Na página.* A função `enviarFoto` tenta primeiro o leitor de códigos do navegador:
-
-```cpp
-  html += "      new BarcodeDetector({formats: ['ean_13']}).detect(img).then(function(lidos) {";
-  html += "        if (!lidos.length) { semCodigo(); return; }";
-  html += "        status.textContent = 'Código ' + lidos[0].rawValue + ' lido. Consultando a lista oficial...';";
-  html += "        consultarCodigo(c, lidos[0].rawValue, status, TEM_CHAVE_IA ? semCodigo : null);";
-```
-
-- `BarcodeDetector`: leitor de códigos do próprio navegador, disponível no Chrome para
-  Android. Onde ele não existe, a foto segue para a IA, e o botão "Digitar o código de
-  barras" continua disponível.
-- `semCodigo`: envia a foto à IA quando há chave cadastrada; sem chave, pede outra foto
-  ou a digitação do código.
-- A confirmação mostra produto, apresentação, princípio ativo, laboratório, tarja,
-  unidades na caixa e código, com o nome sugerido para o cadastro.
+responde com os dados da lista.
 
 A lista oficial **não traz posologia** (doses e intervalos): os horários continuam
 definidos pela receita médica e cadastrados pelo cuidador. A posologia usual da bula é
 tratada como informação de apoio na Parte H (H3.3 e H3.10).
 
-**6. A chave da IA**
-
-A chave de acesso do Gemini é criada gratuitamente no **Google AI Studio**
-(aistudio.google.com, opção "Get API key") e cadastrada no quadro **"Leitura da caixa
-por foto"**, no fim da página, do mesmo jeito que o token do Telegram (Passo 15): fica
-na memória do dispenser e nunca é mostrada na página. No mesmo quadro fica o nome do
-modelo usado.
+**4. Mensagens e ensaios**
 
 | Mensagem na página | Significado |
 |---|---|
+| "Não foi possível ler o código de barras..." | Código não encontrado na foto: fotografar de novo a 10–15 cm, com boa luz e o código inteiro, ou digitar os números. |
 | "Código inválido. Confira os 13 números..." | O código digitado não tem 13 números ou o dígito verificador não confere. |
-| "O código ... não está na lista oficial de medicamentos" | Código válido, mas ausente da lista da CMED (por exemplo, suplemento ou produto sem preço regulado). |
+| "O código ... não está na lista oficial de medicamentos" | Código válido, mas ausente da lista da CMED (por exemplo, suplemento ou produto sem preço regulado): digitar o nome do remédio. |
 | "Não foi possível consultar a lista oficial agora..." | Falha momentânea na consulta; basta repetir. |
-| "Não foi possível ler o código de barras na foto..." | Código não encontrado na foto e chave da IA não cadastrada; tirar outra foto, mais perto do código, ou digitar os números. |
-| "Cadastre antes a chave da IA..." | A chave ainda não foi salva. |
-| "Sem internet: a leitura por foto precisa de conexão..." | O dispenser está sem internet (por exemplo, na rede própria). |
-| "Chave da IA recusada..." | Chave inválida ou revogada. |
-| "Modelo de IA não encontrado..." | O nome do modelo não existe mais; conferir no Google AI Studio e corrigir no quadro. |
-| "Limite de uso da IA atingido por agora..." | Limite da camada gratuita alcançado; basta tentar mais tarde. |
-| "O serviço de IA está ocupado..." | Instabilidade momentânea; basta repetir. |
-| "Código de barras lido (...), mas o nome do remédio não aparece na foto." | Fotografar a frente da caixa. |
+| "Sem internet: a consulta à lista oficial..." | O dispenser está sem internet (por exemplo, na rede própria). |
+| "Não foi possível carregar o leitor..." | O celular não recebeu `/leitor.js`; recarregar a página ou digitar o código. |
 
-**Custo de uso:** a consulta à lista oficial não tem custo: a base fica no
-repositório público do projeto e cada consulta baixa poucos KB. A leitura por IA usa a **camada gratuita** da API do Gemini, que não exige
-cartão de crédito e tem limites de pedidos por minuto e por dia (GOOGLE, 2026b). Como a
-leitura acontece só no cadastro e na troca de remédio, algumas vezes por mês, o uso fica
-muito abaixo desses limites e o custo é zero.
+**Custo de uso:** zero. A base fica no repositório público do projeto, e cada consulta
+baixa poucos KB.
 
-**Privacidade:** quando o código de barras é lido no celular, a foto não sai do
-aparelho; só os 13 números são consultados. Na leitura por IA, apenas a foto da embalagem é enviada; o nome do paciente e os horários
-não saem do dispenser (princípio de [H1](#h1-princípios-de-projeto)). Nos termos da
-camada gratuita, o conteúdo enviado pode ser usado pelo Google para melhorar seus
-produtos (GOOGLE, 2026b). Por isso a foto deve mostrar só a embalagem, sem receitas,
-nomes ou documentos. Numa versão comercial, a camada paga, cujo conteúdo não é usado
-dessa forma, ou um modelo próprio (H7) evitam essa limitação.
-
-**Ensaios da leitura por foto:**
+**Privacidade:** a foto não sai do celular; o dispenser recebe só os 13 números do código.
+O nome do paciente e os horários não são enviados a terceiros (princípio de
+[H1](#h1-princípios-de-projeto)).
 
 | Ensaio | Resultado esperado |
 |---|---|
-| Foto da frente da caixa, com boa luz | Nome e concentração corretos; campo preenchido só após confirmar |
-| Toque em "Cancelar" na confirmação | Campo permanece como estava ("Leitura descartada") |
-| Foto do código de barras de um medicamento da lista | Dados da lista oficial (produto, apresentação, princípio ativo, laboratório, tarja, unidades) e nome sugerido, para confirmação |
-| Código digitado corretamente | Mesmo resultado da foto do código |
+| Foto do código de barras no Chrome do Android | Dados da lista oficial e nome sugerido, para confirmação |
+| Foto do código de barras no Safari do iPhone | Mesmo resultado, com o leitor `/leitor.js` |
+| Código inclinado ou de cabeça para baixo na foto | Leitura normal |
+| Foto longe, escura ou sem o código | Pedido de nova foto ou de digitação; nenhum nome preenchido |
+| Código digitado corretamente | Mesmo resultado da foto |
 | Código digitado com um número trocado | Mensagem de código inválido; nenhuma consulta feita |
 | Código de produto fora da lista | Mensagem de código ausente da lista oficial |
-| Foto desfocada ou escura | Mensagem pedindo nova foto; nenhum nome preenchido |
-| Chave da IA não cadastrada | Leitura do código de barras normal; sem código legível, pedido de nova foto ou de digitação |
+| Toque em "Cancelar" na confirmação | Campo permanece como estava ("Leitura descartada") |
 | Dispenser sem internet | Mensagem de falta de internet |
 
 ## Passo 21 — Modo do cuidador: abrir pelo botão, sem o celular
@@ -3285,12 +3190,11 @@ nuvem**, que concentra as chamadas aos modelos e às bases oficiais:
 - **ESP32:** continua responsável pela rotina do dispenser. Recebe do serviço apenas
   cadastros já confirmados pelo cuidador e envia o histórico para os relatórios.
 
-No protótipo, a leitura da caixa por foto (H3.1, [Passo 20](#passo-20--leitura-da-caixa-do-remédio-por-foto-ia))
-já funciona sem o serviço intermediário: o ESP32 consulta o modelo de IA diretamente,
-com a chave guardada na memória do dispenser, como o token do Telegram. A consulta do
-código de barras à lista da CMED também já funciona: a base convertida fica publicada
-no repositório do projeto e o ESP32 baixa apenas a parte do código lido. Na versão
-comercial, as duas chamadas passam a ser feitas pelo serviço na nuvem.
+No protótipo, o cadastro pelo código de barras (H3.1, [Passo 20](#passo-20--cadastro-pelo-código-de-barras))
+já funciona sem o serviço intermediário: o celular lê o código na foto e o ESP32 consulta
+a lista da CMED, publicada no repositório do projeto, baixando apenas a parte do código
+lido. Na versão comercial, a base passa a ser servida pelo serviço na nuvem, que também
+concentra as chamadas aos modelos de IA das demais funcionalidades.
 
 ## H3. Funcionalidades propostas
 
@@ -3299,12 +3203,12 @@ comercial, as duas chamadas passam a ser feitas pelo serviço na nuvem.
 | Item | Descrição |
 |---|---|
 | **Proposta** | No cadastro, em vez de digitar, o cuidador fotografa o código de barras da caixa ou digita os seus 13 números. O sistema consulta a base oficial e traz nome, apresentação, princípio ativo, laboratório, tarja, registro e quantidade de unidades; o cuidador confere e confirma. |
-| **Atuação da IA** | Quando o código de barras não é lido (embalagem danificada, medicamento manipulado, produto fora da lista), um modelo de visão lê o texto da caixa e extrai nome e concentração. Na evolução, a mesma leitura extrai **lote e validade**. |
+| **Atuação da IA** | Etapa futura, no serviço na nuvem: quando o código de barras não existe ou não está na lista (embalagem danificada, medicamento manipulado), um modelo de visão lê o texto da caixa e extrai nome, concentração, **lote e validade**. |
 | **Fontes de dados** | **Código EAN-13**: chave de identificação da apresentação, que não descreve o medicamento por si só; o significado vem da lista de preços da CMED, que associa cada código à apresentação registrada (ANVISA, 2026b). **Código DataMatrix (IUM)**: quando presente, traz GTIN, registro, número de série, lote e validade (ANVISA, 2017); ainda não está em todas as embalagens. **QR code da bula digital**: leva à bula do medicamento (ANVISA, 2024). |
 | **Posologia** | Nenhuma dessas fontes traz a posologia do paciente, que vem da receita médica. A posologia usual da bula entra apenas como informação de apoio (H3.3 e H3.10). |
 | **Impacto para o usuário** | Elimina erros de digitação e de concentração no cadastro e torna o uso mais simples para cuidadores com pouca familiaridade com tecnologia. |
-| **Impacto no projeto** | Sem hardware novo. Página: leitura do código na foto, digitação do código e tela de confirmação. Dados: conversão mensal da lista da CMED (`tools/cmed_para_json.py`). Serviço na nuvem: hospedagem da base e chamada ao modelo de visão. |
-| **Situação** | Implementado no protótipo ([Passo 20](#passo-20--leitura-da-caixa-do-remédio-por-foto-ia)): leitura do código na foto ou por digitação, consulta à lista oficial e leitura por IA quando o código não é encontrado. Etapa seguinte: leitura do DataMatrix (lote e validade) e acesso à bula digital pelo QR code. |
+| **Impacto no projeto** | Sem hardware novo. Página: leitura do código na foto, digitação do código e tela de confirmação. Dados: conversão mensal da lista da CMED (`tools/cmed_para_json.py`). Serviço na nuvem (etapa futura): hospedagem da base e chamada ao modelo de visão. |
+| **Situação** | Implementado no protótipo ([Passo 20](#passo-20--cadastro-pelo-código-de-barras)): leitura do código pela câmera do celular (Android e iPhone) ou por digitação e consulta à lista oficial. Etapas seguintes: leitura do DataMatrix (lote e validade), acesso à bula digital pelo QR code e leitura do texto da caixa por IA. |
 
 ### H3.2 Conferência na reposição
 
@@ -3469,7 +3373,7 @@ o bastante para rodar no ESP32.
 # Referências
 
 Fontes consultadas para os preços, as especificações dos componentes, os parâmetros
-de custo utilizados nas Partes F e G, a documentação do serviço de IA usado no Passo 20
+de custo utilizados nas Partes F e G, a biblioteca do leitor de código de barras do Passo 20
 e as bases oficiais e normas citadas na Parte H (consulta em setembro e outubro de 2026).
 
 <div class="referencias" markdown="1">
@@ -3515,10 +3419,6 @@ FERMARC. **Placa de circuito perfurada face simples, 7 × 9 cm**. Disponível em
 FERRO DE SOLDA PROFISSIONAL. **Ferros de solda com controle de temperatura**. Disponível em: <https://ferrodesoldaprofissional.com.br/ferro-de-solda/>. Acesso em: 27 set. 2026.
 
 GALPÃO DAS MÁQUINAS. **Como calcular o custo por peça na impressão 3D**. Disponível em: <https://galpaodasmaquinas.com.br/blog/plastico/custo-peca-impressora-3d/>. Acesso em: 27 set. 2026.
-
-GOOGLE. **Gemini API: generating content**. Mountain View: Google, 2026a. Disponível em: <https://ai.google.dev/api/generate-content>. Acesso em: 29 set. 2026.
-
-GOOGLE. **Gemini API: billing**. Mountain View: Google, 2026b. Disponível em: <https://ai.google.dev/gemini-api/docs/billing>. Acesso em: 29 set. 2026.
 
 HESTORE. **LX2-BUPS-5V: boost charging module, UPS function, 2 × 18650, 15 W, 5 V, 3 A, USB-C**. Disponível em: <https://www.hestore.eu/en/prod_10048959.html>. Acesso em: 28 set. 2026.
 
@@ -3585,5 +3485,7 @@ VAMUINO. **Buzzer ativo 5 V**. Disponível em: <https://lojinha.vamuino.com.br/p
 WEMAK. **Filamento PLA premium 1 kg Voolt3D**. Disponível em: <https://www.wemak.com.br/produtos/filamento-3d-pla-1kg-impressao-3d-premium-1-75mm-voolt3d-cor-preto/>. Acesso em: 27 set. 2026.
 
 WJ COMPONENTES. **Micro servo SG90 9 g**. Disponível em: <https://www.wjcomponentes.com.br/micro-servo-sg90-9g/>. Acesso em: 27 set. 2026.
+
+ZXING PROJECT. **ZXing ("Zebra Crossing") barcode scanning library for JavaScript**: @zxing/library 0.21.3. Licença Apache-2.0. [S. l.], 2026. Disponível em: <https://github.com/zxing-js/library>. Acesso em: 1 nov. 2026.
 
 </div>
