@@ -7,7 +7,7 @@ Uso:
 
 A lista oficial e publicada todo mes pela CMED no portal da Anvisa:
 https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos
-(arquivo "Lista de precos de medicamentos - Preco Fabrica", em XLS).
+(arquivo "Lista de precos de medicamentos" PMC ou PF, em XLS/XLSX).
 
 Saida (padrao: dados/cmed/):
     000.json ... 999.json   uma parte da base para cada grupo de codigos
@@ -65,19 +65,21 @@ def normalizar(texto):
 
 
 def ler_planilha(caminho):
-    """Le a lista da CMED. As primeiras linhas do arquivo oficial sao titulos:
-    o cabecalho e a primeira linha que contem SUBSTANCIA, PRODUTO e EAN 1."""
+    """Le a lista da CMED. O arquivo oficial tem uma aba de textos ("Cabecalho") e a aba
+    da lista; nas duas, as primeiras linhas sao titulos. O cabecalho da tabela e a
+    primeira linha que contem SUBSTANCIA, PRODUTO e EAN 1, em qualquer aba."""
     ext = os.path.splitext(caminho)[1].lower()
     if ext == '.csv':
-        bruto = pd.read_csv(caminho, sep=None, engine='python', header=None, dtype=str, encoding_errors='replace')
+        abas = {'csv': pd.read_csv(caminho, sep=None, engine='python', header=None, dtype=str, encoding_errors='replace')}
     else:
-        bruto = pd.read_excel(caminho, header=None, dtype=str)
-    for i in range(min(len(bruto), 100)):
-        celulas = [normalizar(v) for v in bruto.iloc[i].tolist() if isinstance(v, str)]
-        if 'SUBSTANCIA' in celulas and 'PRODUTO' in celulas and any(c.startswith('EAN 1') or c == 'EAN1' for c in celulas):
-            tabela = bruto.iloc[i + 1:].copy()
-            tabela.columns = [normalizar(v) if isinstance(v, str) else f'_{k}' for k, v in enumerate(bruto.iloc[i].tolist())]
-            return tabela
+        abas = pd.read_excel(caminho, header=None, dtype=str, sheet_name=None)
+    for bruto in abas.values():
+        for i in range(min(len(bruto), 100)):
+            celulas = [normalizar(v) for v in bruto.iloc[i].tolist() if isinstance(v, str)]
+            if 'SUBSTANCIA' in celulas and 'PRODUTO' in celulas and any(c.startswith('EAN 1') or c == 'EAN1' for c in celulas):
+                tabela = bruto.iloc[i + 1:].copy()
+                tabela.columns = [normalizar(v) if isinstance(v, str) else f'_{k}' for k, v in enumerate(bruto.iloc[i].tolist())]
+                return tabela
     raise SystemExit('Cabeçalho da lista da CMED não encontrado (colunas SUBSTÂNCIA, PRODUTO e EAN 1).')
 
 
@@ -116,7 +118,16 @@ def capitalizar(texto):
     return ' '.join(saida)
 
 
+RE_ASSOCIACAO = re.compile(r'\(\s*(\d+(?:[.,]\d+)?(?:\s*\+\s*\d+(?:[.,]\d+)?)+)\s*\)\s*(' + UNIDADES + r')', re.I)
+
+
 def concentracao(apresentacao):
+    # associacao escrita como "(5 + 100) MG": a unidade vale para todos os numeros
+    m = RE_ASSOCIACAO.search(apresentacao)
+    if m:
+        numeros = re.sub(r'\s*\+\s*', ' + ', m.group(1).strip())
+        unidade = re.sub(r'\s+', '', m.group(2)).lower().replace('ui', 'UI').replace('meq', 'mEq')
+        return f'{numeros} {unidade}'
     m = RE_CONCENTRACAO.search(apresentacao)
     if not m:
         return ''
@@ -140,7 +151,8 @@ def nome_sugerido(produto, apresentacao):
         limite = 39 - len(conc)
         if len(nome) > limite:
             nome = nome[:limite].rsplit(' ', 1)[0] if ' ' in nome[:limite] else nome[:limite]
-        nome = f'{nome.rstrip()} {conc}'
+        nome = re.sub(r'(\s+(\+|/|-|de|da|do|das|dos|e|com))+\s*$', '', nome.rstrip(), flags=re.I)  # sem conector solto no fim
+        nome = f'{nome} {conc}'
     return nome[:40]
 
 

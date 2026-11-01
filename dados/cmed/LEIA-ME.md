@@ -6,7 +6,7 @@ código lido (ver o Passo 20 do guia do produto).
 
 ## Atualização mensal
 
-1. Baixe a planilha "Preço Fábrica" (XLS) mais recente em
+1. Baixe a planilha mais recente da lista de preços (PMC ou PF, XLS/XLSX) em
    <https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos>.
 2. Na raiz do projeto, execute:
 
