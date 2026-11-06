@@ -391,14 +391,17 @@ pagina(f"""
 {faixa(12, 'Quem recebe cada aviso', 'As mensagens enviadas pelo Zelo+ e quando cada uma chega.', LARANJA)}
 <table>
   <tr><th>Situação</th><th style="width:30mm">Quando</th><th style="width:22mm">Cuidador</th><th style="width:22mm">Familiares</th></tr>
+  <tr><td><b>O paciente tomou a dose no horário</b></td><td>Na hora em que abrir</td><td style="color:{VERDE};font-weight:700">Recebe*</td><td>Se escolhido*</td></tr>
   <tr><td><b>O paciente não abriu o compartimento</b></td><td>6 min após o alarme</td><td style="color:{VERDE};font-weight:700">Recebe</td><td style="color:#94a3b8">—</td></tr>
   <tr><td><b>O paciente não foi até o dispenser</b> (o alarme para)</td><td>12 min após o alarme</td><td style="color:{VERDE};font-weight:700">Recebe</td><td style="color:{VERDE};font-weight:700">Recebem</td></tr>
   <tr><td><b>O paciente chegou depois do aviso</b></td><td>Na hora em que abrir</td><td style="color:{VERDE};font-weight:700">Recebe</td><td>Se foram avisados</td></tr>
   <tr><td><b>Abertura pelo botão no modo do cuidador</b></td><td>Na hora</td><td style="color:{VERDE};font-weight:700">Recebe</td><td style="color:#94a3b8">—</td></tr>
 </table>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-top:6mm">
+<p style="font-size:9pt;color:#475569;margin-top:2mm">* Escolha na página, em <b>Avisos pelo Telegram › Avisar quando a dose for tomada no horário</b>: não avisar, só o cuidador (padrão) ou cuidador e familiares.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-top:4mm">
   <div class="chat">
     <div style="font-size:9pt;color:#1e3a8a;font-weight:700;display:flex;align-items:center;gap:2mm">{icone('enviar', '#1e3a8a', 16)} Exemplo de conversa com o bot</div>
+    <div class="bolha"><div class="q">Zelo+</div>Zelo+: Paulo Silva tomou no horário a dose de Losartana 50 mg das 08:00 (às 08:02).<small>08:02</small></div>
     <div class="bolha"><div class="q">Zelo+</div>Zelo+: Paciente “Paulo Silva” não acessou o medicamento das “12:00” horas (Metformina 850 mg).<small>12:06</small></div>
     <div class="bolha"><div class="q">Zelo+</div>Zelo+: Paulo Silva acessou o dispenser às 12:08 (dose de Metformina 850 mg das 12:00).<small>12:08</small></div>
     <div class="bolha"><div class="q">Zelo+</div>Zelo+: Paciente “Paulo Silva” não foi até o dispenser no horário das “20:00” (Losartana 50 mg).<small>20:12</small></div>

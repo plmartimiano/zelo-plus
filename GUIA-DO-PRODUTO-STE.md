@@ -9,7 +9,7 @@
 
 *Imagem de referência — conceito visual do produto final (ilustrativo).*
 
-**Versão do programa do dispenser: 01/11/2026-3**
+**Versão do programa do dispenser: 06/11/2026**
 <!-- /so-github -->
 
 ---
@@ -194,7 +194,7 @@ na terceira idade.
 | Objetivo de valor | Como o Zelo+ entrega o objetivo |
 |---|---|
 | **Dose certa, na hora certa** | O dispenser tem três compartimentos. Um servo move cada tampa do compartimento. No horário, o buzzer toca, a luz de alerta pisca e o visor mostra uma mensagem colorida. O botão abre somente o compartimento da dose. |
-| **Família informada** | O dispenser envia um aviso pelo Telegram quando o paciente não retira a dose. O primeiro aviso ocorre aos 6 min. O alerta final ocorre aos 12 min. |
+| **Família informada** | O dispenser envia uma confirmação pelo Telegram quando o paciente toma a dose no horário. Também envia um aviso quando o paciente não retira a dose. O primeiro aviso ocorre aos 6 min. O alerta final ocorre aos 12 min. |
 | **Configuração sem técnico** | O cuidador usa a página do dispenser no celular. Ele cadastra remédios, horários e familiares. A página guia o abastecimento. A página também lê a caixa do remédio por foto. |
 | **Funciona sem internet** | Se o Wi-Fi da casa falhar, o dispenser cria uma rede própria. O dispenser tenta conectar de novo automaticamente. A bateria mantém o dispenser ligado na falta de energia. |
 | **Informação para a consulta** | O dispenser grava o histórico de doses. A página mostra a taxa de adesão de cada remédio. O cuidador pode exportar o histórico em planilha. |
@@ -1747,14 +1747,16 @@ void abrirParaPaciente() {
   estadoAtual = PORTA_ABERTA_ESTADO;
   portaAbertaEm = millis();
 
-  avisarAcessoAposAviso();
+  avisarAcessoDose();
 }
 ```
 
 - Antes do primeiro aviso, o registro é "tomada no horário". Depois do primeiro aviso, o
   registro é "tomada com atraso" (Passo 16).
-- Se o dispenser já avisou alguém, a função `avisarAcessoAposAviso()` envia a mensagem
-  "Paulo acessou o dispenser às 15:27". Assim, a família recebe a confirmação.
+- A função `avisarAcessoDose()` trata os dois casos. Se a dose foi tomada no horário, o
+  dispenser avisa as pessoas escolhidas na página ("Paulo tomou no horário a dose de
+  Losartana das 15:26"). Se o dispenser já avisou alguém, envia a mensagem "Paulo acessou
+  o dispenser às 15:27". Assim, a família recebe a confirmação.
 
 **Fechamento com trava de 7 s:** logo depois da abertura, o dedo do paciente pode estar no
 botão. Para evitar um fechamento por acidente, o botão funciona somente depois de 7 s. Se
@@ -1892,7 +1894,13 @@ void alertarSemAcesso() {
 |---|---|---|
 | 6 min sem acesso | Cuidador | Zelo+: Paciente "Paulo" não acessou o medicamento das "15:26" horas (Losartana). |
 | 12 min sem acesso | Cuidador e familiares | Zelo+: Paciente "Paulo" não foi até o dispenser no horário das "15:26" (Losartana e Metformina). |
+| Dose tomada no horário | As pessoas escolhidas na página | Zelo+: Paulo tomou no horário a dose de Losartana das 15:26 (às 15:28). |
 | Acesso depois de um aviso | As pessoas avisadas | Zelo+: Paulo acessou o dispenser às 15:27 (dose de Losartana das 15:26). |
+
+**Aviso de dose tomada:** o bloco **Avisos pelo Telegram** da página tem o campo
+**"Avisar quando a dose for tomada no horário"**. As opções são: não avisar, somente o
+cuidador ou o cuidador e os familiares. O padrão é somente o cuidador. A escolha fica
+gravada na memória do dispenser (`tg_tomada`).
 
 **Buscar IDs:** a função `handleTelegramIds()` pede ao Telegram as últimas mensagens do
 bot (`getUpdates`). A biblioteca **ArduinoJson** lê somente os dados necessários: o id e o

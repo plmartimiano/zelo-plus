@@ -21,7 +21,7 @@
 // Atualizar a cada alteracao do codigo.
 // Aparece no visor ao ligar, no Serial Monitor e no rodape da pagina; a capa do guia
 // do produto mostra a mesma data (tools/gerar_pdf_guia.py le esta linha).
-#define VERSAO_PROGRAMA "01/11/2026-3"
+#define VERSAO_PROGRAMA "06/11/2026"
 
 #define BUZZER_PIN 15
 #define LED_PIN 4
@@ -120,6 +120,9 @@ Medicamento medicamentos[NUM_COMPARTIMENTOS];
 Contato cuidador;
 Contato familiares[MAX_FAMILIARES];
 String tokenTelegram = ""; // token do bot, criado pelo cuidador no @BotFather
+// Aviso de dose tomada no horario: 0 = desligado, 1 = so o cuidador,
+// 2 = cuidador e familiares.
+int avisoDoseTomada = 1;
 int ultimoMinutoChecado = -1;
 
 const unsigned long TEMPO_PORTA_ABERTA = 3UL * 60UL * 1000UL;
@@ -561,13 +564,24 @@ void alertarSemAcesso() {
                   horarioDose + "” (" + nomesDose + ").");
 }
 
-// Depois de um aviso, confirma para quem foi avisado que o paciente chegou.
-void avisarAcessoAposAviso() {
+// Quando o paciente abre a dose: depois de um aviso, confirma para quem foi
+// avisado que ele chegou; no horario, avisa quem foi escolhido na pagina.
+void avisarAcessoDose() {
+  if (nivelAvisoEnviado == 0) {
+    String texto = "Zelo+: " + nomePaciente + " tomou no horário a dose de " + nomesDose +
+                   " das " + horarioDose + (horarioAgora() != "" ? " (às " + horarioAgora() + ")" : String("")) + ".";
+    if (avisoDoseTomada >= 2) {
+      enviarParaTodos(texto);
+    } else if (avisoDoseTomada == 1) {
+      enviarParaCuidador(texto);
+    }
+    return;
+  }
   String texto = "Zelo+: " + nomePaciente + " acessou o dispenser às " + horarioAgora() +
                  " (dose de " + nomesDose + " das " + horarioDose + ").";
   if (nivelAvisoEnviado >= 2) {
     enviarParaTodos(texto);
-  } else if (nivelAvisoEnviado == 1) {
+  } else {
     enviarParaCuidador(texto);
   }
   nivelAvisoEnviado = 0;
@@ -660,6 +674,7 @@ void salvarCadastro() {
   }
 
   prefsCadastro.putString("tg_token", tokenTelegram);
+  prefsCadastro.putUChar("tg_tomada", (uint8_t)avisoDoseTomada);
   salvarContato("cuid", cuidador);
   for (int i = 0; i < MAX_FAMILIARES; i++) {
     salvarContato(prefixoFamiliar(i).c_str(), familiares[i]);
@@ -694,6 +709,7 @@ void carregarCadastro() {
   }
 
   tokenTelegram = prefsCadastro.getString("tg_token", "");
+  avisoDoseTomada = constrain((int)prefsCadastro.getUChar("tg_tomada", 1), 0, 2);
   // A leitura por IA saiu do projeto: apaga a chave antiga, se houver.
   if (prefsCadastro.isKey("ia_chave")) prefsCadastro.remove("ia_chave");
   if (prefsCadastro.isKey("ia_modelo")) prefsCadastro.remove("ia_modelo");
@@ -1340,6 +1356,13 @@ String blocoTelegram(bool pendente) {
   html += "</small></span><span class='seta'></span></summary><div class='conteudo'>";
 
   html += "<p class='suave'>O Zelo+ avisa o cuidador e os familiares pelo Telegram quando o paciente não pega o remédio.</p>";
+  html += "<label>Avisar quando a dose for tomada no horário:</label>";
+  html += "<select form='cadastro' name='tg_tomada' style='width:100%;padding:8px;margin:6px 0'>";
+  const char* opcoesTomada[] = {"Não avisar", "Só o cuidador", "Cuidador e familiares"};
+  for (int i = 0; i < 3; i++) {
+    html += "<option value='" + String(i) + "'" + (avisoDoseTomada == i ? " selected" : "") + ">" + opcoesTomada[i] + "</option>";
+  }
+  html += "</select>";
   html += "<label>Token do bot:</label>";
   html += "<input type='password' form='cadastro' name='tg_token' id='tg_token' autocomplete='off' placeholder='";
   html += tokenTelegram != "" ? "(salvo &mdash; deixe em branco para manter)" : "cole aqui o token do @BotFather";
@@ -2089,6 +2112,7 @@ void handleSalvar() {
   String novoToken = server.arg("tg_token");
   novoToken.trim();
   if (novoToken != "") tokenTelegram = novoToken; // em branco = mantem o token salvo
+  if (server.hasArg("tg_tomada")) avisoDoseTomada = constrain(server.arg("tg_tomada").toInt(), 0, 2);
 
   nomePaciente = server.arg("paciente");
   nomePaciente.trim();
@@ -2176,7 +2200,7 @@ void abrirParaPaciente() {
   estadoAtual = PORTA_ABERTA_ESTADO;
   portaAbertaEm = millis();
 
-  avisarAcessoAposAviso();
+  avisarAcessoDose();
 }
 
 // ---------- MODO DO CUIDADOR (botao) ----------
