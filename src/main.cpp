@@ -21,19 +21,64 @@
 // Atualizar a cada alteracao do codigo.
 // Aparece no visor ao ligar, no Serial Monitor e no rodape da pagina; a capa do guia
 // do produto mostra a mesma data (tools/gerar_pdf_guia.py le esta linha).
-#define VERSAO_PROGRAMA "06/11/2026"
+#define VERSAO_PROGRAMA "17/11/2026"
 
+// ---------- PINOS ----------
+// O mesmo programa serve as duas placas; a placa e escolhida pelo ambiente do
+// PlatformIO (esp32c5 ou esp32dev).
+#if defined(CONFIG_IDF_TARGET_ESP32C5)
+// Placa GOOUUU ESP32-C5 (modulo ESPC5-32 N16R8). Nao usar: G27 (alimenta a
+// memoria flash e define o modo de partida), G28 (precisa estar em nivel alto
+// ao ligar), G13/G14 (USB nativo) e TX0/RX0 (gravacao e Serial Monitor).
+#define PLACA_NOME "ESP32-C5"
+#define FAIXAS_WIFI_TEXTO "2,4 e 5 GHz"
+#define PWM_EM_PARES false
+#define BUZZER_PIN 26
+#define LED_PIN 25
+#define BUTTON_PIN 24
+#define SERVO_1_PIN 23
+#define SERVO_2_PIN 5   // a biblioteca dos servos nao aceita o G15 no C5
+#define SERVO_3_PIN 4
+// Liga a energia dos servos (MOSFET IRLZ44N no GND dos servos). Os servos so
+// recebem energia durante o movimento: parados nao puxam corrente nem forcam.
+#define ENERGIA_SERVOS_PIN 10
+#define TELA_SCK 8
+#define TELA_MOSI 9
+#define TELA_CS 2
+#define TELA_DC 3
+#define TELA_RST 7
+#define TELA_BL 6
+#define RELOGIO_SDA 0
+#define RELOGIO_SCL 1
+#else
+// Placa ESP32 DevKit (versao anterior). O GPIO 12 foi evitado de proposito: ele
+// interfere na inicializacao do ESP32.
+#define PLACA_NOME "ESP32"
+#define FAIXAS_WIFI_TEXTO "2,4 GHz"
+#define PWM_EM_PARES true  // canais de PWM dividem o temporizador em pares
 #define BUZZER_PIN 15
 #define LED_PIN 4
 #define BUTTON_PIN 5
+#define SERVO_1_PIN 13
+#define SERVO_2_PIN 14
+#define SERVO_3_PIN 27
+#define ENERGIA_SERVOS_PIN -1  // sem corte de energia: servos sempre ligados
+#define TELA_SCK 18
+#define TELA_MOSI 23
+#define TELA_CS 26
+#define TELA_DC 16
+#define TELA_RST 17
+#define TELA_BL 25
+#define RELOGIO_SDA 21
+#define RELOGIO_SCL 22
+#endif
 #define NUM_COMPARTIMENTOS 3
 #define MAX_HORARIOS 6       // horarios por medicamento
 #define MAX_FAMILIARES 5
 #define MAX_HISTORICO 60
 
-// Um servo por compartimento. O GPIO 12 foi evitado de proposito: ele interfere
-// na inicializacao do ESP32.
-const int PINOS_SERVO[NUM_COMPARTIMENTOS] = {13, 14, 27};
+// Um servo por compartimento.
+const int PINOS_SERVO[NUM_COMPARTIMENTOS] = {SERVO_1_PIN, SERVO_2_PIN, SERVO_3_PIN};
 // Angulos de cada porta (ajuste aqui se algum mecanismo precisar de outro valor).
 const int ANGULO_FECHADO[NUM_COMPARTIMENTOS] = {0, 0, 0};
 const int ANGULO_ABERTO[NUM_COMPARTIMENTOS] = {90, 90, 90};
@@ -44,12 +89,8 @@ const char* FUNDO_COMPARTIMENTO[NUM_COMPARTIMENTOS] = {"#eff6ff", "#f0fdf4", "#f
 const char* NOME_COR[NUM_COMPARTIMENTOS] = {"azul", "verde", "roxo"};
 
 // Visor: tela TFT 2,25" colorida (controlador ST7789P3, 76 x 284 pontos), ligada
-// por SPI (SCL -> GPIO 18, SDA -> GPIO 23). A luz de fundo deste modulo acende
-// com o pino BL em nivel BAIXO.
-#define TELA_CS 26
-#define TELA_DC 16
-#define TELA_RST 17
-#define TELA_BL 25
+// por SPI (SCL da tela -> TELA_SCK, SDA da tela -> TELA_MOSI; pinos no topo). A
+// luz de fundo deste modulo acende com o pino BL em nivel BAIXO.
 Adafruit_ST7789 tela(TELA_CS, TELA_DC, TELA_RST);
 U8G2_FOR_ADAFRUIT_GFX texto;
 Servo servos[NUM_COMPARTIMENTOS];
@@ -226,13 +267,44 @@ int pulsoDoAngulo(float angulo) {
 // fim (curva de cosseno). Um passo a cada 20 ms, o intervalo do sinal do servo.
 // Exige os servos em 5 V: com tensao baixa eles nao tem forca para os avancos
 // pequenos, param zumbindo e depois saltam.
+//
+// Com ENERGIA_SERVOS_PIN (placa C5), os servos so recebem energia durante o
+// movimento. O sinal continua sempre na ultima posicao: ao religar a energia,
+// o servo ja recebe a posicao em que esta e nao da tranco. Sem energia, o
+// MOSFET abre o GND dos servos e o sinal nao tem por onde circular.
+bool energiaServosLigada = false;
+unsigned long ultimoMovimentoServo = 0;
+const unsigned long CORTE_ENERGIA_SERVOS = 1000; // ms parado ate cortar
+
+void ligarEnergiaServos() {
+  if (ENERGIA_SERVOS_PIN < 0 || energiaServosLigada) return;
+  digitalWrite(ENERGIA_SERVOS_PIN, HIGH);
+  energiaServosLigada = true;
+  delay(50);  // tempo para a tensao dos servos estabilizar
+}
+
+void cortarEnergiaServos() {
+  if (ENERGIA_SERVOS_PIN < 0 || !energiaServosLigada) return;
+  digitalWrite(ENERGIA_SERVOS_PIN, LOW);
+  energiaServosLigada = false;
+}
+
 void moverPorta(int c, int de, int para) {
+  ligarEnergiaServos();
   const int passos = TEMPO_MOVIMENTO_PORTA / 20;
   for (int i = 1; i <= passos; i++) {
     float t = (float)i / passos;          // 0 -> 1 ao longo do movimento
     float suave = (1 - cos(t * PI)) / 2;  // 0 -> 1, lento no inicio e no fim
     servos[c].writeMicroseconds(pulsoDoAngulo(de + (para - de) * suave));
     delay(20);
+  }
+  ultimoMovimentoServo = millis();
+}
+
+// Chamada no loop: corta a energia dos servos depois de um tempo parados.
+void conferirEnergiaServos() {
+  if (energiaServosLigada && millis() - ultimoMovimentoServo >= CORTE_ENERGIA_SERVOS) {
+    cortarEnergiaServos();
   }
 }
 
@@ -341,7 +413,7 @@ void conferirCanaisPWM(const int canalServo[]) {
   for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
     if (canalServo[c] < 0) {
       Serial.printf("ERRO: o servo do compartimento %d nao conseguiu canal de PWM\n", c + 1);
-    } else if (canalServo[c] / 2 == canalLuz / 2) {
+    } else if (PWM_EM_PARES && canalServo[c] / 2 == canalLuz / 2) {
       Serial.printf("ERRO: o servo do compartimento %d divide o temporizador com a luz da tela\n", c + 1);
     }
   }
@@ -350,6 +422,7 @@ void conferirCanaisPWM(const int canalServo[]) {
 void iniciarVisor() {
   luzVisor.attachPin(TELA_BL, 5000, 8);
   brilhoVisor(100);
+  SPI.begin(TELA_SCK, -1, TELA_MOSI, TELA_CS);
   tela.init(VISOR_ALTURA, VISOR_LARGURA); // o painel e "em pe": 76 x 284
   tela.setRotation(1);                    // deitado: 284 x 76
   tela.invertDisplay(false);              // este painel nao usa inversao de cores
@@ -1013,7 +1086,7 @@ void handleConfigRoot() {
   html += "<form action='/conectar' method='POST'>";
   html += "<label>Rede Wi-Fi:</label><br>";
   if (redesEncontradas == 0) {
-    html += "<p>Nenhuma rede encontrada. O dispenser so enxerga redes de 2,4 GHz.</p>";
+    html += "<p>Nenhuma rede encontrada. O dispenser enxerga redes de " FAIXAS_WIFI_TEXTO ".</p>";
   }
   html += "<select name='ssid' style='width:100%;padding:8px;margin:6px 0'>";
   for (int i = 0; i < redesEncontradas; i++) {
@@ -1109,7 +1182,7 @@ void registrarPortalCativo() {
 // Explica por que a rede salva nao conectou (aparece no aviso da pagina).
 String descreverFalhaWiFi(wl_status_t situacao) {
   if (situacao == WL_NO_SSID_AVAIL) {
-    return "a rede " + redeSalva + " não foi encontrada (o dispenser só enxerga redes de 2,4 GHz)";
+    return "a rede " + redeSalva + " não foi encontrada (o dispenser só enxerga redes de " FAIXAS_WIFI_TEXTO ")";
   }
   if (situacao == WL_CONNECT_FAILED) {
     return "a rede " + redeSalva + " recusou a conexão (confira a senha)";
@@ -2421,7 +2494,8 @@ void aoSincronizarNTP(struct timeval* tv) {
 // Ao ligar: procura o DS3231. Se ele tiver uma hora valida, acerta o relogio do
 // ESP32 com ela na hora, sem esperar a internet.
 void iniciarRelogioRTC() {
-  rtcPresente = rtc.begin();
+  Wire.begin(RELOGIO_SDA, RELOGIO_SCL);
+  rtcPresente = rtc.begin(&Wire);
   if (!rtcPresente) {
     Serial.println("DS3231 nao encontrado - usando so a internet");
     return;
@@ -2614,11 +2688,15 @@ String motivoReinicio() {
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("Zelo+ - versao do programa: " VERSAO_PROGRAMA);
+  Serial.println("Zelo+ - versao do programa: " VERSAO_PROGRAMA " (placa " PLACA_NOME ")");
 #if MODO_TESTE
   Serial.println("ATENCAO: MODO_TESTE ativo (avisos aos 30 s e 60 s)");
 #endif
 
+  if (ENERGIA_SERVOS_PIN >= 0) {
+    pinMode(ENERGIA_SERVOS_PIN, OUTPUT);
+    digitalWrite(ENERGIA_SERVOS_PIN, LOW);  // servos sem energia ate o 1o movimento
+  }
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
@@ -2635,13 +2713,24 @@ void setup() {
   // Liga os servos um de cada vez: ao receber o primeiro sinal, cada um corre
   // para a posicao fechada e puxa um pico de corrente. Com tudo na mesma fonte
   // de 5 V, os tres juntos derrubam a tensao do ESP32, que reinicia em ciclo.
+  // Na placa C5, a energia e ligada antes, com os pinos de sinal em nivel baixo
+  // (servos parados); cada servo recebe o sinal na sua vez e, no fim, a energia
+  // e cortada.
   int canalServo[NUM_COMPARTIMENTOS];
+  if (ENERGIA_SERVOS_PIN >= 0) {
+    for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
+      pinMode(PINOS_SERVO[c], OUTPUT);
+      digitalWrite(PINOS_SERVO[c], LOW);
+    }
+    ligarEnergiaServos();
+  }
   for (int c = 0; c < NUM_COMPARTIMENTOS; c++) {
     servos[c].setTimerWidth(RESOLUCAO_SERVO);  // precisa vir antes do attach
     canalServo[c] = servos[c].attach(PINOS_SERVO[c], PULSO_0_GRAU, PULSO_180_GRAUS);
     servos[c].write(ANGULO_FECHADO[c]);
     delay(500);
   }
+  cortarEnergiaServos();
   conferirCanaisPWM(canalServo);
 
   iniciarRelogioRTC();
@@ -2689,6 +2778,7 @@ void setup() {
 }
 
 void loop() {
+  conferirEnergiaServos();
   if (modoConfig || modoLocal) {
     dnsServer.processNextRequest();
   }
