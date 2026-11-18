@@ -21,7 +21,7 @@
 // Atualizar a cada alteracao do codigo.
 // Aparece no visor ao ligar, no Serial Monitor e no rodape da pagina; a capa do guia
 // do produto mostra a mesma data (tools/gerar_pdf_guia.py le esta linha).
-#define VERSAO_PROGRAMA "17/11/2026"
+#define VERSAO_PROGRAMA "18/11/2026"
 
 // ---------- PINOS ----------
 // O mesmo programa serve as duas placas; a placa e escolhida pelo ambiente do
@@ -1885,7 +1885,15 @@ void handleTelegramIds() {
     return;
   }
   if (codigo != 200) {
-    server.send(200, "text/plain; charset=utf-8", "Nao foi possivel falar com o Telegram (HTTP " + String(codigo) + "). Tente de novo.");
+    // Mostra o motivo que o proprio Telegram informa (campo "description").
+    String motivo;
+    JsonDocument erro;
+    if (resposta.length() > 0 && deserializeJson(erro, resposta) == DeserializationError::Ok) {
+      motivo = erro["description"] | "";
+    }
+    Serial.println("Telegram getUpdates HTTP " + String(codigo) + ": " + resposta);
+    server.send(200, "text/plain; charset=utf-8", "Nao foi possivel falar com o Telegram (HTTP " + String(codigo) + ")." +
+                (motivo != "" ? "\nMotivo informado pelo Telegram: " + motivo : String("")) + "\nTente de novo.");
     return;
   }
 
