@@ -15,13 +15,14 @@
 #include <ESP32Servo.h>
 #include <RTClib.h>
 #include <esp_sntp.h>
+#include <esp_wifi.h>
 #include "leitor_js.h"   // leitor de codigo de barras da pagina (tools/leitor/)
 
 // Data desta versao do programa (dd/mm/aaaa; "-2", "-3"... para outra versao no mesmo dia).
 // Atualizar a cada alteracao do codigo.
 // Aparece no visor ao ligar, no Serial Monitor e no rodape da pagina; a capa do guia
 // do produto mostra a mesma data (tools/gerar_pdf_guia.py le esta linha).
-#define VERSAO_PROGRAMA "19/11/2026"
+#define VERSAO_PROGRAMA "19/11/2026-2"
 
 // ---------- PINOS ----------
 // O mesmo programa serve as duas placas; a placa e escolhida pelo ambiente do
@@ -1113,6 +1114,57 @@ void handleConfigRoot() {
   server.send(200, "text/html", html);
 }
 
+// Motivo da ultima desconexao informado pelo roteador (codigo do ESP-IDF).
+volatile uint8_t motivoDesconexaoWiFi = 0;
+
+void aoEventoWiFi(arduino_event_id_t evento, arduino_event_info_t info) {
+  if (evento == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+    motivoDesconexaoWiFi = info.wifi_sta_disconnected.reason;
+  }
+}
+
+// Canais de Wi-Fi do Brasil (inclui todos os canais de 5 GHz permitidos aqui).
+// Chamar depois de cada WiFi.mode().
+void ajustarPaisWiFi() {
+  esp_wifi_set_country_code("BR", true);
+}
+
+// Texto curto (para o visor) e explicacao (para a pagina) do ultimo motivo.
+String motivoWiFiCurto() {
+  switch (motivoDesconexaoWiFi) {
+    case WIFI_REASON_NO_AP_FOUND: return "Rede nao achada";
+    case WIFI_REASON_AUTH_FAIL:
+    case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+    case WIFI_REASON_HANDSHAKE_TIMEOUT:
+    case WIFI_REASON_MIC_FAILURE: return "Senha recusada";
+    case 0: return "Sem resposta";
+    default: return "Codigo " + String(motivoDesconexaoWiFi);
+  }
+}
+
+String motivoWiFiExplicado() {
+  switch (motivoDesconexaoWiFi) {
+    case WIFI_REASON_NO_AP_FOUND:
+      return "o dispenser nao encontrou a rede (fora de alcance, nome diferente ou rede escondida)";
+    case WIFI_REASON_AUTH_FAIL:
+    case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+    case WIFI_REASON_HANDSHAKE_TIMEOUT:
+    case WIFI_REASON_MIC_FAILURE:
+      return "a rede recusou a senha (confira maiusculas e minusculas)";
+    case WIFI_REASON_ASSOC_TOOMANY:
+      return "a rede esta cheia (muitos aparelhos conectados)";
+    case WIFI_REASON_NOT_AUTHED:
+    case WIFI_REASON_NOT_ASSOCED:
+    case WIFI_REASON_ASSOC_FAIL:
+    case WIFI_REASON_CONNECTION_FAIL:
+      return "a rede recusou o aparelho (pode exigir cadastro do aparelho pela TI)";
+    case 0:
+      return "a rede nao respondeu a tempo";
+    default:
+      return "a rede recusou a conexao (codigo " + String(motivoDesconexaoWiFi) + ")";
+  }
+}
+
 void handleConectar() {
   String ssid = server.arg("ssid_manual");
   ssid.trim();
@@ -1132,9 +1184,10 @@ void handleConectar() {
   limparVisor();
   escreverLinha(0, "Testando rede...");
 
+  motivoDesconexaoWiFi = 0;
   WiFi.begin(ssid.c_str(), senha.c_str());
   unsigned long inicio = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - inicio < 15000) {
+  while (WiFi.status() != WL_CONNECTED && millis() - inicio < 20000) {
     delay(300);
   }
 
@@ -1153,14 +1206,16 @@ void handleConectar() {
     delay(3000);
     ESP.restart();
   } else {
-    configErro = "Nao foi possivel conectar. Verifique a senha e tente novamente.";
+    configErro = "Nao foi possivel conectar a " + ssid + ": " + motivoWiFiExplicado() + ".";
+    Serial.println("Wi-Fi: falha ao conectar a " + ssid + " - motivo " + String(motivoDesconexaoWiFi));
+    String curto = motivoWiFiCurto();
     WiFi.disconnect();
     // Volta o visor para a tela da rede de configuracao (antes ficava parado
     // em "Testando rede...").
     temaVisor(COR_LARANJA);
     limparVisor();
     escreverLinha(0, "Rede nao conectou");
-    escreverLinha(1, "Tente de novo");
+    escreverLinha(1, curto);
     delay(2500);
     temaVisor(COR_AZUL_ESCURO);
     limparVisor();
@@ -1195,8 +1250,8 @@ String descreverFalhaWiFi(wl_status_t situacao) {
   if (situacao == WL_NO_SSID_AVAIL) {
     return "a rede " + redeSalva + " não foi encontrada (o dispenser só enxerga redes de " FAIXAS_WIFI_TEXTO ")";
   }
-  if (situacao == WL_CONNECT_FAILED) {
-    return "a rede " + redeSalva + " recusou a conexão (confira a senha)";
+  if (situacao == WL_CONNECT_FAILED || motivoDesconexaoWiFi != 0) {
+    return "não foi possível conectar à rede " + redeSalva + ": " + motivoWiFiExplicado();
   }
   return "não foi possível conectar à rede " + redeSalva;
 }
@@ -1210,6 +1265,7 @@ void iniciarModoLocal(const String& motivo) {
   WiFi.setAutoReconnect(false); // novas tentativas so no horario certo (manterRedeLocal)
   WiFi.disconnect();
   WiFi.mode(WIFI_AP_STA);
+  ajustarPaisWiFi();
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   WiFi.softAP(NOME_REDE_LOCAL, SENHA_REDE_LOCAL);
   dnsServer.start(DNS_PORT, "*", apIP);
@@ -1255,6 +1311,7 @@ void iniciarModoConfig() {
 
   WiFi.disconnect();  // para de tentar a rede salva, senao a busca de redes falha
   WiFi.mode(WIFI_AP_STA);
+  ajustarPaisWiFi();
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   WiFi.softAP("ZeloPlus-Config");
 
@@ -2565,6 +2622,7 @@ void sairModoLocal() {
   dnsServer.stop();
   WiFi.softAPdisconnect(true);
   WiFi.mode(WIFI_STA);
+  ajustarPaisWiFi();
   WiFi.setAutoReconnect(true);
   Serial.print("Rede salva conectada. Acesse: http://");
   Serial.println(WiFi.localIP());
@@ -2708,6 +2766,7 @@ String motivoReinicio() {
 void setup() {
   Serial.begin(115200);
   Serial.println("Zelo+ - versao do programa: " VERSAO_PROGRAMA " (placa " PLACA_NOME ")");
+  WiFi.onEvent(aoEventoWiFi);
 #if MODO_TESTE
   Serial.println("ATENCAO: MODO_TESTE ativo (avisos aos 30 s e 60 s)");
 #endif
