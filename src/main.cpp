@@ -22,7 +22,7 @@
 // Atualizar a cada alteracao do codigo.
 // Aparece no visor ao ligar, no Serial Monitor e no rodape da pagina; a capa do guia
 // do produto mostra a mesma data (tools/gerar_pdf_guia.py le esta linha).
-#define VERSAO_PROGRAMA "19/11/2026-3"
+#define VERSAO_PROGRAMA "19/11/2026-4"
 
 // ---------- PINOS ----------
 // O mesmo programa serve as duas placas; a placa e escolhida pelo ambiente do
@@ -1122,7 +1122,8 @@ void handleConfigRoot() {
 volatile uint8_t motivoDesconexaoWiFi = 0;
 
 void aoEventoWiFi(arduino_event_id_t evento, arduino_event_info_t info) {
-  if (evento == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+  if (evento == ARDUINO_EVENT_WIFI_STA_DISCONNECTED &&
+      info.wifi_sta_disconnected.reason != WIFI_REASON_ASSOC_LEAVE) {
     motivoDesconexaoWiFi = info.wifi_sta_disconnected.reason;
   }
 }
@@ -1184,59 +1185,30 @@ void handleConectar() {
 
   String senha = server.arg("senha");
 
+  // A rede escolhida fica guardada como "nova" e e testada na partida, so com
+  // o modo estacao ligado: com a rede de configuracao no ar ao mesmo tempo, o
+  // radio unico do ESP32-C5 nao consegue trocar para o canal (e a faixa) da
+  // rede nova. Se ela nao conectar, a rede anterior continua valendo.
+  preferences.putString("ssid_novo", ssid);
+  preferences.putString("pass_novo", senha);
+  Serial.println("Wi-Fi: rede escolhida " + ssid + " - reiniciando para testar");
+
+  String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
+  html += "<meta name='viewport' content='width=device-width, initial-scale=1'></head>";
+  html += "<body style='font-family:sans-serif;max-width:420px;margin:20px auto;padding:0 16px'>";
+  html += "<h2>Testando a rede " + escaparHTML(ssid) + "</h2>";
+  html += "<p>O dispenser vai reiniciar e testar a rede. Acompanhe pelo visor:</p><ul>";
+  html += "<li><b>Conectou:</b> o visor mostra o endereço da página. Conecte o celular na mesma rede e abra esse endereço.</li>";
+  html += "<li><b>Não conectou:</b> o visor mostra o motivo e o dispenser volta para a rede anterior (ou para a ZeloPlus-Config).</li>";
+  html += "</ul></body></html>";
+  server.send(200, "text/html", html);
+
   temaVisor(COR_AZUL_ESCURO);
   limparVisor();
   escreverLinha(0, "Testando rede...");
-
-  motivoDesconexaoWiFi = 0;
-  WiFi.begin(ssid.c_str(), senha.c_str());
-  unsigned long inicio = millis();
-  Serial.println("Wi-Fi: tentando conectar a " + ssid + "...");
-  unsigned long ultimoAviso = 0;
-  while (WiFi.status() != WL_CONNECTED && millis() - inicio < 20000) {
-    delay(300);
-    if (millis() - ultimoAviso >= 1000) {
-      ultimoAviso = millis();
-      Serial.printf("  %2lus: situacao %d, motivo %d\n", (millis() - inicio) / 1000,
-                    (int)WiFi.status(), (int)motivoDesconexaoWiFi);
-    }
-  }
-  Serial.printf("Wi-Fi: fim da tentativa (situacao %d)\n", (int)WiFi.status());
-
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("Wi-Fi: conectado, IP " + WiFi.localIP().toString() + " canal " + String(WiFi.channel()));
-    preferences.putString("ssid", ssid);
-    preferences.putString("pass", senha);
-
-    String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
-    html += "<meta name='viewport' content='width=device-width, initial-scale=1'></head>";
-    html += "<body style='font-family:sans-serif;max-width:400px;margin:20px auto;padding:0 16px'>";
-    html += "<h2 style='color:green'>Conectado com sucesso!</h2>";
-    html += "<p>O sistema vai reiniciar. Conecte seu celular de volta na rede normal e acesse o IP mostrado no visor do dispenser.</p>";
-    html += "</body></html>";
-    server.send(200, "text/html", html);
-
-    delay(3000);
-    ESP.restart();
-  } else {
-    configErro = "Nao foi possivel conectar a " + ssid + ": " + motivoWiFiExplicado() + ".";
-    Serial.println("Wi-Fi: falha ao conectar a " + ssid + " - motivo " + String(motivoDesconexaoWiFi));
-    String curto = motivoWiFiCurto();
-    WiFi.disconnect();
-    // Volta o visor para a tela da rede de configuracao (antes ficava parado
-    // em "Testando rede...").
-    temaVisor(COR_LARANJA);
-    limparVisor();
-    escreverLinha(0, "Rede nao conectou");
-    escreverLinha(1, curto);
-    delay(2500);
-    temaVisor(COR_AZUL_ESCURO);
-    limparVisor();
-    escreverLinha(0, "Conecte no Wi-Fi");
-    escreverLinha(1, "ZeloPlus-Config");
-    server.sendHeader("Location", "/");
-    server.send(303);
-  }
+  escreverLinha(1, "Reiniciando");
+  delay(2500);
+  ESP.restart();
 }
 
 void handleCaptivePortal() {
@@ -1321,6 +1293,10 @@ void handleModoLocal() {
 
 void iniciarModoConfig() {
   modoConfig = true;
+  if (preferences.isKey("erro_rede")) {
+    configErro = preferences.getString("erro_rede", "");
+    preferences.remove("erro_rede");
+  }
 
   WiFi.disconnect();  // para de tentar a rede salva, senao a busca de redes falha
   WiFi.mode(WIFI_AP_STA);
@@ -2841,8 +2817,58 @@ void setup() {
   bool forcarConfig = (digitalRead(BUTTON_PIN) == LOW);
 
   if (forcarConfig) {
+    preferences.remove("ssid_novo");
+    preferences.remove("pass_novo");
     iniciarModoConfig();
     return;
+  }
+
+  WiFi.mode(WIFI_STA);
+  ajustarPaisWiFi();
+
+  // Rede escolhida na pagina de configuracao e ainda nao testada.
+  String ssidNovo = preferences.getString("ssid_novo", "");
+  if (ssidNovo != "") {
+    String senhaNova = preferences.getString("pass_novo", "");
+    preferences.remove("ssid_novo");
+    preferences.remove("pass_novo");
+    temaVisor(COR_AZUL_ESCURO);
+    limparVisor();
+    escreverLinha(0, "Testando rede...");
+    escreverLinha(1, ssidNovo);
+    Serial.println("Wi-Fi: testando a rede nova " + ssidNovo + "...");
+    motivoDesconexaoWiFi = 0;
+    WiFi.begin(ssidNovo.c_str(), senhaNova.c_str());
+    unsigned long inicio = millis();
+    unsigned long ultimoAviso = 0;
+    while (WiFi.status() != WL_CONNECTED && millis() - inicio < 25000) {
+      delay(300);
+      if (millis() - ultimoAviso >= 1000) {
+        ultimoAviso = millis();
+        Serial.printf("  %2lus: situacao %d, motivo %d\n", (millis() - inicio) / 1000,
+                      (int)WiFi.status(), (int)motivoDesconexaoWiFi);
+      }
+    }
+    if (WiFi.status() == WL_CONNECTED) {
+      Serial.println("Wi-Fi: conectado a " + ssidNovo + ", IP " + WiFi.localIP().toString() +
+                     " canal " + String(WiFi.channel()));
+      preferences.putString("ssid", ssidNovo);
+      preferences.putString("pass", senhaNova);
+      redeSalva = ssidNovo;
+      senhaRedeSalva = senhaNova;
+      iniciarModoNormal();
+      return;
+    }
+    String explicado = motivoWiFiExplicado();
+    Serial.println("Wi-Fi: a rede nova " + ssidNovo + " nao conectou - motivo " + String(motivoDesconexaoWiFi));
+    preferences.putString("erro_rede", "Não foi possível conectar à rede " + ssidNovo + ": " + explicado + ".");
+    temaVisor(COR_LARANJA);
+    limparVisor();
+    escreverLinha(0, "Rede nao conectou");
+    escreverLinha(1, motivoWiFiCurto());
+    delay(5000);
+    WiFi.disconnect();
+    delay(200);
   }
 
   if (ssidSalvo != "") {
