@@ -21,7 +21,7 @@
 // Atualizar a cada alteracao do codigo.
 // Aparece no visor ao ligar, no Serial Monitor e no rodape da pagina; a capa do guia
 // do produto mostra a mesma data (tools/gerar_pdf_guia.py le esta linha).
-#define VERSAO_PROGRAMA "18/11/2026"
+#define VERSAO_PROGRAMA "19/11/2026"
 
 // ---------- PINOS ----------
 // O mesmo programa serve as duas placas; a placa e escolhida pelo ambiente do
@@ -1155,6 +1155,17 @@ void handleConectar() {
   } else {
     configErro = "Nao foi possivel conectar. Verifique a senha e tente novamente.";
     WiFi.disconnect();
+    // Volta o visor para a tela da rede de configuracao (antes ficava parado
+    // em "Testando rede...").
+    temaVisor(COR_LARANJA);
+    limparVisor();
+    escreverLinha(0, "Rede nao conectou");
+    escreverLinha(1, "Tente de novo");
+    delay(2500);
+    temaVisor(COR_AZUL_ESCURO);
+    limparVisor();
+    escreverLinha(0, "Conecte no Wi-Fi");
+    escreverLinha(1, "ZeloPlus-Config");
     server.sendHeader("Location", "/");
     server.send(303);
   }
