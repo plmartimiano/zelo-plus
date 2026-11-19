@@ -22,7 +22,7 @@
 // Atualizar a cada alteracao do codigo.
 // Aparece no visor ao ligar, no Serial Monitor e no rodape da pagina; a capa do guia
 // do produto mostra a mesma data (tools/gerar_pdf_guia.py le esta linha).
-#define VERSAO_PROGRAMA "19/11/2026-2"
+#define VERSAO_PROGRAMA "19/11/2026-3"
 
 // ---------- PINOS ----------
 // O mesmo programa serve as duas placas; a placa e escolhida pelo ambiente do
@@ -1074,6 +1074,10 @@ void handleConfigRoot() {
   if (redesEncontradas < 0) {
     redesEncontradas = 0;
   }
+  Serial.printf("Wi-Fi: %d redes encontradas\n", redesEncontradas);
+  for (int i = 0; i < redesEncontradas; i++) {
+    Serial.printf("  %-32s canal %3d  sinal %4d dBm\n", WiFi.SSID(i).c_str(), WiFi.channel(i), WiFi.RSSI(i));
+  }
 
   String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
   html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
@@ -1187,11 +1191,20 @@ void handleConectar() {
   motivoDesconexaoWiFi = 0;
   WiFi.begin(ssid.c_str(), senha.c_str());
   unsigned long inicio = millis();
+  Serial.println("Wi-Fi: tentando conectar a " + ssid + "...");
+  unsigned long ultimoAviso = 0;
   while (WiFi.status() != WL_CONNECTED && millis() - inicio < 20000) {
     delay(300);
+    if (millis() - ultimoAviso >= 1000) {
+      ultimoAviso = millis();
+      Serial.printf("  %2lus: situacao %d, motivo %d\n", (millis() - inicio) / 1000,
+                    (int)WiFi.status(), (int)motivoDesconexaoWiFi);
+    }
   }
+  Serial.printf("Wi-Fi: fim da tentativa (situacao %d)\n", (int)WiFi.status());
 
   if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("Wi-Fi: conectado, IP " + WiFi.localIP().toString() + " canal " + String(WiFi.channel()));
     preferences.putString("ssid", ssid);
     preferences.putString("pass", senha);
 
