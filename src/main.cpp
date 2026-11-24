@@ -22,7 +22,7 @@
 // Atualizar a cada alteracao do codigo.
 // Aparece no visor ao ligar, no Serial Monitor e no rodape da pagina; a capa do guia
 // do produto mostra a mesma data (tools/gerar_pdf_guia.py le esta linha).
-#define VERSAO_PROGRAMA "19/11/2026-4"
+#define VERSAO_PROGRAMA "24/11/2026"
 
 // ---------- PINOS ----------
 // O mesmo programa serve as duas placas; a placa e escolhida pelo ambiente do
@@ -2393,6 +2393,26 @@ void abrirPeloCuidador(int c) {
                      (horarioAgora() != "" ? " às " + horarioAgora() : String("")) + ".");
 }
 
+// Toque curto no botao fora do horario de dose: mostra de novo o endereco da
+// pagina (e, sem internet, o nome e a senha da rede propria).
+void mostrarEnderecoPagina() {
+  temaVisor(COR_AZUL_ESCURO);
+  limparVisor();
+  if (modoLocal) {
+    escreverLinha(0, "Rede " + nomeRedeLocal);
+    escreverLinha(1, nomeRedeLocal == NOME_REDE_LOCAL ? "senha " + String(SENHA_REDE_LOCAL) : "sem senha");
+    delay(4000);
+    escreverLinha(0, "Endereço da página:");
+    escreverLinha(1, "192.168.4.1");
+  } else {
+    escreverLinha(0, "Endereço da página:");
+    escreverLinha(1, WiFi.localIP().toString());
+  }
+  delay(8000);
+  temaVisor(COR_PRETO);
+  limparVisor(); // volta para a tela de espera
+}
+
 // Segurar o botao fora do horario de dose: depois de 2 s o visor avisa e, aos
 // 10 s, entra no modo do cuidador. Devolve true enquanto o botao esta seguro
 // (o loop nao redesenha a tela de espera nesse tempo).
@@ -2400,11 +2420,14 @@ bool acompanharBotaoEspera() {
   bool apertado = (digitalRead(BUTTON_PIN) == LOW);
   if (!apertado) {
     if (botaoApertadoEm != 0) {
+      unsigned long segurado = millis() - botaoApertadoEm;
       botaoApertadoEm = 0;
       if (avisoSegurarMostrado) {
         avisoSegurarMostrado = false;
         temaVisor(COR_PRETO);
         limparVisor(); // volta para a tela de espera
+      } else if (segurado >= 50) {
+        mostrarEnderecoPagina();  // toque curto
       }
     }
     return false;
